@@ -18,11 +18,44 @@
 				"wip"
 			]
 		],
-		"type-empty": [2, "never"],
 		"type-case": [2, "always", "lower-case"],
+		"type-empty": [2, "never"],
+
+		"scope-case": [2, "always", "kebab-case"],
+		"scope-enum": [
+			2,
+			"always",
+			[
+				"app",
+				"build",
+				"ci",
+				"deps",
+				"docs",
+				"engine",
+				"hooks",
+				"lefthook",
+				"mise",
+				"release",
+				"scripts",
+				"tooling",
+				"website",
+				"workflows"
+			]
+		],
+
+		"subject-case": [2, "always", "sentence-case"],
 		"subject-empty": [2, "never"],
 		"subject-full-stop": [2, "never", "."],
+		"subject-max-length": [2, "always", 72],
+		"subject-min-length": [2, "always", 10],
+
 		"header-max-length": [2, "always", 100],
-		"scope-case": [2, "always", "kebab-case"]
+		"header-min-length": [2, "always", 15],
+
+		"body-leading-blank": [2, "always"],
+		"body-max-line-length": [2, "always", 100],
+
+		"footer-leading-blank": [2, "always"],
+		"footer-max-line-length": [2, "always", 100]
 	}
 }
