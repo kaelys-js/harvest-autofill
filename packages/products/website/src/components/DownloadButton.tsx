@@ -14,7 +14,7 @@ export default function DownloadButton({ size = "lg" }: { size?: "lg" | "default
 			.catch(() => {});
 	}, []);
 	return (
-		<a href={ZIP} className="inline-block">
+		<a href={ZIP} rel="noopener noreferrer" className="inline-block">
 			<Button size={size} className="gap-2">
 				<Download />
 				Download for macOS

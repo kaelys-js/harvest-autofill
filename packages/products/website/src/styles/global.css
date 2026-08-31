@@ -122,3 +122,61 @@
 		transition-delay: 300ms;
 	}
 }
+
+/* Hero entrance. Runs on load (above the fold, so no IntersectionObserver). The LCP
+   element ([data-hero="lcp"], the headline) animates transform ONLY and never drops below
+   opacity 1 — Chromium excludes opacity:0 nodes from LCP but not transformed ones, so this
+   keeps LCP fast. Everything else may fade. Scoped to html.js and gated by reduced-motion;
+   transforms/opacity don't reflow, so CLS stays 0. */
+@media (prefers-reduced-motion: no-preference) {
+	@keyframes haf-rise {
+		from {
+			transform: translateY(14px);
+		}
+
+		to {
+			transform: none;
+		}
+	}
+
+	@keyframes haf-rise-fade {
+		from {
+			opacity: 0;
+			transform: translateY(14px);
+		}
+
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	html.js [data-hero] {
+		animation: haf-rise-fade 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+		animation-delay: var(--hd, 0ms);
+	}
+
+	html.js [data-hero="lcp"] {
+		animation-name: haf-rise;
+	}
+}
+
+/* Theme-toggle animation. The View Transitions API handles the crossfade where supported;
+   this is the fallback path (class added only during a manual toggle, never on first paint),
+   and it tunes the View Transition timing. Both are inside the no-preference query. */
+@media (prefers-reduced-motion: no-preference) {
+	html.theme-anim,
+	html.theme-anim body,
+	html.theme-anim *:not(svg *) {
+		transition:
+			background-color 0.3s ease,
+			border-color 0.3s ease,
+			color 0.3s ease,
+			fill 0.3s ease;
+	}
+
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation-duration: 0.3s;
+	}
+}

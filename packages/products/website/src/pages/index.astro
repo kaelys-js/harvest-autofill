@@ -124,8 +124,10 @@ const steps = [
 			<div class="ml-auto flex items-center gap-2 md:ml-6">
 				<a
 					href={REPO}
+					target="_blank"
+					rel="noopener noreferrer"
 					class="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-					aria-label="View on GitHub"><Github className="size-5" /></a
+					aria-label="View on GitHub (opens in a new tab)"><Github className="size-5" /></a
 				>
 				<ThemeToggle client:load />
 				<span class="hidden sm:block"><DownloadButton client:load size="default" /></span>
@@ -136,34 +138,47 @@ const steps = [
 	<main id="main">
 		<!-- hero -->
 		<section class="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 md:py-24 lg:grid-cols-2">
-			<!-- Hero stays un-animated: it's the LCP region, so it must paint at full opacity
-			     immediately. Entrance reveals begin below the fold. -->
+			<!-- Hero entrance: the LCP headline animates transform-only (data-hero="lcp",
+			     never opacity:0) so LCP stays fast; the rest fade+rise with a light stagger. -->
 			<div>
-				<Badge className="border-primary/20 bg-primary/10 text-primary"
-					><Sparkles className="size-3.5" /> Open source · macOS 26</Badge
+				<span data-hero class="inline-block">
+					<Badge className="border-primary/20 bg-primary/10 text-primary"
+						><Sparkles className="size-3.5" /> Open source · macOS 26</Badge
+					>
+				</span>
+				<h1
+					data-hero="lcp"
+					class="mt-5 text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl"
 				>
-				<h1 class="mt-5 text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
 					Your timesheet <span
 						class="bg-gradient-to-r from-[#f2762a] to-[#e2541f] bg-clip-text text-transparent"
 						>fills itself.</span
 					>
 				</h1>
-				<p class="mt-5 max-w-xl text-lg text-muted-foreground text-pretty">
+				<p
+					data-hero
+					style="--hd:120ms"
+					class="mt-5 max-w-xl text-lg text-muted-foreground text-pretty"
+				>
 					Harvest Auto-Fill turns the work you already did — commits, pushes, and meetings — into
 					hours, split across the right projects and filed for you every Friday.
 				</p>
-				<div class="mt-8 flex flex-wrap items-center gap-3">
+				<div data-hero style="--hd:200ms" class="mt-8 flex flex-wrap items-center gap-3">
 					<DownloadButton client:load />
-					<a href={REPO}
+					<a href={REPO} target="_blank" rel="noopener noreferrer"
 						><span
 							class="inline-flex h-11 items-center gap-2 rounded-md border border-border bg-background px-6 text-base font-medium shadow-xs transition-colors hover:bg-accent"
-							><Github className="size-4" /> View on GitHub</span
+							><Github className="size-4" /> View on GitHub<span class="sr-only">
+								(opens in a new tab)</span
+							></span
 						></a
 					>
 				</div>
-				<p class="mt-4 text-sm text-muted-foreground">Free · Apple Silicon · nothing to install</p>
+				<p data-hero style="--hd:260ms" class="mt-4 text-sm text-muted-foreground">
+					Free · Apple Silicon · nothing to install
+				</p>
 			</div>
-			<div class="flex justify-center lg:justify-end">
+			<div data-hero style="--hd:140ms" class="flex justify-center lg:justify-end">
 				<WindowMockup />
 			</div>
 		</section>
@@ -361,21 +376,39 @@ const steps = [
 					<h2 class="text-sm font-semibold">Resources</h2>
 					<ul class="mt-4 space-y-3 text-sm text-muted-foreground">
 						<li>
-							<a href={REPO} class="transition-colors hover:text-foreground">Source on GitHub</a>
-						</li>
-						<li>
-							<a href={`${REPO}/releases`} class="transition-colors hover:text-foreground"
-								>Releases</a
+							<a
+								href={REPO}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="transition-colors hover:text-foreground"
+								>Source on GitHub<span class="sr-only"> (opens in a new tab)</span></a
 							>
 						</li>
 						<li>
-							<a href={`${REPO}/releases/latest`} class="transition-colors hover:text-foreground"
-								>Changelog</a
+							<a
+								href={`${REPO}/releases`}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="transition-colors hover:text-foreground"
+								>Releases<span class="sr-only"> (opens in a new tab)</span></a
 							>
 						</li>
 						<li>
-							<a href={`${REPO}/blob/main/LICENSE`} class="transition-colors hover:text-foreground"
-								>MIT License</a
+							<a
+								href={`${REPO}/releases/latest`}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="transition-colors hover:text-foreground"
+								>Changelog<span class="sr-only"> (opens in a new tab)</span></a
+							>
+						</li>
+						<li>
+							<a
+								href={`${REPO}/blob/main/LICENSE`}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="transition-colors hover:text-foreground"
+								>MIT License<span class="sr-only"> (opens in a new tab)</span></a
 							>
 						</li>
 					</ul>

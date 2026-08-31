@@ -17,7 +17,11 @@ export default function CopyCommand({ cmd }: { cmd: string }) {
 				aria-label="Copy command"
 				className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
 			>
-				{copied ? <Check className="size-4 text-primary" /> : <Copy className="size-4" />}
+				{copied ? (
+					<Check className="size-4 text-primary motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:fade-in motion-safe:duration-300" />
+				) : (
+					<Copy className="size-4" />
+				)}
 			</button>
 		</div>
 	);
