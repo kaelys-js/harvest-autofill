@@ -4,12 +4,23 @@ on:
   push:
     branches: [main]
   pull_request:
+
+permissions:
+  contents: read            # least privilege: this workflow only reads the repo
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true  # a newer push supersedes an in-flight build
+
 jobs:
   build:
-    runs-on: macos-26
+    runs-on: macos-26       # needs the macOS 26 SDK (Liquid Glass APIs)
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - name: Build (compile, bundle Python, ad-hoc sign, verify signature)
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Build (compile, bundle Python, sign, verify signature)
         run: ./build.sh
       - name: Confirm the app built
-        run: test -d "dist/Harvest Auto-Fill.app/Contents/MacOS/Harvest" -o -f "dist/Harvest Auto-Fill.app/Contents/MacOS/Harvest"
+        run: test -f "dist/Harvest Auto-Fill.app/Contents/MacOS/Harvest"

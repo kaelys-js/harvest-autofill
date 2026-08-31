@@ -133,7 +133,7 @@ let UPDATE_REPO_URL = "https://github.com/kaelys-js/harvest-autofill-releases"
 let UPDATE_PUBKEY_B64 = "QwrTC2P5Xh/A+Eq92spnRGHFESWTxfiX7Hqwk0waays="
 
 struct UpdateInfo: Equatable { let build: Int; let version: String; let sha256: String; let notes: String; let zip: URL }
-struct WhatsNew: Equatable { let version: String; let notes: String }
+struct WhatsNew: Equatable { let version: String; let notes: String; let date: String; let url: String }
 enum UpdaterState: Equatable { case idle, checking, upToDate, downloading, ready(UpdateInfo), failed(String) }
 struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: String? { m } }
 
@@ -142,6 +142,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
     @Published var state: UpdaterState = .idle
     @Published var readyAppPath: String?
     @Published var whatsNew: WhatsNew?          // set to trigger the "What's new" window
+    @Published var loadingWhatsNew = false
     private var timer: Timer?
     var currentBuild: Int { Int((Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "0") ?? 0 }
     var currentVersion: String { (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "" }
@@ -154,25 +155,42 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
         }
     }
 
-    // On the first launch after an update, fetch the current release's notes and show What's New.
+    // On the first launch after an update, show What's New for the current version.
     func maybeShowWhatsNew() {
         let seen = UserDefaults.standard.integer(forKey: "seenBuild")
         let cur = currentBuild
         if seen == 0 { UserDefaults.standard.set(cur, forKey: "seenBuild"); return }   // fresh install: nothing to show
         if cur > seen {
-            let ver = currentVersion
             Task {
-                let notes = (try? await fetchReleaseBody(tag: "v\(ver)")) ?? ""
-                if !notes.isEmpty { self.whatsNew = WhatsNew(version: ver, notes: notes) }
+                if let wn = try? await release(forTag: "v\(currentVersion)"), !wn.notes.isEmpty { self.whatsNew = wn }
                 UserDefaults.standard.set(cur, forKey: "seenBuild")
             }
         }
     }
-    func fetchReleaseBody(tag: String) async throws -> String {
+    // Open What's New on demand (from the About button), for the current version.
+    func showWhatsNewNow() {
+        loadingWhatsNew = true
+        Task {
+            let wn = try? await release(forTag: "v\(currentVersion)")
+            loadingWhatsNew = false
+            self.whatsNew = wn ?? WhatsNew(version: currentVersion, notes: "No release notes were found for this version.", date: "", url: UPDATE_REPO_URL)
+        }
+    }
+    func release(forTag tag: String) async throws -> WhatsNew {
         var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(UPDATE_REPO)/releases/tags/\(tag)")!)
         req.setValue("harvest-fill-updater", forHTTPHeaderField: "User-Agent"); req.timeoutInterval = 15
         let (d, _) = try await URLSession.shared.data(for: req)
-        return ((try? JSONSerialization.jsonObject(with: d)) as? [String: Any])?["body"] as? String ?? ""
+        let o = ((try? JSONSerialization.jsonObject(with: d)) as? [String: Any]) ?? [:]
+        let ver = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
+        return WhatsNew(version: ver, notes: o["body"] as? String ?? "",
+                        date: Self.pretty(o["published_at"] as? String ?? ""),
+                        url: o["html_url"] as? String ?? UPDATE_REPO_URL)
+    }
+    static func pretty(_ iso: String) -> String {
+        let f = ISO8601DateFormatter()
+        guard let d = f.date(from: iso) else { return "" }
+        let out = DateFormatter(); out.dateStyle = .long; out.timeStyle = .none
+        return out.string(from: d)
     }
     func check(manual: Bool) {
         if case .downloading = state { return }
@@ -1161,21 +1179,46 @@ struct WhatsNewView: View {
     @ObservedObject var updater = Updater.shared
     @Environment(\.dismissWindow) var dismissWindow
     var render = false
+    var wn: WhatsNew? { updater.whatsNew }
     var body: some View {
-        VStack(spacing: 14) {
-            if let img = NSImage(contentsOfFile: P.icon) {
-                Image(nsImage: img).resizable().frame(width: 60, height: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous)).shadow(color: .black.opacity(0.18), radius: 4, y: 1)
-            }
-            Text("What's new in \(updater.whatsNew?.version ?? updater.currentVersion)").font(.system(size: 19, weight: .bold))
+        VStack(spacing: 0) {
+            VStack(spacing: 10) {
+                if let img = NSImage(contentsOfFile: P.icon) {
+                    Image(nsImage: img).resizable().frame(width: 58, height: 58)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous)).shadow(color: .black.opacity(0.18), radius: 4, y: 1)
+                }
+                Text("What's New").font(.system(size: 22, weight: .bold))
+                HStack(spacing: 8) {
+                    Text("Version \(wn?.version ?? updater.currentVersion)")
+                        .font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.accentColor)
+                        .padding(.horizontal, 9).padding(.vertical, 3)
+                        .background(Capsule().fill(Color.accentColor.opacity(0.14)))
+                    if let d = wn?.date, !d.isEmpty {
+                        Text(d).font(.system(size: 11)).foregroundStyle(.secondary)
+                    }
+                }
+            }.padding(.top, 30).padding(.bottom, 18).frame(maxWidth: .infinity)
+                .background(render ? AnyShapeStyle(Color(nsColor: .windowBackgroundColor)) : AnyShapeStyle(.regularMaterial))
+
+            Divider()
+
             Group {
-                if render { ChangelogView(text: updater.whatsNew?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading) }
-                else { ScrollView { ChangelogView(text: updater.whatsNew?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 2) }.frame(maxHeight: 300) }
-            }
-            Button("Continue") { updater.whatsNew = nil; dismissWindow(id: "whatsnew") }
-                .primaryProminent().controlSize(.large).keyboardShortcut(.defaultAction)
+                if render { ChangelogView(text: wn?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading) }
+                else { ScrollView { ChangelogView(text: wn?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading) }.frame(maxHeight: 280) }
+            }.padding(20)
+
+            Divider()
+
+            HStack {
+                Button { NSWorkspace.shared.open(URL(string: wn?.url ?? UPDATE_REPO_URL)!) } label: {
+                    Label("View release on GitHub", systemImage: "arrow.up.right.square")
+                }.buttonStyle(.link).font(.system(size: 12))
+                Spacer()
+                Button("Continue") { updater.whatsNew = nil; dismissWindow(id: "whatsnew") }
+                    .primaryProminent().controlSize(.large).keyboardShortcut(.defaultAction)
+            }.padding(.horizontal, 20).padding(.vertical, 14)
         }
-        .padding(26).frame(width: 460)
+        .frame(width: 460)
         .background(render ? AnyShapeStyle(Color(nsColor: .windowBackgroundColor)) : AnyShapeStyle(.regularMaterial))
     }
 }
@@ -1225,6 +1268,7 @@ struct UpdateCard: View {
 
 struct AboutContent: View {
     @ObservedObject var prefs: Prefs
+    @ObservedObject var updater = Updater.shared
     var version: String { (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "—" }
     var pyVersion: String {
         let vf = P.res + "/python/lib/python3.12"
@@ -1249,9 +1293,17 @@ struct AboutContent: View {
                 Text("Fills your Harvest timesheet from the work you already did — commits, pushes, and meetings turned into hours, filed for you every Friday.")
                     .font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 8)
-                Button { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) } label: {
-                    Label("View on GitHub", systemImage: "arrow.up.right.square")
-                }.buttonStyle(.link).font(.system(size: 12)).padding(.top, 2)
+                HStack(spacing: 16) {
+                    Button { updater.showWhatsNewNow() } label: {
+                        HStack(spacing: 4) {
+                            if updater.loadingWhatsNew { ProgressView().controlSize(.small) }
+                            Label("What's new", systemImage: "sparkles")
+                        }
+                    }.buttonStyle(.link).font(.system(size: 12)).disabled(updater.loadingWhatsNew)
+                    Button { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) } label: {
+                        Label("View on GitHub", systemImage: "arrow.up.right.square")
+                    }.buttonStyle(.link).font(.system(size: 12))
+                }.padding(.top, 2)
             }.frame(maxWidth: .infinity).padding(.top, 4)
 
             UpdateCard(prefs: prefs)
@@ -1740,7 +1792,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 Updater.shared.maybeShowWhatsNew()
                 for _ in 0..<30 {
                     try? await Task.sleep(nanoseconds: 500_000_000)
-                    if let wn = Updater.shared.whatsNew { print("WHATSNEW version=\(wn.version) notesChars=\(wn.notes.count)"); NSApp.terminate(nil) }
+                    if let wn = Updater.shared.whatsNew { print("WHATSNEW version=\(wn.version) date=\(wn.date) url=\(wn.url) notesChars=\(wn.notes.count)"); NSApp.terminate(nil) }
                 }
                 print("WHATSNEW none"); NSApp.terminate(nil)
             }
@@ -1757,16 +1809,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             else if which == "reset" { view = ResetConfirmSheet(typed: .constant("RESET")).background(Color(nsColor: .windowBackgroundColor)) }
             else if which == "about" { view = AboutContent(prefs: Prefs()).padding(22).frame(width: 480).background(Color(nsColor: .windowBackgroundColor)) }
             else if which == "whatsnew" {
-                Updater.shared.whatsNew = WhatsNew(version: "2.9", notes: """
+                Updater.shared.whatsNew = WhatsNew(version: "2.11", notes: """
                 ## Auto-update
                 - The app now checks GitHub for **signed** updates and installs them for you.
-                - A new *What's New* screen shows the changelog after each update.
+                - A new *What's New* screen shows the changelog after each update — and any time from About.
 
                 ## Polish
                 - Clearer wording across the whole update flow.
                 - A green check now appears on every field you've filled in correctly.
                 - The Friday auto-log moved from 4pm to **6pm**.
-                """)
+                """, date: "August 31, 2026", url: UPDATE_REPO_URL)
                 view = WhatsNewView(render: true)
             }
             let renderer = ImageRenderer(content: AnyView(view)); renderer.scale = 2

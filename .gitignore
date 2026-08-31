@@ -1,5 +1,3 @@
-#
-# @generated — do not edit directly. Managed by @/cli/tools/sync.
 # https://git-scm.com/docs/gitignore
 #
 
@@ -66,7 +64,6 @@ __snapshots__/
 .stylelintcache
 .prettiercache
 .oxlintcache
-.foundation-lint-cache.json
 .biome/
 .swc/
 
@@ -330,24 +327,17 @@ temp/
 # Git: Local developer state (`.branding.*.yml`, `.devenv.json`,
 # `branding-git-exclude`, `.playwright-mcp`, `.cocoindex_code/` all live in the
 # shared partial — universal scanner ignore).
-# `.foundation/*` (not `.foundation/`) so the negation
 # below is honoured — git refuses to re-include children of an excluded
 # directory, but re-including children of an excluded PATTERN works. Without
-# this, `!.foundation/sync-manifest.json` silently does nothing
-# and `git add .foundation/sync-manifest.json` needs -f.
-.foundation/*
 
 # Sync manifest is committed intentionally so template deletions surface as
 # visible diffs in review (see sync/utils/manifest.ts).
-!.foundation/sync-manifest.json
 
 # The verdict writer at the end of `runLinter` emits one
-# `<pkgDir>/.foundation/lint-verdict.json` per workspace package
 # — read on every invocation by the cache-immune `lint-gate` stage. A
 # pattern with a slash is anchored to this .gitignore's location, so the
 # root-level rule above does NOT cover nested per-package directories;
 # spell that out here.
-**/.foundation/*
 
 # `test-results/` (in the shared partial) targets test-OUTPUT dirs; re-include
 # the first-party source "lens" directory that the broad pattern would otherwise
@@ -363,7 +353,6 @@ temp/
 # pnpm-lock.yaml MUST be committed
 !pnpm-lock.yaml
 
-# ── Harvest Auto-Fill (project-specific; appended to the shared @generated base) ──
 # Secrets — NEVER commit (these hold your Harvest/ADO/calendar tokens)
 *.env
 config.json

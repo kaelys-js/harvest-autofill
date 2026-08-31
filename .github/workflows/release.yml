@@ -1,46 +1,63 @@
 name: Release
-# Push a version tag (e.g. v2.10) to build, sign, and publish that release.
-# Put the changelog in the annotated tag message: git tag -a v2.10 -m "## Changes…"; git push origin v2.10
+# Push an annotated version tag (e.g. v2.11) to build, sign, and publish that release.
+# The changelog goes in the tag message: git tag -a v2.11 -m "## Changes…"; git push origin v2.11
 on:
   push:
     tags: ['v*']
+
 permissions:
-  contents: write
+  contents: write           # least privilege: only needs to create the release
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false # never interrupt a publish midway
+
 jobs:
   release:
-    runs-on: macos-26
+    runs-on: macos-26       # needs the macOS 26 SDK (Liquid Glass APIs)
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0          # need the annotated tag object for the release notes
+          persist-credentials: false
 
       - name: Compute version + build
         id: v
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           IFS=. read -r MA MI PA <<< "$VERSION"
-          BUILD=$(( MA*10000 + MI*100 + ${PA:-0} ))   # monotonic across versions
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "build=$BUILD"     >> "$GITHUB_OUTPUT"
+          echo "build=$(( MA*10000 + MI*100 + ${PA:-0} ))" >> "$GITHUB_OUTPUT"
 
       - name: Build the app
-        run: ./build.sh "${{ steps.v.outputs.version }}" "${{ steps.v.outputs.build }}"
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+          BUILD: ${{ steps.v.outputs.build }}
+        run: ./build.sh "$VERSION" "$BUILD"
 
       - name: Write signing key
+        env:
+          KEY_B64: ${{ secrets.ED25519_PRIVATE_KEY }}
         run: |
-          echo "${{ secrets.ED25519_PRIVATE_KEY }}" | base64 --decode > "$RUNNER_TEMP/haf_priv.pem"
+          printf '%s' "$KEY_B64" | base64 --decode > "$RUNNER_TEMP/haf_priv.pem"
           chmod 600 "$RUNNER_TEMP/haf_priv.pem"
 
       - name: Release notes from the tag message
         id: notes
         run: |
           NOTES="$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")"
-          [ -n "$NOTES" ] || NOTES="Release ${{ steps.v.outputs.version }}"
+          [ -n "$NOTES" ] || NOTES="Release ${GITHUB_REF_NAME#v}"
           { echo "notes<<HAF_EOF"; echo "$NOTES"; echo "HAF_EOF"; } >> "$GITHUB_OUTPUT"
 
       - name: Sign + publish the release
-        env:
+        env:                       # values passed via env (never interpolated into the command) to avoid injection
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HAF_PRIV_KEY: ${{ runner.temp }}/haf_priv.pem
-        run: ./release.sh "${{ steps.v.outputs.version }}" "${{ steps.v.outputs.build }}" "${{ steps.notes.outputs.notes }}" "dist/Harvest Auto-Fill.app"
+          VERSION: ${{ steps.v.outputs.version }}
+          BUILD: ${{ steps.v.outputs.build }}
+          NOTES: ${{ steps.notes.outputs.notes }}
+        run: ./release.sh "$VERSION" "$BUILD" "$NOTES" "dist/Harvest Auto-Fill.app"
 
       - name: Wipe signing key
         if: always()
