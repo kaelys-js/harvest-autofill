@@ -652,10 +652,10 @@ struct WhatsNewView: View {
                     Label("All releases on GitHub", systemImage: "arrow.up.right.square")
                 }.buttonStyle(.link).font(.system(size: 12))
                 Spacer()
-                // "Continue" is a post-update acknowledgement; when browsing from About the
+                // "Got It" is a post-update acknowledgement; when browsing from About the
                 // window is just closed via its title bar, so no button is shown.
                 if !updater.whatsNewManual {
-                    Button("Continue") { updater.whatsNew = nil; updater.releases = []; dismissWindow(id: "whatsnew") }
+                    Button("Got It") { updater.whatsNew = nil; updater.releases = []; dismissWindow(id: "whatsnew") }
                         .primaryProminent().controlSize(.large).keyboardShortcut(.defaultAction)
                 }
             }.padding(.horizontal, 20).padding(.vertical, 14)
