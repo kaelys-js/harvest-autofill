@@ -1,6 +1,6 @@
 name: Lint
-# Format-check + lint every file type on push/PR, using the mise-pinned tools via the same
-# lefthook gate that runs on pre-push locally.
+# Format-check + lint every file type AND lint commit messages, using the mise-pinned
+# tools via the same lefthook gate that runs on pre-push locally.
 on:
   push:
     branches: [main]
@@ -20,6 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
+          fetch-depth: 0          # need history to lint the commit range
           persist-credentials: false
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
@@ -27,3 +28,18 @@ jobs:
           cache: true
       - name: Format-check + lint (all file types)
         run: mise exec -- lefthook run pre-push --all-files
+      - name: Lint commit messages
+        env:                       # values via env (never interpolated into the script) — injection-safe
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            mise exec -- commitlint --from "$PR_BASE" --to "$PR_HEAD"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            mise exec -- commitlint --from "$BEFORE" --to "$SHA"
+          else
+            mise exec -- commitlint --from "HEAD~1" --to HEAD
+          fi

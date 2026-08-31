@@ -7,6 +7,14 @@
 [settings]
 # npm/asdf backends are needed for oxfmt/oxlint/taplo/markdownlint and SwiftFormat.
 experimental = true
+lockfile = true       # once mise.lock exists, refuse versions that don't match it
+auto_install = false  # explicit `mise install` only — no surprise downloads on cd
+
+[env]
+# MISE_INSTALLS_DIR scopes tool installs to .mise/installs inside the repo (self-contained).
+# _.path prepends ./bin so a bare `mise` resolves to the pinned ./bin/mise wrapper.
+MISE_INSTALLS_DIR = "{{ config_root }}/.mise/installs"
+_.path = ["{{ config_root }}/bin"]
 
 [tools]
 # Runtimes the tooling + scripts need
@@ -23,6 +31,7 @@ shfmt = "3.13.1"                                # shell format
 yamllint = "1.38.0"                             # YAML lint
 actionlint = "1.7.11"                           # GitHub workflow lint
 "npm:markdownlint-cli2" = "0.23.2"              # Markdown lint
+"npm:@commitlint/cli" = "20.4.1"                # commit-message lint
 "aqua:realm/SwiftLint" = "0.65.0"               # Swift lint
 "asdf:mise-plugins/mise-swiftformat" = "0.62.1" # Swift format (nicklockwood)
 

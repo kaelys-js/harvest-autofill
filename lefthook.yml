@@ -1,6 +1,37 @@
-# Pre-push gate: format-check + lint every file type, using the mise-pinned tools.
-# Run locally via `mise exec -- lefthook install` (wires the git hook); CI runs the same
-# set via `mise exec -- lefthook run pre-push`.
+# Git hooks, all driven by the mise-pinned tools. Install locally with
+# `mise exec -- lefthook install`; CI runs the pre-push gate + commitlint too.
+# Gates are meant to hold — don't push with --no-verify. Override locally, if you
+# must, via an un-committed lefthook-local.yml.
+
+# ─── Commit message: conventional-commit lint ────────────────────────────────
+commit-msg:
+  commands:
+    commitlint:
+      run: mise exec -- commitlint --edit {1}
+      fail_text: "Commit message must be a Conventional Commit (e.g. 'fix: …', 'feat(scope): …')."
+
+# ─── Pre-commit: auto-format the staged files (fast) ─────────────────────────
+pre-commit:
+  parallel: true
+  commands:
+    swift-format:
+      glob: "*.swift"
+      run: mise exec -- swiftformat {staged_files}
+      stage_fixed: true
+    python-format:
+      glob: "*.py"
+      run: mise exec -- ruff format {staged_files}
+      stage_fixed: true
+    shell-format:
+      glob: "*.sh"
+      run: mise exec -- shfmt -i 2 -w {staged_files}
+      stage_fixed: true
+    json-format:
+      glob: "*.json"
+      run: mise exec -- oxfmt {staged_files}
+      stage_fixed: true
+
+# ─── Pre-push: the full format-check + lint gate (also run in CI) ────────────
 pre-push:
   parallel: true
   commands:
@@ -19,7 +50,8 @@ pre-push:
     shell-lint:
       run: cd packages/products/harvest-autofill && mise exec -- shellcheck *.sh
     toml:
-      run: mise exec -- taplo format --check mise.toml && mise exec -- taplo lint mise.toml
+      # taplo's formatter panics on mise's `_.path` dotted key (upstream bug), so lint only.
+      run: mise exec -- taplo lint mise.toml
     json-format:
       run: cd packages/products/harvest-autofill && mise exec -- oxfmt --check config.default.json
     yaml-lint:
@@ -28,3 +60,13 @@ pre-push:
       run: mise exec -- actionlint
     markdown-lint:
       run: mise exec -- markdownlint-cli2 "*.md"
+
+# ─── Keep the workspace toolchain in sync after branch switches / merges ──────
+post-checkout:
+  commands:
+    mise-sync:
+      run: mise install
+post-merge:
+  commands:
+    mise-sync:
+      run: mise install
