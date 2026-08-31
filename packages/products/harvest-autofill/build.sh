@@ -13,7 +13,7 @@ APP="$DIST/Harvest Auto-Fill.app"
 PY_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20260825/cpython-3.12.14%2B20260825-aarch64-apple-darwin-install_only_stripped.tar.gz"
 
 echo "==> Compiling..."
-swiftc -parse-as-library -O HarvestApp.swift -o /tmp/haf-bin.$$
+swiftc -parse-as-library -O HarvestCore.swift HarvestSideEffects.swift HarvestApp.swift -o /tmp/haf-bin.$$
 echo "==> Fetching bundled Python (cached in vendor/)..."
 if [ ! -x "vendor/python/bin/python3" ]; then
   mkdir -p vendor && curl -sL -m 300 -o vendor/py.tar.gz "$PY_URL"
