@@ -184,6 +184,7 @@ final class WeekModel: ObservableObject {
 // ============================================================ Auto-update (GitHub Releases + Ed25519)
 let UPDATE_REPO = "kaelys-js/harvest-autofill-releases"
 let UPDATE_REPO_URL = "https://github.com/kaelys-js/harvest-autofill-releases"
+let WEBSITE_URL = "https://kaelys-js.github.io/harvest-autofill-releases/"
 // Raw 32-byte Ed25519 public key (base64). Private key lives only on the release machine.
 let UPDATE_PUBKEY_B64 = "QwrTC2P5Xh/A+Eq92spnRGHFESWTxfiX7Hqwk0waays="
 
@@ -199,6 +200,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
     @Published var state: UpdaterState = .idle
     @Published var readyAppPath: String?
     @Published var whatsNew: WhatsNew? // set to trigger the "What's new" window
+    @Published var releases: [WhatsNew] = [] // full history shown under the newest notes
     @Published var loadingWhatsNew = false
     private var timer: Timer?
     var currentBuild: Int {
@@ -217,7 +219,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
         }
     }
 
-    // On the first launch after an update, show What's New for the current version.
+    // On the first launch after an update, show What's New — newest release on top, history below.
     func maybeShowWhatsNew() {
         let seen = UserDefaults.standard.integer(forKey: "seenBuild")
         let cur = currentBuild
@@ -226,7 +228,10 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
         } // fresh install: nothing to show
         if cur > seen {
             Task {
-                if let wn = try? await release(forTag: "v\(currentVersion)"), !wn.notes.isEmpty {
+                let list = await loadReleases()
+                let head = list.first { $0.version == currentVersion } ?? list.first
+                if let wn = head, !wn.notes.isEmpty {
+                    self.releases = list
                     self.whatsNew = wn
                 }
                 UserDefaults.standard.set(cur, forKey: "seenBuild")
@@ -234,13 +239,29 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
         }
     }
 
-    // Open What's New on demand (from the About button), for the current version.
+    // Open What's New on demand (from the About button): newest release plus the full history.
     func showWhatsNewNow() {
         loadingWhatsNew = true
         Task {
-            let wn = try? await release(forTag: "v\(currentVersion)")
+            let list = await loadReleases()
             loadingWhatsNew = false
-            self.whatsNew = wn ?? WhatsNew(version: currentVersion, notes: "No release notes were found for this version.", date: "", url: UPDATE_REPO_URL)
+            self.releases = list
+            self.whatsNew = list.first ?? WhatsNew(version: currentVersion, notes: "No release notes were found for this version.", date: "", url: UPDATE_REPO_URL)
+        }
+    }
+
+    // The published releases, newest first, mapped to WhatsNew. Drops drafts.
+    func loadReleases() async -> [WhatsNew] {
+        var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(UPDATE_REPO)/releases?per_page=30")!)
+        req.setValue("harvest-fill-updater", forHTTPHeaderField: "User-Agent"); req.timeoutInterval = 15
+        guard let (d, _) = try? await URLSession.shared.data(for: req),
+              let arr = (try? JSONSerialization.jsonObject(with: d)) as? [[String: Any]] else { return [] }
+        return arr.compactMap { o in
+            guard (o["draft"] as? Bool) != true, let tag = o["tag_name"] as? String else { return nil }
+            let ver = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
+            return WhatsNew(version: ver, notes: o["body"] as? String ?? "",
+                            date: Self.pretty(o["published_at"] as? String ?? ""),
+                            url: o["html_url"] as? String ?? UPDATE_REPO_URL)
         }
     }
 
@@ -1524,18 +1545,41 @@ struct WhatsNewView: View {
                 if render {
                     ChangelogView(text: wn?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    ScrollView { ChangelogView(text: wn?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading) }.frame(maxHeight: 280)
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            ChangelogView(text: wn?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading)
+                            let earlier = updater.releases.filter { $0.version != wn?.version }
+                            if !earlier.isEmpty {
+                                Divider()
+                                Text("Earlier releases").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
+                                ForEach(Array(earlier.enumerated()), id: \.offset) { _, r in
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        HStack(spacing: 8) {
+                                            Text("Version \(r.version)")
+                                                .font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Color.accentColor)
+                                                .padding(.horizontal, 8).padding(.vertical, 2)
+                                                .background(Capsule().fill(Color.accentColor.opacity(0.14)))
+                                            if !r.date.isEmpty {
+                                                Text(r.date).font(.system(size: 10.5)).foregroundStyle(.secondary)
+                                            }
+                                        }
+                                        ChangelogView(text: r.notes).frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                }
+                            }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                    }.frame(maxHeight: 340)
                 }
             }.padding(20)
 
             Divider()
 
             HStack {
-                Button { NSWorkspace.shared.open(URL(string: wn?.url ?? UPDATE_REPO_URL)!) } label: {
-                    Label("View release on GitHub", systemImage: "arrow.up.right.square")
+                Button { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL + "/releases")!) } label: {
+                    Label("All releases on GitHub", systemImage: "arrow.up.right.square")
                 }.buttonStyle(.link).font(.system(size: 12))
                 Spacer()
-                Button("Continue") { updater.whatsNew = nil; dismissWindow(id: "whatsnew") }
+                Button("Continue") { updater.whatsNew = nil; updater.releases = []; dismissWindow(id: "whatsnew") }
                     .primaryProminent().controlSize(.large).keyboardShortcut(.defaultAction)
             }.padding(.horizontal, 20).padding(.vertical, 14)
         }
@@ -1642,6 +1686,9 @@ struct AboutContent: View {
                             Label("What's new", systemImage: "sparkles")
                         }
                     }.buttonStyle(.link).font(.system(size: 12)).disabled(updater.loadingWhatsNew)
+                    Button { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) } label: {
+                        Label("Website", systemImage: "safari")
+                    }.buttonStyle(.link).font(.system(size: 12))
                     Button { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) } label: {
                         Label("View on GitHub", systemImage: "arrow.up.right.square")
                     }.buttonStyle(.link).font(.system(size: 12))
@@ -2183,7 +2230,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 for _ in 0 ..< 30 {
                     try? await Task.sleep(nanoseconds: 500_000_000)
                     if let wn = Updater.shared.whatsNew {
-                        print("WHATSNEW version=\(wn.version) date=\(wn.date) url=\(wn.url) notesChars=\(wn.notes.count)"); NSApp.terminate(nil)
+                        let hist = Updater.shared.releases.map(\.version).joined(separator: ",")
+                        print("WHATSNEW version=\(wn.version) date=\(wn.date) url=\(wn.url) notesChars=\(wn.notes.count) history=[\(hist)]"); NSApp.terminate(nil)
                     }
                 }
                 print("WHATSNEW none"); NSApp.terminate(nil)
