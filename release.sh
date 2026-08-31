@@ -25,27 +25,27 @@ PRIV="${HAF_PRIV_KEY:-$HOME/.config/harvest-autofill/release_ed25519_priv.pem}"
 
 WORK="$(mktemp -d -t haf-release)"; trap 'rm -rf "$WORK"' EXIT
 STAGE="$WORK/Harvest Auto-Fill.app"
-echo "==> Staging $APP as v$VERSION (build $BUILD)…"
+echo "==> Staging $APP as v$VERSION (build $BUILD)..."
 /usr/bin/ditto "$APP" "$STAGE"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$STAGE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" "$STAGE/Contents/Info.plist" 2>/dev/null \
   || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $BUILD" "$STAGE/Contents/Info.plist"
 
 if [ -n "${SIGN_ID:-}" ] && [ -n "${NOTARY_PROFILE:-}" ]; then
-  echo "==> Developer ID sign + notarize…"; SIGN_ID="$SIGN_ID" NOTARY_PROFILE="$NOTARY_PROFILE" \
+  echo "==> Developer ID sign + notarize..."; SIGN_ID="$SIGN_ID" NOTARY_PROFILE="$NOTARY_PROFILE" \
     "$(dirname "$0")/notarize.sh" "$STAGE"
 else
-  echo "==> Ad-hoc signing (set SIGN_ID+NOTARY_PROFILE to notarize)…"
+  echo "==> Ad-hoc signing (set SIGN_ID+NOTARY_PROFILE to notarize)..."
   codesign --force --deep -s - "$STAGE"
 fi
 codesign --verify --deep --strict "$STAGE"
 
-echo "==> Zipping…"
+echo "==> Zipping..."
 ZIP="$WORK/HarvestAutoFill.zip"
 /usr/bin/ditto -c -k --keepParent "$STAGE" "$ZIP"
 SHA=$(shasum -a 256 "$ZIP" | awk '{print $1}')
 
-echo "==> Writing + signing manifest…"
+echo "==> Writing + signing manifest..."
 MAN="$WORK/manifest.json"
 cat > "$MAN" <<JSON
 {
@@ -58,7 +58,7 @@ cat > "$MAN" <<JSON
 JSON
 openssl pkeyutl -sign -inkey "$PRIV" -rawin -in "$MAN" | base64 | tr -d '\n' > "$WORK/manifest.json.sig"
 
-echo "==> Creating GitHub release v$VERSION on $REPO…"
+echo "==> Creating GitHub release v$VERSION on $REPO..."
 gh release create "v$VERSION" --repo "$REPO" --title "v$VERSION" --notes "${NOTES:-Release $VERSION}" \
   "$ZIP" "$MAN" "$WORK/manifest.json.sig"
 echo "Done. The app will pick up v$VERSION (build $BUILD) on its next check."

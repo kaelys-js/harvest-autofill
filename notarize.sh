@@ -5,7 +5,7 @@
 # copied/downloaded build ("unidentified developer"). Notarizing under a TTT Apple
 # Developer ID removes that prompt so anyone can double-click it.
 #
-# WHAT YOU NEED (one-time, only you/TTT can supply — I can't):
+# WHAT YOU NEED (one-time, only you/TTT can supply -- I can't):
 #   1. A TTT Apple Developer Program membership ($99/yr org account).
 #   2. A "Developer ID Application" certificate in your login keychain
 #      (Xcode > Settings > Accounts > Manage Certificates > + Developer ID Application),
@@ -25,7 +25,7 @@
 set -euo pipefail
 
 APP="${1:-/Applications/Harvest Auto-Fill.app}"
-: "${SIGN_ID:?set SIGN_ID to your 'Developer ID Application: …' identity}"
+: "${SIGN_ID:?set SIGN_ID to your 'Developer ID Application: ...' identity}"
 : "${NOTARY_PROFILE:?set NOTARY_PROFILE to your stored notarytool profile name}"
 ENTITLEMENTS="$(mktemp -t hafent).plist"
 
@@ -41,7 +41,7 @@ cat > "$ENTITLEMENTS" <<'PLIST'
 </dict></plist>
 PLIST
 
-echo "==> Signing nested Mach-O binaries (python, dylibs) first, then the app…"
+echo "==> Signing nested Mach-O binaries (python, dylibs) first, then the app..."
 # Sign every nested Mach-O (the bundled Python is full of them) with hardened runtime.
 find "$APP/Contents/Resources/python" -type f \( -name "*.dylib" -o -name "*.so" -o -perm -u+x \) -print0 2>/dev/null \
   | while IFS= read -r -d '' f; do
@@ -50,24 +50,24 @@ find "$APP/Contents/Resources/python" -type f \( -name "*.dylib" -o -name "*.so"
       fi
     done
 
-echo "==> Signing the app bundle…"
+echo "==> Signing the app bundle..."
 codesign --force --deep --timestamp --options runtime \
   --entitlements "$ENTITLEMENTS" -s "$SIGN_ID" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 
-echo "==> Zipping for notarization…"
+echo "==> Zipping for notarization..."
 ZIP="$(dirname "$APP")/HarvestAutoFill.zip"
 rm -f "$ZIP"
 ditto -c -k --keepParent "$APP" "$ZIP"
 
-echo "==> Submitting to Apple notary service (waits for the verdict)…"
+echo "==> Submitting to Apple notary service (waits for the verdict)..."
 xcrun notarytool submit "$ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
 
-echo "==> Stapling the ticket to the app…"
+echo "==> Stapling the ticket to the app..."
 xcrun stapler staple "$APP"
 xcrun stapler validate "$APP"
 
-echo "==> Re-zipping the stapled app for sharing…"
+echo "==> Re-zipping the stapled app for sharing..."
 rm -f "$ZIP"; ditto -c -k --keepParent "$APP" "$ZIP"
 echo "Done. Share: $ZIP  (opens with no Gatekeeper prompt on any Mac)"
 rm -f "$ENTITLEMENTS"
