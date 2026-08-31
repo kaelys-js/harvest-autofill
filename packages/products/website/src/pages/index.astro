@@ -1,0 +1,194 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import WindowMockup from "@/components/WindowMockup.astro";
+import ThemeToggle from "@/components/ThemeToggle.tsx";
+import DownloadButton from "@/components/DownloadButton.tsx";
+import Faq from "@/components/Faq.tsx";
+import CopyCommand from "@/components/CopyCommand.tsx";
+import { Card, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  CalendarCheck, GitCommitHorizontal, ShieldCheck, PackageCheck,
+  RefreshCw, ChartPie, Github, Sparkles, Lock, Cloud, PlugZap, ArrowRight,
+} from "lucide-react";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const REPO = "https://github.com/kaelys-js/harvest-autofill-releases";
+const ZIP = `${REPO}/releases/latest/download/HarvestAutoFill.zip`;
+
+const features = [
+  { icon: CalendarCheck, title: "Files itself every Friday", body: "Your finished week is logged to Harvest automatically at 6pm — even if the app is closed. Dedup-guarded, so it never double-books." },
+  { icon: GitCommitHorizontal, title: "Built from real activity", body: "Commits, pushes, and meetings become hours on a timeline, credited to the project you were actually working on." },
+  { icon: ChartPie, title: "Split across projects", body: "Time between commits is apportioned to the right project, estimating real hours per project instead of counting commits." },
+  { icon: PackageCheck, title: "Nothing to install", body: "A full Python runtime ships inside the app. Set up your accounts in a guided wizard and you're done." },
+  { icon: RefreshCw, title: "Signed auto-updates", body: "Checks for a new signed release and installs it for you, with a What's-New changelog every time." },
+  { icon: ShieldCheck, title: "Private by design", body: "Tokens stay on your Mac in a locked folder. No account, no cloud, no telemetry — and the source is open." },
+];
+
+const steps = [
+  { n: "1", title: "Connect your accounts", body: "A guided onboarding pulls in your Harvest, GitHub, Azure DevOps, and calendar — with a live test so nothing breaks later." },
+  { n: "2", title: "It watches your week", body: "The menu-bar total recomputes in the background, turning your real work into a per-project, per-day breakdown." },
+  { n: "3", title: "Friday, it files", body: "At 6pm the finished week is written to Harvest automatically. Or click “Log this week” whenever you like." },
+];
+---
+
+<Layout>
+  <!-- backdrop -->
+  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div class="absolute -top-40 left-1/2 h-[36rem] w-[72rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,var(--color-border)_1px,transparent_0)] [background-size:26px_26px] opacity-40"></div>
+  </div>
+
+  <!-- nav -->
+  <header class="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+    <nav class="mx-auto flex h-16 max-w-6xl items-center gap-4 px-5">
+      <a href="#top" class="flex items-center gap-2.5 font-semibold">
+        <span class="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-[#f6903a] to-[#e2541f] text-white">
+          <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        </span>
+        Harvest Auto-Fill
+      </a>
+      <div class="ml-auto hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
+        <a href="#features" class="transition-colors hover:text-foreground">Features</a>
+        <a href="#how" class="transition-colors hover:text-foreground">How it works</a>
+        <a href="#faq" class="transition-colors hover:text-foreground">FAQ</a>
+      </div>
+      <div class="flex items-center gap-1">
+        <a href={REPO} class="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label="GitHub"><Github className="size-5" /></a>
+        <ThemeToggle client:load />
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <!-- hero -->
+    <section class="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 md:py-24 lg:grid-cols-2">
+      <div>
+        <Badge className="border-primary/20 bg-primary/10 text-primary"><Sparkles className="size-3.5" /> Open source · macOS 26</Badge>
+        <h1 class="mt-5 text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
+          Your timesheet <span class="bg-gradient-to-r from-[#f2762a] to-[#e2541f] bg-clip-text text-transparent">fills itself.</span>
+        </h1>
+        <p class="mt-5 max-w-xl text-lg text-muted-foreground text-pretty">
+          Harvest Auto-Fill turns the work you already did — commits, pushes, and meetings — into hours, split across the right projects and filed for you every Friday.
+        </p>
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <DownloadButton client:load />
+          <a href={REPO}><span class="inline-flex h-11 items-center gap-2 rounded-md border border-border bg-background px-6 text-base font-medium shadow-xs transition-colors hover:bg-accent"><Github className="size-4" /> View on GitHub</span></a>
+        </div>
+        <p class="mt-4 text-sm text-muted-foreground">Free · Apple Silicon · nothing to install</p>
+      </div>
+      <div class="flex justify-center lg:justify-end">
+        <WindowMockup />
+      </div>
+    </section>
+
+    <!-- trust bar -->
+    <section class="border-y border-border/60 bg-muted/30">
+      <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-5 py-6 text-sm text-muted-foreground">
+        <span class="inline-flex items-center gap-2"><Lock className="size-4 text-primary" /> Tokens stay on your Mac</span>
+        <span class="inline-flex items-center gap-2"><Cloud className="size-4 text-primary" /> No account, no cloud</span>
+        <span class="inline-flex items-center gap-2"><Github className="size-4 text-primary" /> Fully open source</span>
+        <span class="inline-flex items-center gap-2"><PlugZap className="size-4 text-primary" /> Nothing to install</span>
+      </div>
+    </section>
+
+    <!-- features -->
+    <section id="features" class="mx-auto max-w-6xl px-5 py-20">
+      <div class="mx-auto max-w-2xl text-center">
+        <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Everything, handled</h2>
+        <p class="mt-3 text-muted-foreground">The tedious parts of timesheets, done for you — accurately.</p>
+      </div>
+      <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {features.map((f) => (
+          <Card className="gap-3 transition-shadow hover:shadow-md">
+            <div class="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary"><f.icon className="size-5" /></div>
+            <CardTitle>{f.title}</CardTitle>
+            <CardDescription className="leading-relaxed">{f.body}</CardDescription>
+          </Card>
+        ))}
+      </div>
+    </section>
+
+    <!-- how it works -->
+    <section id="how" class="border-y border-border/60 bg-muted/30">
+      <div class="mx-auto max-w-6xl px-5 py-20">
+        <div class="mx-auto max-w-2xl text-center">
+          <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Set it up once</h2>
+          <p class="mt-3 text-muted-foreground">Two minutes of setup, then it runs on its own.</p>
+        </div>
+        <div class="mt-12 grid gap-8 md:grid-cols-3">
+          {steps.map((s) => (
+            <div class="relative">
+              <div class="grid size-10 place-items-center rounded-full bg-primary text-lg font-bold text-primary-foreground">{s.n}</div>
+              <h3 class="mt-4 text-lg font-semibold">{s.title}</h3>
+              <p class="mt-2 text-muted-foreground">{s.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- screenshots -->
+    <section class="mx-auto max-w-6xl px-5 py-20">
+      <div class="mx-auto max-w-2xl text-center">
+        <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Made to feel native</h2>
+        <p class="mt-3 text-muted-foreground">A guided setup, a live week, and a changelog after every update.</p>
+      </div>
+      <div class="mt-12 grid items-start gap-6 md:grid-cols-2">
+        <figure class="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xl">
+          <img src={`${base}/screens/welcome.png`} alt="Onboarding welcome screen" width="1120" height="900" class="w-full" loading="lazy" />
+        </figure>
+        <figure class="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xl">
+          <img src={`${base}/screens/whatsnew.png`} alt="What's New changelog screen" width="920" height="760" class="w-full" loading="lazy" />
+        </figure>
+      </div>
+    </section>
+
+    <!-- download -->
+    <section id="download" class="border-y border-border/60 bg-muted/30">
+      <div class="mx-auto max-w-3xl px-5 py-20 text-center">
+        <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Get Harvest Auto-Fill</h2>
+        <p class="mt-3 text-muted-foreground">macOS 26 or newer, Apple Silicon. Free and open source.</p>
+        <div class="mt-8 flex justify-center"><DownloadButton client:visible /></div>
+        <div class="mx-auto mt-10 max-w-xl text-left">
+          <ol class="space-y-3 text-sm text-muted-foreground">
+            <li><span class="font-medium text-foreground">1.</span> Unzip and drag <span class="font-medium text-foreground">Harvest Auto-Fill</span> to your Applications folder.</li>
+            <li><span class="font-medium text-foreground">2.</span> It's signed but not yet notarized, so clear the download flag once (or right-click → Open):</li>
+          </ol>
+          <div class="mt-3"><CopyCommand client:visible cmd={`xattr -dr com.apple.quarantine "/Applications/Harvest Auto-Fill.app"`} /></div>
+          <ol class="mt-3 space-y-3 text-sm text-muted-foreground" start="3">
+            <li><span class="font-medium text-foreground">3.</span> Open it — a guided wizard walks you through connecting your accounts.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- faq -->
+    <section id="faq" class="mx-auto max-w-3xl px-5 py-20">
+      <div class="text-center">
+        <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Questions</h2>
+      </div>
+      <div class="mt-10"><Faq client:visible /></div>
+      <div class="mt-12 flex flex-col items-center gap-4 rounded-2xl border border-border/60 bg-card p-8 text-center">
+        <h3 class="text-xl font-semibold">Ready to stop filling timesheets?</h3>
+        <DownloadButton client:visible />
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-border/60">
+    <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-sm text-muted-foreground sm:flex-row">
+      <div class="flex items-center gap-2">
+        <span class="grid size-6 place-items-center rounded-md bg-gradient-to-br from-[#f6903a] to-[#e2541f] text-white">
+          <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        </span>
+        Harvest Auto-Fill · MIT licensed
+      </div>
+      <div class="flex items-center gap-5">
+        <a href={REPO} class="transition-colors hover:text-foreground">GitHub</a>
+        <a href={`${REPO}/releases`} class="transition-colors hover:text-foreground">Releases</a>
+        <a href={ZIP} class="inline-flex items-center gap-1 transition-colors hover:text-foreground">Download <ArrowRight className="size-3.5" /></a>
+      </div>
+    </div>
+  </footer>
+</Layout>

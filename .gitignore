@@ -370,3 +370,8 @@ run.sh
 
 # Keep the app icon (the shared base ignores *.png)
 !icon.png
+
+# website build artifacts
+packages/products/website/node_modules/
+packages/products/website/dist/
+packages/products/website/.astro/

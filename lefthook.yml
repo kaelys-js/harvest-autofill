@@ -30,6 +30,10 @@ pre-commit:
       glob: "*.json"
       run: mise exec -- oxfmt {staged_files}
       stage_fixed: true
+    web-format:
+      glob: "*.{ts,tsx}"
+      run: mise exec -- oxfmt {staged_files}
+      stage_fixed: true
 
 # ─── Pre-push: the full format-check + lint gate (also run in CI) ────────────
 pre-push:
@@ -60,6 +64,10 @@ pre-push:
       run: mise exec -- actionlint
     markdown-lint:
       run: mise exec -- markdownlint-cli2 "*.md"
+    web-format:
+      run: cd packages/products/website && mise exec -- oxfmt --check src
+    web-lint:
+      run: cd packages/products/website && mise exec -- oxlint src
 
 # ─── Keep the workspace toolchain in sync after branch switches / merges ──────
 post-checkout:
