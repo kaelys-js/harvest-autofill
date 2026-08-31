@@ -53,6 +53,6 @@ jobs:
         working-directory: packages/products/website
         run: pnpm exec playwright install chromium
 
-      - name: Website E2E + visual (Playwright)
+      - name: Website E2E (Playwright)
         working-directory: packages/products/website
         run: pnpm test:e2e

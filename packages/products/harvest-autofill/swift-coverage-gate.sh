@@ -8,11 +8,15 @@ cd "$(dirname "$0")"
 FLOOR="${SWIFT_COV_FLOOR:-75}"
 
 # A full Xcode is needed for the macOS SDK the app uses.
-if [ -z "${DEVELOPER_DIR:-}" ] && ls -d /Applications/Xcode*.app >/dev/null 2>&1; then
-  DEVELOPER_DIR="$(ls -d /Applications/Xcode*.app | head -1)/Contents/Developer"
-  export DEVELOPER_DIR
+if [ -z "${DEVELOPER_DIR:-}" ]; then
+  XC="$(find /Applications -maxdepth 1 -name 'Xcode*.app' | head -1)"
+  if [ -n "$XC" ]; then
+    DEVELOPER_DIR="$XC/Contents/Developer"
+    export DEVELOPER_DIR
+  fi
 fi
-export HARVEST_DATA_DIR="$(mktemp -d)"
+HARVEST_DATA_DIR="$(mktemp -d)"
+export HARVEST_DATA_DIR
 
 swift test --enable-code-coverage
 
