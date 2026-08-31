@@ -509,6 +509,7 @@ final class Prefs: ObservableObject {
     @Published var ghOrgs = ""
     @Published var autoRecord = true
     @Published var autoUpdate = false
+    @Published var showDockIcon = false
     @Published var adoEnabled = true
     @Published var adoOrg = ""
     @Published var adoProject = ""
@@ -627,6 +628,7 @@ final class Prefs: ObservableObject {
         let c = cfg()
         autoRecord = c["auto_record"] as? Bool ?? true
         autoUpdate = c["auto_update"] as? Bool ?? false
+        showDockIcon = c["show_dock_icon"] as? Bool ?? false
         dailyTarget = c["daily_target_hours"] as? Double ?? 9.0
         if let w = c["work_hours"] as? [String: Any] {
             workStart = w["start"] as? Int ?? 9; workEnd = w["end"] as? Int ?? 17
@@ -671,6 +673,7 @@ final class Prefs: ObservableObject {
         var c = cfg()
         c["auto_record"] = autoRecord
         c["auto_update"] = autoUpdate
+        c["show_dock_icon"] = showDockIcon
         c["daily_target_hours"] = dailyTarget
         c["work_hours"] = ["start": workStart, "end": workEnd]
         c["timeline"] = ["gap_cap_min": gapCap, "lead_in_min": leadIn]
@@ -702,6 +705,13 @@ final class Prefs: ObservableObject {
         guard let d = try? Data(contentsOf: URL(fileURLWithPath: P.config)),
               let c = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else { return false }
         return c["auto_update"] as? Bool ?? false
+    }
+
+    // Read at launch (before any Prefs instance exists) to set the Dock activation policy.
+    static func dockIconEnabled() -> Bool {
+        guard let d = try? Data(contentsOf: URL(fileURLWithPath: P.config)),
+              let c = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else { return false }
+        return c["show_dock_icon"] as? Bool ?? false
     }
 
     func markComplete() {
@@ -1420,6 +1430,18 @@ struct GeneralContent: View {
             PrefCard(title: "Automatic recording") {
                 Toggle("Log the finished week to Harvest every Friday at 6pm", isOn: $prefs.autoRecord).font(.system(size: 12.5)).toggleStyle(.switch)
                 Text("On — the app records your week for you every Friday evening and won't double-book if it already ran. Off — nothing reaches Harvest until you open the app and click \u{201C}Log this week.\u{201D}")
+                    .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
+            }
+            PrefCard(title: "Dock icon") {
+                Toggle("Show the app icon in the Dock", isOn: $prefs.showDockIcon).font(.system(size: 12.5)).toggleStyle(.switch)
+                    .onChange(of: prefs.showDockIcon) { _, on in
+                        prefs.writeAll()
+                        NSApp.setActivationPolicy(on ? .regular : .accessory)
+                        if on {
+                            NSApp.activate(ignoringOtherApps: true)
+                        }
+                    }
+                Text("Off — the app lives only in the menu bar. On — it also appears in the Dock and the \u{2318}-Tab app switcher.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
             }
             PrefCard(title: "How it works") {
@@ -2204,7 +2226,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             NSApp.terminate(nil); return
         }
-        NSApp.setActivationPolicy(.accessory) // menu-bar utility, no dock icon
+        // Menu-bar utility: no Dock icon by default, unless the user opted in (Preferences → General).
+        NSApp.setActivationPolicy(Prefs.dockIconEnabled() ? .regular : .accessory)
         Updater.shared.startAuto() // check GitHub for signed updates on launch + daily
         // seed a default config on first launch so the engine has something to read
         if !FileManager.default.fileExists(atPath: P.config), FileManager.default.fileExists(atPath: P.configDefault) {
