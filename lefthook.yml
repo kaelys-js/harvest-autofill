@@ -68,6 +68,10 @@ pre-push:
       run: cd packages/products/website && mise exec -- oxfmt --check src
     web-lint:
       run: cd packages/products/website && mise exec -- oxlint src
+    astro-format:
+      run: cd packages/products/website && mise exec -- pnpm exec prettier --check "src/**/*.astro"
+    css-lint:
+      run: cd packages/products/website && mise exec -- pnpm exec stylelint "src/**/*.css"
 
 # ─── Keep the workspace toolchain in sync after branch switches / merges ──────
 post-checkout:

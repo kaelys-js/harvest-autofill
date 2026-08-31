@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kaelys-js.github.io/harvest-autofill-releases/sitemap-index.xml

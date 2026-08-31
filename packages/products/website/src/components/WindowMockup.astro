@@ -1,71 +1,105 @@
 ---
 // A neutral recreation of the app's "This week" window (no real client data).
 const dot: Record<string, string> = {
-  Website: "bg-[#f2762a]",
-  "Mobile App": "bg-[#22afa0]",
-  Internal: "bg-[#6b78f6]",
-  Design: "bg-[#4dba6b]",
+	Website: "bg-[#f2762a]",
+	"Mobile App": "bg-[#22afa0]",
+	Internal: "bg-[#6b78f6]",
+	Design: "bg-[#4dba6b]",
 };
 type Row = { span: string; project: keyof typeof dot; task: string; hours: string };
 const days: { name: string; total: string; note?: string; rows: Row[] }[] = [
-  {
-    name: "Mon", total: "9h", rows: [
-      { span: "9:00–1:30", project: "Website", task: "Development", hours: "4.5h" },
-      { span: "1:30–5:00", project: "Design", task: "Development", hours: "3.5h" },
-      { span: "11:00–11:30", project: "Website", task: "Client meeting", hours: "1h" },
-    ],
-  },
-  { name: "Tue", total: "9h", rows: [{ span: "9:00–6:00", project: "Mobile App", task: "Development", hours: "9h" }] },
-  { name: "Wed", total: "", note: "Statutory holiday — skipped", rows: [] },
-  {
-    name: "Thu", total: "9h", rows: [
-      { span: "9:00–5:00", project: "Internal", task: "Development", hours: "8h" },
-      { span: "3:00–4:00", project: "Internal", task: "Internal meeting", hours: "1h" },
-    ],
-  },
-  { name: "Fri", total: "9h", rows: [{ span: "9:00–6:00", project: "Website", task: "Development", hours: "9h" }] },
+	{
+		name: "Mon",
+		total: "9h",
+		rows: [
+			{ span: "9:00–1:30", project: "Website", task: "Development", hours: "4.5h" },
+			{ span: "1:30–5:00", project: "Design", task: "Development", hours: "3.5h" },
+			{ span: "11:00–11:30", project: "Website", task: "Client meeting", hours: "1h" },
+		],
+	},
+	{
+		name: "Tue",
+		total: "9h",
+		rows: [{ span: "9:00–6:00", project: "Mobile App", task: "Development", hours: "9h" }],
+	},
+	{ name: "Wed", total: "", note: "Statutory holiday — skipped", rows: [] },
+	{
+		name: "Thu",
+		total: "9h",
+		rows: [
+			{ span: "9:00–5:00", project: "Internal", task: "Development", hours: "8h" },
+			{ span: "3:00–4:00", project: "Internal", task: "Internal meeting", hours: "1h" },
+		],
+	},
+	{
+		name: "Fri",
+		total: "9h",
+		rows: [{ span: "9:00–6:00", project: "Website", task: "Development", hours: "9h" }],
+	},
 ];
 ---
 
-<div class="w-full max-w-md overflow-hidden rounded-2xl border border-border/60 bg-card shadow-2xl shadow-black/10 ring-1 ring-black/5 dark:shadow-black/40">
-  <div class="flex items-center gap-3 border-b border-border/60 px-5 py-4">
-    <div class="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-[#f6903a] to-[#e2541f] shadow-sm">
-      <svg viewBox="0 0 24 24" class="size-6 text-white" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
-    </div>
-    <div class="leading-tight">
-      <div class="flex items-center gap-1.5 text-sm font-semibold text-primary">
-        <span class="size-2 rounded-full bg-primary"></span> This week, so far
-      </div>
-      <div class="text-xs text-muted-foreground">36h across 4 days · Aug 31 – Sep 4</div>
-    </div>
-  </div>
+<div
+	class="w-full max-w-md overflow-hidden rounded-2xl border border-border/60 bg-card shadow-2xl shadow-black/10 ring-1 ring-black/5 dark:shadow-black/40"
+>
+	<div class="flex items-center gap-3 border-b border-border/60 px-5 py-4">
+		<div
+			class="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-[#f6903a] to-[#e2541f] shadow-sm"
+		>
+			<svg
+				viewBox="0 0 24 24"
+				class="size-6 text-white"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg
+			>
+		</div>
+		<div class="leading-tight">
+			<div class="flex items-center gap-1.5 text-sm font-semibold text-primary">
+				<span class="size-2 rounded-full bg-primary"></span> This week, so far
+			</div>
+			<div class="text-xs text-muted-foreground">36h across 4 days · Aug 31 – Sep 4</div>
+		</div>
+	</div>
 
-  <div class="divide-y divide-border/50 px-5">
-    {days.map((d) => (
-      <div class="py-3">
-        <div class="flex items-center justify-between">
-          <span class="text-[13px] font-semibold">{d.name}</span>
-          {d.total && <span class="text-xs font-semibold text-muted-foreground tabular-nums">{d.total}</span>}
-        </div>
-        {d.note ? (
-          <div class="pt-0.5 text-xs text-muted-foreground/80">{d.note}</div>
-        ) : (
-          d.rows.map((r) => (
-            <div class="flex items-center gap-2.5 py-1 text-[13px]">
-              <span class={`size-1.5 shrink-0 rounded-full ${dot[r.project]}`}></span>
-              <span class="w-24 shrink-0 font-mono text-[11px] text-muted-foreground">{r.span}</span>
-              <span class="font-medium">{r.project}</span>
-              <span class="truncate text-muted-foreground">{r.task}</span>
-              <span class="ml-auto font-semibold tabular-nums">{r.hours}</span>
-            </div>
-          ))
-        )}
-      </div>
-    ))}
-  </div>
+	<div class="divide-y divide-border/50 px-5">
+		{
+			days.map((d) => (
+				<div class="py-3">
+					<div class="flex items-center justify-between">
+						<span class="text-[13px] font-semibold">{d.name}</span>
+						{d.total && (
+							<span class="text-xs font-semibold text-muted-foreground tabular-nums">
+								{d.total}
+							</span>
+						)}
+					</div>
+					{d.note ? (
+						<div class="pt-0.5 text-xs text-muted-foreground/80">{d.note}</div>
+					) : (
+						d.rows.map((r) => (
+							<div class="flex items-center gap-2.5 py-1 text-[13px]">
+								<span class={`size-1.5 shrink-0 rounded-full ${dot[r.project]}`} />
+								<span class="w-24 shrink-0 font-mono text-[11px] text-muted-foreground">
+									{r.span}
+								</span>
+								<span class="font-medium">{r.project}</span>
+								<span class="truncate text-muted-foreground">{r.task}</span>
+								<span class="ml-auto font-semibold tabular-nums">{r.hours}</span>
+							</div>
+						))
+					)}
+				</div>
+			))
+		}
+	</div>
 
-  <div class="flex items-center justify-between border-t border-border/60 px-5 py-3">
-    <span class="text-xs text-muted-foreground">Files to Harvest every Friday</span>
-    <span class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">Log this week</span>
-  </div>
+	<div class="flex items-center justify-between border-t border-border/60 px-5 py-3">
+		<span class="text-xs text-muted-foreground">Files to Harvest every Friday</span>
+		<span class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+			>Log this week</span
+		>
+	</div>
 </div>

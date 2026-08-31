@@ -26,6 +26,9 @@ jobs:
         with:
           install: true
           cache: true
+      - name: Install website deps (for the astro/css checks)
+        run: mise exec -- pnpm install --frozen-lockfile
+        working-directory: packages/products/website
       - name: Format-check + lint (all file types)
         run: mise exec -- lefthook run pre-push --all-files
       - name: Lint commit messages
