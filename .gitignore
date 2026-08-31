@@ -378,3 +378,4 @@ packages/products/website/.astro/
 
 # website public assets (the shared base ignores *.png)
 !packages/products/website/public/**/*.png
+.coverage
