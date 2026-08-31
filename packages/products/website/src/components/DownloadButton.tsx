@@ -18,7 +18,11 @@ export default function DownloadButton({ size = "lg" }: { size?: "lg" | "default
 			<Button size={size} className="gap-2">
 				<Download />
 				Download for macOS
-				{ver && <span className="font-normal opacity-80">· {ver}</span>}
+				{/* Width reserved from first paint so the async version tag doesn't reflow the
+				    button (and shift its neighbors) once the release fetch resolves — zero CLS. */}
+				<span className="inline-block min-w-[5.5ch] text-left font-normal tabular-nums opacity-80">
+					{ver ? `· ${ver}` : ""}
+				</span>
 			</Button>
 		</a>
 	);

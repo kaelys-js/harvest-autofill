@@ -1,6 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import WindowMockup from "@/components/WindowMockup.astro";
+import OnboardingMockup from "@/components/OnboardingMockup.astro";
+import WhatsNewMockup from "@/components/WhatsNewMockup.astro";
 import ThemeToggle from "@/components/ThemeToggle.tsx";
 import DownloadButton from "@/components/DownloadButton.tsx";
 import Faq from "@/components/Faq.tsx";
@@ -134,6 +136,8 @@ const steps = [
 	<main id="main">
 		<!-- hero -->
 		<section class="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 md:py-24 lg:grid-cols-2">
+			<!-- Hero stays un-animated: it's the LCP region, so it must paint at full opacity
+			     immediately. Entrance reveals begin below the fold. -->
 			<div>
 				<Badge className="border-primary/20 bg-primary/10 text-primary"
 					><Sparkles className="size-3.5" /> Open source · macOS 26</Badge
@@ -187,12 +191,14 @@ const steps = [
 		<!-- features -->
 		<section id="features" class="mx-auto max-w-6xl px-5 py-20">
 			<div class="mx-auto max-w-2xl text-center">
-				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Everything, handled</h2>
+				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>
+					Everything, handled
+				</h2>
 				<p class="mt-3 text-muted-foreground">
 					The tedious parts of timesheets, done for you — accurately.
 				</p>
 			</div>
-			<div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+			<div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" data-stagger>
 				{
 					features.map((f) => (
 						<Card className="gap-3 transition-shadow hover:shadow-md">
@@ -211,10 +217,10 @@ const steps = [
 		<section id="how" class="border-y border-border/60 bg-muted/30">
 			<div class="mx-auto max-w-6xl px-5 py-20">
 				<div class="mx-auto max-w-2xl text-center">
-					<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Set it up once</h2>
+					<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>Set it up once</h2>
 					<p class="mt-3 text-muted-foreground">Two minutes of setup, then it runs on its own.</p>
 				</div>
-				<div class="mt-12 grid gap-8 md:grid-cols-3">
+				<div class="mt-12 grid gap-8 md:grid-cols-3" data-stagger>
 					{
 						steps.map((s) => (
 							<div class="relative">
@@ -233,31 +239,25 @@ const steps = [
 		<!-- screenshots -->
 		<section class="mx-auto max-w-6xl px-5 py-20">
 			<div class="mx-auto max-w-2xl text-center">
-				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Made to feel native</h2>
+				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>
+					Made to feel native
+				</h2>
 				<p class="mt-3 text-muted-foreground">
 					A guided setup, a live week, and a changelog after every update.
 				</p>
 			</div>
-			<div class="mt-12 grid items-start gap-6 md:grid-cols-2">
-				<figure class="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xl">
-					<img
-						src={`${base}/screens/welcome.png`}
-						alt="Onboarding welcome screen"
-						width="1120"
-						height="900"
-						class="w-full"
-						loading="lazy"
-					/>
+			<div class="mt-12 grid items-start justify-items-center gap-8 md:grid-cols-2">
+				<figure class="w-full" data-reveal>
+					<OnboardingMockup />
+					<figcaption class="mt-3 text-center text-sm text-muted-foreground">
+						A six-step first run that connects everything.
+					</figcaption>
 				</figure>
-				<figure class="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xl">
-					<img
-						src={`${base}/screens/whatsnew.png`}
-						alt="What's New changelog screen"
-						width="920"
-						height="760"
-						class="w-full"
-						loading="lazy"
-					/>
+				<figure class="w-full" data-reveal>
+					<WhatsNewMockup />
+					<figcaption class="mt-3 text-center text-sm text-muted-foreground">
+						A plain-language changelog after every update.
+					</figcaption>
 				</figure>
 			</div>
 		</section>
@@ -265,7 +265,9 @@ const steps = [
 		<!-- download -->
 		<section id="download" class="border-y border-border/60 bg-muted/30">
 			<div class="mx-auto max-w-3xl px-5 py-20 text-center">
-				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Get Harvest Auto-Fill</h2>
+				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>
+					Get Harvest Auto-Fill
+				</h2>
 				<p class="mt-3 text-muted-foreground">
 					macOS 26 or newer, Apple Silicon. Free and open source.
 				</p>
@@ -301,7 +303,7 @@ const steps = [
 		<!-- faq -->
 		<section id="faq" class="mx-auto max-w-3xl px-5 py-20">
 			<div class="text-center">
-				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Questions</h2>
+				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>Questions</h2>
 			</div>
 			<div class="mt-10"><Faq client:visible /></div>
 			<div
@@ -383,7 +385,7 @@ const steps = [
 			<div
 				class="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row"
 			>
-				<span>© 2026 Cole Beuker · Released under the MIT License.</span>
+				<span>© 2026 Harvest Auto-Fill · Released under the MIT License.</span>
 				<span>Not affiliated with or endorsed by Harvest.</span>
 			</div>
 		</div>

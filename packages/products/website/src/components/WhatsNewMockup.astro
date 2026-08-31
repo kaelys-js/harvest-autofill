@@ -1,0 +1,61 @@
+---
+// A neutral recreation of the app's "What's New" changelog window. Semantic tokens only,
+// so it renders true light/dark — no rasterized screenshot, no placeholder artifacts.
+const notes = [
+	"Live preview now shows only the days you've actually worked.",
+	"Dark-mode polish across every window.",
+	"Faster account discovery on first run.",
+	"Reset back to onboarding anytime from Preferences.",
+];
+---
+
+<div
+	class="w-full max-w-md overflow-hidden rounded-2xl border border-border/60 bg-card shadow-2xl shadow-black/10 ring-1 ring-black/5 dark:shadow-black/40"
+	role="img"
+	aria-label="App What's New window for version 2.14, listing the latest changes."
+>
+	<div class="flex items-center gap-2 border-b border-border/60 px-4 py-3">
+		<span class="size-3 rounded-full bg-[#ff5f57]"></span>
+		<span class="size-3 rounded-full bg-[#febc2e]"></span>
+		<span class="size-3 rounded-full bg-[#28c840]"></span>
+		<span class="ml-2 text-xs font-medium text-muted-foreground">What's New</span>
+	</div>
+
+	<div class="flex items-center gap-3 px-6 pt-6">
+		<div
+			class="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-[#f6903a] to-[#e2541f] shadow-sm"
+		>
+			<svg
+				viewBox="0 0 24 24"
+				class="size-6 text-white"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg
+			>
+		</div>
+		<div class="leading-tight">
+			<div class="text-lg font-bold tracking-tight">Version 2.14</div>
+			<div class="text-xs text-muted-foreground">Released Aug 31, 2026</div>
+		</div>
+	</div>
+
+	<ul class="space-y-3 px-6 py-6">
+		{
+			notes.map((n) => (
+				<li class="flex items-start gap-3 text-[13px]">
+					<span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+					<span>{n}</span>
+				</li>
+			))
+		}
+	</ul>
+
+	<div class="flex items-center justify-between border-t border-border/60 px-6 py-4">
+		<span class="text-xs font-medium text-primary">View on GitHub →</span>
+		<span class="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground"
+			>Got it</span
+		>
+	</div>
+</div>

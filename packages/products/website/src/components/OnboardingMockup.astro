@@ -1,0 +1,95 @@
+---
+// A neutral recreation of the app's first-run "Welcome" step. Semantic tokens only,
+// so it renders true light/dark with the rest of the page — no rasterized screenshot,
+// no placeholder artifacts.
+const steps = [
+	{
+		title: "Connect your accounts",
+		body: "GitHub, your calendar, and Harvest — read-only, stored on your Mac.",
+		icon: "M9 12l2 2 4-4",
+	},
+	{
+		title: "We map work to projects",
+		body: "Commits, pushes, and meetings become hours, split by project.",
+		icon: "M4 7h16M4 12h10M4 17h7",
+	},
+	{
+		title: "Filed every Friday",
+		body: "Your week lands in Harvest automatically. Review or turn it off anytime.",
+		icon: "M12 7v5l3 2",
+	},
+];
+---
+
+<div
+	class="w-full max-w-md overflow-hidden rounded-2xl border border-border/60 bg-card shadow-2xl shadow-black/10 ring-1 ring-black/5 dark:shadow-black/40"
+	role="img"
+	aria-label="App onboarding welcome screen: connect accounts, map work to projects, filed every Friday."
+>
+	<div class="flex items-center gap-2 border-b border-border/60 px-4 py-3">
+		<span class="size-3 rounded-full bg-[#ff5f57]"></span>
+		<span class="size-3 rounded-full bg-[#febc2e]"></span>
+		<span class="size-3 rounded-full bg-[#28c840]"></span>
+		<span class="ml-2 text-xs font-medium text-muted-foreground">Harvest Auto-Fill — Setup</span>
+	</div>
+
+	<div class="px-7 py-8 text-center">
+		<div
+			class="mx-auto grid size-16 place-items-center rounded-2xl bg-gradient-to-br from-[#f6903a] to-[#e2541f] shadow-md"
+		>
+			<svg
+				viewBox="0 0 24 24"
+				class="size-9 text-white"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg
+			>
+		</div>
+		<h3 class="mt-5 text-xl font-bold tracking-tight">Welcome to Harvest Auto-Fill</h3>
+		<p class="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
+			Your timesheet fills itself from the work you already did.
+		</p>
+	</div>
+
+	<div class="space-y-1 px-5 pb-2">
+		{
+			steps.map((s) => (
+				<div class="flex items-start gap-3 rounded-xl px-3 py-3">
+					<span class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+						<svg
+							viewBox="0 0 24 24"
+							class="size-4"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d={s.icon} />
+						</svg>
+					</span>
+					<div class="leading-snug">
+						<div class="text-sm font-semibold">{s.title}</div>
+						<div class="text-[13px] text-muted-foreground">{s.body}</div>
+					</div>
+				</div>
+			))
+		}
+	</div>
+
+	<div class="flex items-center justify-between border-t border-border/60 px-6 py-4">
+		<div class="flex items-center gap-1.5" aria-hidden="true">
+			<span class="h-1.5 w-5 rounded-full bg-primary"></span>
+			<span class="size-1.5 rounded-full bg-muted-foreground/30"></span>
+			<span class="size-1.5 rounded-full bg-muted-foreground/30"></span>
+			<span class="size-1.5 rounded-full bg-muted-foreground/30"></span>
+			<span class="size-1.5 rounded-full bg-muted-foreground/30"></span>
+			<span class="size-1.5 rounded-full bg-muted-foreground/30"></span>
+		</div>
+		<span class="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground"
+			>Get started</span
+		>
+	</div>
+</div>
