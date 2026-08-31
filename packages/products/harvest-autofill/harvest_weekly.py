@@ -115,12 +115,20 @@ def parse_ampm(s):
 ANCHOR = parse_ampm(CFG.get("anchor_start", "9:00am"))
 
 # ---------- target week ----------
+today = tovan(datetime.datetime.now(datetime.timezone.utc)).date()
 if os.environ.get("WEEK_START"):
     mon = datetime.date.fromisoformat(os.environ["WEEK_START"])
 else:
-    today = tovan(datetime.datetime.now(datetime.timezone.utc)).date()
     mon = today - datetime.timedelta(days=today.weekday())
-days = [mon + datetime.timedelta(d) for d in range(5)]
+# Only fill days that have actually happened. Mid-week (and any manual run before the
+# Friday job) must not fabricate a full 9h for days still in the future — that showed a
+# 45h week on a Monday and, worse, would write unworked time to Harvest on "Log week".
+# The Friday 18:00 run has today == Fri, so all five days are included as before; a
+# WEEK_START pointed at a past week likewise includes all five (every day <= today).
+days = [d for d in (mon + datetime.timedelta(i) for i in range(5)) if d <= today]
+if not days:
+    print(f"Target week ({mon}) hasn't started yet — nothing to fill.")
+    sys.exit(0)
 fri = days[-1]
 NAMES = {d: d.strftime("%a %Y-%m-%d") for d in days}
 
@@ -477,7 +485,7 @@ for _d, _k, _e in plan:
             _ph[_p] += _h
 _worked = [d for d, k, e in plan if k == "work"]
 _blanks = [(d, k) for d, k, e in plan if k != "work"]
-_wl = f"{mon.strftime('%b')} {mon.day}–{fri.day}"
+_wl = mon.strftime("%b %-d") if mon == fri else f"{mon.strftime('%b')} {mon.day}–{fri.day}"
 _totalh = round(sum(_ph.values()), 2)
 _brk = " · ".join(f"{p} {round(h, 1)}h" for p, h in sorted(_ph.items(), key=lambda x: -x[1])) or "—"
 _nm = {
