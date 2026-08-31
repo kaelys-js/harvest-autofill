@@ -1,0 +1,15 @@
+name: Build
+# Compile + assemble on every push/PR so breakage is caught before a release tag.
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (compile, bundle Python, ad-hoc sign, verify signature)
+        run: ./build.sh
+      - name: Confirm the app built
+        run: test -d "dist/Harvest Auto-Fill.app/Contents/MacOS/Harvest" -o -f "dist/Harvest Auto-Fill.app/Contents/MacOS/Harvest"

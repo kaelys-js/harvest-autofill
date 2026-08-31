@@ -1,0 +1,171 @@
+{
+  "timezone": "America/Vancouver",
+  "daily_target_hours": 9.0,
+  "anchor_start": "9:00am",
+  "work_hours": {
+    "start": 9,
+    "end": 17
+  },
+  "timeline": {
+    "gap_cap_min": 90,
+    "lead_in_min": 45
+  },
+  "harvest": {
+    "user_id": 0,
+    "user_agent": "harvest-fill (you@example.com)"
+  },
+  "projects": {
+    "ITC": {
+      "project_id": 0,
+      "meeting_task": 26347195,
+      "dev_task": 5451510
+    },
+    "Providence": {
+      "project_id": 0,
+      "meeting_task": 26347195,
+      "dev_task": 5451510
+    },
+    "Internal": {
+      "project_id": 0,
+      "meeting_task": 12123517,
+      "dev_task": 5451510
+    },
+    "Wheaton": {
+      "project_id": 0,
+      "meeting_task": 26347195,
+      "dev_task": 5451510,
+      "note": "Wheaton (WPM/OMS)"
+    }
+  },
+  "dev_order": [
+    "ITC",
+    "Providence",
+    "Internal",
+    "Wheaton"
+  ],
+  "meeting_rules": [
+    {
+      "keywords": [
+        "itc"
+      ],
+      "project": "ITC"
+    },
+    {
+      "keywords": [
+        "wpm",
+        "oms"
+      ],
+      "project": "Wheaton"
+    },
+    {
+      "keywords": [
+        "providence",
+        "home 4 us"
+      ],
+      "project": "Providence"
+    }
+  ],
+  "meeting_default_project": "Internal",
+  "social_keywords": [
+    "yoga",
+    "bubble tea",
+    "and learn",
+    "happy hour",
+    "rubber duck",
+    "jamboree",
+    "forest bathing",
+    "murder mystery",
+    "offsite",
+    "off-site",
+    "off site",
+    "retreat",
+    "team building",
+    "team-building",
+    "holiday party",
+    "christmas party",
+    "xmas party",
+    "staff party",
+    "company event",
+    "company party",
+    "social",
+    "celebration",
+    "games night",
+    "bowling",
+    "boat cruise",
+    "escape room",
+    "trivia"
+  ],
+  "long_event_hours": 5.0,
+  "social_day_hours": 4.5,
+  "ooo_keywords": [
+    "ooo",
+    "vacation",
+    "pto",
+    "out of office",
+    "day off"
+  ],
+  "github": {
+    "login": "",
+    "orgs": [],
+    "author_email_hints": [
+      "kaelys",
+      "cole.beuker",
+      "cole.c.bieker"
+    ],
+    "scope_rules": [
+      {
+        "keywords": [
+          "itc",
+          "hand_itc"
+        ],
+        "project": "ITC"
+      },
+      {
+        "keywords": [
+          "oms",
+          "wpm",
+          "wheaton"
+        ],
+        "project": "Wheaton"
+      }
+    ],
+    "scope_default": "Internal"
+  },
+  "azure_devops": {
+    "enabled": false,
+    "project_bucket": "Wheaton",
+    "org": "",
+    "project": "",
+    "repos": [],
+    "author": "",
+    "note": "PAT (secret) is the only ADO value in ado.env as ADO_PAT"
+  },
+  "holidays": {
+    "region": "CA-BC",
+    "dates": [
+      "2026-01-01",
+      "2026-02-16",
+      "2026-04-03",
+      "2026-05-18",
+      "2026-07-01",
+      "2026-08-03",
+      "2026-09-07",
+      "2026-09-30",
+      "2026-10-12",
+      "2026-11-11",
+      "2026-12-25",
+      "2027-01-01",
+      "2027-02-15",
+      "2027-03-26",
+      "2027-05-24",
+      "2027-07-01",
+      "2027-08-02",
+      "2027-09-06",
+      "2027-09-30",
+      "2027-10-11",
+      "2027-11-11",
+      "2027-12-25"
+    ]
+  },
+  "auto_record": true
+}
