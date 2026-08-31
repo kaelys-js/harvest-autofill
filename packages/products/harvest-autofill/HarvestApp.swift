@@ -201,6 +201,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
     @Published var readyAppPath: String?
     @Published var whatsNew: WhatsNew? // set to trigger the "What's new" window
     @Published var releases: [WhatsNew] = [] // full history shown under the newest notes
+    @Published var whatsNewManual = false // opened from About (no "Continue") vs post-update
     @Published var loadingWhatsNew = false
     private var timer: Timer?
     var currentBuild: Int {
@@ -232,6 +233,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
                 let head = list.first { $0.version == currentVersion } ?? list.first
                 if let wn = head, !wn.notes.isEmpty {
                     self.releases = list
+                    self.whatsNewManual = false // post-update: show "Continue"
                     self.whatsNew = wn
                 }
                 UserDefaults.standard.set(cur, forKey: "seenBuild")
@@ -246,6 +248,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
             let list = await loadReleases()
             loadingWhatsNew = false
             self.releases = list
+            self.whatsNewManual = true // browsing from About: no "Continue"
             self.whatsNew = list.first ?? WhatsNew(version: currentVersion, notes: "No release notes were found for this version.", date: "", url: UPDATE_REPO_URL)
         }
     }
@@ -609,6 +612,20 @@ final class Prefs: ObservableObject {
         accountValid && tokenValid && calUrlValid && calSecretValid && ghLoginValid && ghOrgsValid && targetValid && workHoursValid && gapValid && regionValid && adoValid
     }
 
+    // Change tracking: a signature over every persisted field, compared to the value at the
+    // last load/write, so the Save button appears only when there is something to save.
+    @Published var savedSig = ""
+    var changeSig: String {
+        ([autoRecord, autoUpdate, showDockIcon, adoEnabled].map(String.init)
+            + [String(dailyTarget), String(workStart), String(workEnd), String(gapCap), String(leadIn),
+               ghLogin, ghOrgs, adoOrg, adoProject, adoRepos, adoAuthor, holidayRegion,
+               harvestAccount, harvestToken, calUrl, calSecret, adoPAT, ghToken]).joined(separator: "\u{1}")
+    }
+
+    var hasChanges: Bool {
+        changeSig != savedSig
+    }
+
     // Dependency self-check: the engine needs Python (bundled) + curl (system). No install required.
     var pythonReady: Bool {
         FileManager.default.isExecutableFile(atPath: P.res + "/python/bin/python3")
@@ -680,6 +697,7 @@ final class Prefs: ObservableObject {
         calSecret = envVal(P.calEnv, "APPS_SCRIPT_SECRET")
         adoPAT = envVal(P.adoEnv, "ADO_PAT")
         ghToken = envVal(P.githubEnv, "GITHUB_TOKEN")
+        savedSig = changeSig
     }
 
     func writeEnv(_ path: String, _ kv: [(String, String)]) {
@@ -720,6 +738,7 @@ final class Prefs: ObservableObject {
         } else {
             try? FileManager.default.removeItem(atPath: P.githubEnv)
         }
+        savedSig = changeSig
     }
 
     static func autoUpdateEnabled() -> Bool {
@@ -1579,8 +1598,12 @@ struct WhatsNewView: View {
                     Label("All releases on GitHub", systemImage: "arrow.up.right.square")
                 }.buttonStyle(.link).font(.system(size: 12))
                 Spacer()
-                Button("Continue") { updater.whatsNew = nil; updater.releases = []; dismissWindow(id: "whatsnew") }
-                    .primaryProminent().controlSize(.large).keyboardShortcut(.defaultAction)
+                // "Continue" is a post-update acknowledgement; when browsing from About the
+                // window is just closed via its title bar, so no button is shown.
+                if !updater.whatsNewManual {
+                    Button("Continue") { updater.whatsNew = nil; updater.releases = []; dismissWindow(id: "whatsnew") }
+                        .primaryProminent().controlSize(.large).keyboardShortcut(.defaultAction)
+                }
             }.padding(.horizontal, 20).padding(.vertical, 14)
         }
         .frame(width: 460)
@@ -1718,6 +1741,7 @@ struct AboutContent: View {
 
 struct PreferencesView: View {
     @StateObject var prefs = Prefs()
+    @State private var tab = 0 // 0 General, 1 Accounts, 2 Allocation, 3 About
     var render = false
     var footer: some View {
         HStack(spacing: 10) {
@@ -1741,13 +1765,16 @@ struct PreferencesView: View {
             }.padding(20).frame(width: 560).background(Color(nsColor: .windowBackgroundColor))
         } else {
             VStack(spacing: 0) {
-                TabView {
-                    ScrollView { GeneralContent(prefs: prefs).padding(20) }.tabItem { Label("General", systemImage: "gearshape") }
-                    ScrollView { AccountsContent(prefs: prefs).padding(20) }.tabItem { Label("Accounts", systemImage: "person.crop.circle") }
-                    ScrollView { AllocationContent(prefs: prefs).padding(20) }.tabItem { Label("Allocation", systemImage: "chart.pie") }
-                    ScrollView { AboutContent(prefs: prefs).padding(20) }.tabItem { Label("About", systemImage: "info.circle") }
+                TabView(selection: $tab) {
+                    ScrollView { GeneralContent(prefs: prefs).padding(20) }.tabItem { Label("General", systemImage: "gearshape") }.tag(0)
+                    ScrollView { AccountsContent(prefs: prefs).padding(20) }.tabItem { Label("Accounts", systemImage: "person.crop.circle") }.tag(1)
+                    ScrollView { AllocationContent(prefs: prefs).padding(20) }.tabItem { Label("Allocation", systemImage: "chart.pie") }.tag(2)
+                    ScrollView { AboutContent(prefs: prefs).padding(20) }.tabItem { Label("About", systemImage: "info.circle") }.tag(3)
                 }
-                Divider(); footer
+                // Save appears only when there's something to save, and never on the About tab.
+                if tab != 3, prefs.hasChanges {
+                    Divider(); footer
+                }
             }.frame(width: 560, height: 600).background(.regularMaterial)
                 .onAppear {
                     if prefs.ghOrgsAvailable.isEmpty, prefs.adoReposAvailable.isEmpty {
@@ -2204,6 +2231,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return
         }
+        if args.contains("--prefs-selftest") { // exercise the Save-appears-only-on-change signal
+            let p = Prefs()
+            print("PREFS afterLoad hasChanges=\(p.hasChanges)") // expect false
+            let old = p.ghLogin
+            p.ghLogin = old + "-selftest"
+            print("PREFS afterEdit hasChanges=\(p.hasChanges)") // expect true
+            p.writeAll()
+            print("PREFS afterSave hasChanges=\(p.hasChanges)") // expect false
+            p.ghLogin = old; p.writeAll() // restore
+            NSApp.terminate(nil); return
+        }
         if args.contains("--self-update-now") { // check → download → install/relaunch
             Task { @MainActor in
                 let u = Updater.shared; u.check(manual: true)
@@ -2253,7 +2291,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 view = ResetConfirmSheet(typed: .constant("RESET")).background(Color(nsColor: .windowBackgroundColor))
             } else if which == "about" {
                 view = AboutContent(prefs: Prefs()).padding(22).frame(width: 480).background(Color(nsColor: .windowBackgroundColor))
-            } else if which == "whatsnew" {
+            } else if which.hasPrefix("whatsnew") {
+                Updater.shared.whatsNewManual = (which == "whatsnewmanual") // manual = no "Continue"
                 Updater.shared.whatsNew = WhatsNew(version: "2.11", notes: """
                 ## Auto-update
                 - The app now checks GitHub for **signed** updates and installs them for you.
