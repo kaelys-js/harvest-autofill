@@ -378,3 +378,6 @@ logs/
 # Superseded/local
 HarvestPopup.swift
 run.sh
+
+# Keep the app icon (the shared base ignores *.png)
+!icon.png
