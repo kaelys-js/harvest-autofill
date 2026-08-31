@@ -5,7 +5,7 @@ description = "Tests for the Harvest Auto-Fill engine (the app ships the .py fil
 requires-python = ">=3.12"
 
 [dependency-groups]
-dev = ["pytest>=8.3", "pytest-cov>=6.0"]
+dev = ["pytest==9.1.1", "pytest-cov==7.1.0"]
 
 # Not an installable package — just scripts + a test suite.
 [tool.uv]

@@ -8,6 +8,7 @@ __mise_bootstrap() {
     export MISE_CONFIG_DIR="$localized_dir"
     export MISE_CACHE_DIR="$localized_dir/cache"
     export MISE_STATE_DIR="$localized_dir/state"
+    export MISE_INSTALLS_DIR="$localized_dir/installs"
     local mise_version="${MISE_VERSION:-2026.8.15}"
     mise_version="${mise_version#v}"
     export MISE_INSTALL_PATH="${MISE_INSTALL_PATH:-$localized_dir/mise-$mise_version}"

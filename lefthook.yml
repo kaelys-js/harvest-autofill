@@ -84,8 +84,8 @@ pre-push:
       run: cd packages/products/website && mise exec -- pnpm exec prettier --check "src/**/*.astro"
     css-lint:
       run: cd packages/products/website && mise exec -- pnpm exec stylelint "src/**/*.css"
-    # ── Test suites (unit + behaviour + coverage). Visual regression + Playwright E2E are
-    #    heavier (need a built app / a browser) and run in CI — see .github/workflows/test.yml.
+    # ── Test suites: unit + behaviour + coverage, plus app + website visual regression.
+    #    The Checks CI job runs this whole gate; web-e2e also runs in web-e2e.yml (container).
     python-test:
       run: cd packages/products/harvest-autofill && mise exec -- uv run --python 3.12 --group dev pytest --cov
     swift-test:
@@ -114,8 +114,8 @@ pre-push:
 post-checkout:
   commands:
     mise-sync:
-      run: mise install
+      run: ./bin/mise install
 post-merge:
   commands:
     mise-sync:
-      run: mise install
+      run: ./bin/mise install

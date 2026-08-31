@@ -16,7 +16,7 @@ UPDATE=""
 # If already inside the container (CI runs the job in the image), run directly.
 if [ -f /.dockerenv ] || [ -n "${PLAYWRIGHT_IN_CONTAINER:-}" ]; then
   corepack enable >/dev/null 2>&1 || true
-  corepack prepare pnpm@11.25.0 --activate >/dev/null 2>&1 || true
+  corepack prepare pnpm@11.24.0 --activate >/dev/null 2>&1 || true
   pnpm install --frozen-lockfile
   ASTRO_BASE=/ pnpm build
   exec node_modules/.bin/playwright test $UPDATE
