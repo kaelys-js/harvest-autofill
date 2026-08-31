@@ -55,9 +55,8 @@ jobs:
           # %(contents) would fall back to the commit message. Re-fetch the annotated
           # tag object to read its actual message.
           git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}" || true
-          # %(contents) also includes any signature block on a signed tag — strip it.
-          NOTES="$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME" \
-            | sed '/-----BEGIN \(SSH\|PGP\) SIGNATURE-----/,/-----END \(SSH\|PGP\) SIGNATURE-----/d')"
+          # subject + body excludes any GPG/SSH signature block that %(contents) would include.
+          NOTES="$(git tag -l --format='%(contents:subject)%0a%0a%(contents:body)' "$GITHUB_REF_NAME")"
           [ -n "$NOTES" ] || NOTES="Release ${GITHUB_REF_NAME#v}"
           { echo "notes<<HAF_EOF"; echo "$NOTES"; echo "HAF_EOF"; } >> "$GITHUB_OUTPUT"
 
