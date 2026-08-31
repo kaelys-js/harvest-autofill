@@ -37,6 +37,6 @@ actionlint = "1.7.12"                           # GitHub workflow lint
 
 # Orchestration + release tooling
 lefthook = "2.1.12" # pre-push hooks (also run in CI)
-gh = "2.98.0"       # used by release.sh to publish
+gh = "latest"       # used by release.sh to publish
 pnpm = "11.24.0"    # website package manager
 uv = "0.12.7"       # runs the Python engine test suite (pytest + coverage)

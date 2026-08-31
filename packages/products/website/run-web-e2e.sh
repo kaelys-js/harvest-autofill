@@ -17,8 +17,11 @@ UPDATE=""
 if [ -f /.dockerenv ] || [ -n "${PLAYWRIGHT_IN_CONTAINER:-}" ]; then
   corepack enable >/dev/null 2>&1 || true
   corepack prepare pnpm@11.24.0 --activate >/dev/null 2>&1 || true
-  pnpm install --frozen-lockfile
-  ASTRO_BASE=/ pnpm build
+  # The Playwright image ships its own Node (matched to the bundled browsers), which is not
+  # the mise-pinned engines.node. That is correct for a test runner, so relax pnpm's strict
+  # engine check here only — dev + CI installs still run on the pinned Node and enforce it.
+  pnpm --config.engine-strict=false install --frozen-lockfile
+  ASTRO_BASE=/ pnpm --config.engine-strict=false build
   exec node_modules/.bin/playwright test $UPDATE
 fi
 
