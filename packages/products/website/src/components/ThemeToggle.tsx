@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 
 export default function ThemeToggle() {
 	const [dark, setDark] = useState(false);
+	// Sync the button icon to the theme the pre-paint inline script already set on <html>
+	// (an external system) after hydration — starting false keeps SSR and first client render
+	// matched, so this is the correct use of an effect despite the rule.
+	// oxlint-disable-next-line react/set-state-in-effect
 	useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
 
 	function toggle() {

@@ -3,6 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import WindowMockup from "@/components/WindowMockup.astro";
 import OnboardingMockup from "@/components/OnboardingMockup.astro";
 import WhatsNewMockup from "@/components/WhatsNewMockup.astro";
+import GithubMark from "@/components/GithubMark.astro";
 import ThemeToggle from "@/components/ThemeToggle.tsx";
 import DownloadButton from "@/components/DownloadButton.tsx";
 import Faq from "@/components/Faq.tsx";
@@ -16,7 +17,6 @@ import {
 	PackageCheck,
 	RefreshCw,
 	ChartPie,
-	Github,
 	Sparkles,
 	Lock,
 	Cloud,
@@ -127,7 +127,7 @@ const steps = [
 					target="_blank"
 					rel="noopener noreferrer"
 					class="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-					aria-label="View on GitHub (opens in a new tab)"><Github className="size-5" /></a
+					aria-label="View on GitHub (opens in a new tab)"><GithubMark class="size-5" /></a
 				>
 				<ThemeToggle client:load />
 				<span class="hidden sm:block"><DownloadButton client:load size="default" /></span>
@@ -168,7 +168,7 @@ const steps = [
 					<a href={REPO} target="_blank" rel="noopener noreferrer"
 						><span
 							class="inline-flex h-11 items-center gap-2 rounded-md border border-border bg-background px-6 text-base font-medium shadow-xs transition-colors hover:bg-accent"
-							><Github className="size-4" /> View on GitHub<span class="sr-only">
+							><GithubMark class="size-4" /> View on GitHub<span class="sr-only">
 								(opens in a new tab)</span
 							></span
 						></a
@@ -195,7 +195,7 @@ const steps = [
 					><Cloud className="size-4 text-primary" /> No account, no cloud</span
 				>
 				<span class="inline-flex items-center gap-2"
-					><Github className="size-4 text-primary" /> Fully open source</span
+					><GithubMark class="size-4 text-primary" /> Fully open source</span
 				>
 				<span class="inline-flex items-center gap-2"
 					><PlugZap className="size-4 text-primary" /> Nothing to install</span

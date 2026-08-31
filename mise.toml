@@ -22,21 +22,21 @@ node = "22"
 python = "3.12"
 
 # Formatters + linters (versions track the foundation repo's choices)
-ruff = "0.16.0"                                 # Python format + lint
-shfmt = "3.13.1"                                # shell format
+ruff = "0.16.5"                                 # Python format + lint
+shfmt = "3.14.0"                                # shell format
 "aqua:koalaman/shellcheck" = "0.11.0"           # shell lint
 "npm:@taplo/cli" = "0.7.0"                      # TOML format + lint
 "npm:oxfmt" = "0.65.0"                          # JSON/JS format
-"npm:oxlint" = "1.76.0"                         # JSON/JS lint
+"npm:oxlint" = "1.80.0"                         # JSON/JS lint
 yamllint = "1.38.0"                             # YAML lint
-actionlint = "1.7.11"                           # GitHub workflow lint
+actionlint = "1.7.12"                           # GitHub workflow lint
 "npm:markdownlint-cli2" = "0.23.2"              # Markdown lint
-"npm:@commitlint/cli" = "20.4.1"                # commit-message lint
-"aqua:realm/SwiftLint" = "0.65.0"               # Swift lint
-"asdf:mise-plugins/mise-swiftformat" = "0.62.1" # Swift format (nicklockwood)
+"npm:@commitlint/cli" = "21.2.2"                # commit-message lint
+"aqua:realm/SwiftLint" = "0.65.1"               # Swift lint
+"asdf:mise-plugins/mise-swiftformat" = "0.63.0" # Swift format (nicklockwood)
 
 # Orchestration + release tooling
 lefthook = "2.1.12" # pre-push hooks (also run in CI)
 gh = "latest"       # used by release.sh to publish
-pnpm = "11.23.0"    # website package manager
-uv = "0.12.0"       # runs the Python engine test suite (pytest + coverage)
+pnpm = "11.25.0"    # website package manager
+uv = "0.12.7"       # runs the Python engine test suite (pytest + coverage)
