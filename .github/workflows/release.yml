@@ -1,6 +1,6 @@
 name: Release
-# Push an annotated version tag (e.g. v2.11) to build, sign, and publish that release.
-# The changelog goes in the tag message: git tag -a v2.11 -m "## Changes…"; git push origin v2.11
+# Push an annotated version tag (e.g. v2.12) to build, sign, and publish that release.
+# The changelog goes in the tag message: git tag -a v2.12 -m "## Changes…"; git push origin v2.12
 on:
   push:
     tags: ['v*']
@@ -12,12 +12,17 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false # never interrupt a publish midway
 
+defaults:
+  run:
+    working-directory: packages/products/harvest-autofill
+
 jobs:
   release:
     runs-on: macos-26       # needs the macOS 26 SDK (Liquid Glass APIs)
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v5
+      # Pinned to a full commit SHA (supply-chain hardening); the comment tracks the version.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0          # need the annotated tag object for the release notes
           persist-credentials: false

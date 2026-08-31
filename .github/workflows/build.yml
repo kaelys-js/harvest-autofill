@@ -12,12 +12,17 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true  # a newer push supersedes an in-flight build
 
+defaults:
+  run:
+    working-directory: packages/products/harvest-autofill
+
 jobs:
   build:
     runs-on: macos-26       # needs the macOS 26 SDK (Liquid Glass APIs)
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v5
+      # Pinned to a full commit SHA (supply-chain hardening); the comment tracks the version.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
       - name: Build (compile, bundle Python, sign, verify signature)

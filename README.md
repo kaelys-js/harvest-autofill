@@ -10,6 +10,7 @@ A macOS menu-bar app that fills your Harvest timesheet from the work you already
 ## Build
 
 ```
+cd packages/products/harvest-autofill
 ./build.sh            # → dist/Harvest Auto-Fill.app  (compiles, bundles Python, ad-hoc signs)
 ```
 
@@ -27,8 +28,12 @@ The app verifies each update's Ed25519 signature against the public key baked in
 
 ## Layout
 
+The app lives under `packages/products/harvest-autofill/`:
+
 - `HarvestApp.swift` — the app (SwiftUI menu-bar UI, onboarding, updater).
 - `harvest_weekly.py` — the engine: timeline allocation of hours across projects.
 - `discover.py` — auto-discovery of accounts/projects and holiday generation.
 - `engine.sh` — runner used by the app and the Friday launchd job.
 - `build.sh` / `release.sh` / `notarize.sh` — build, publish, notarize.
+
+Repo-wide config and the CI workflows (`.github/workflows/`) stay at the root.
