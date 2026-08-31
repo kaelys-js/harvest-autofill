@@ -1,0 +1,53 @@
+{
+	"timezone": "America/Vancouver",
+	"daily_target_hours": 9.0,
+	"anchor_start": "9:00am",
+	"work_hours": { "start": 9, "end": 17 },
+	"timeline": { "gap_cap_min": 90, "lead_in_min": 45 },
+	"harvest": { "user_id": 999, "user_agent": "harvest-fill-test" },
+	"projects": {
+		"ITC": { "project_id": 100, "meeting_task": 111, "dev_task": 112 },
+		"Providence": { "project_id": 200, "meeting_task": 211, "dev_task": 212 },
+		"Internal": { "project_id": 300, "meeting_task": 311, "dev_task": 312 },
+		"Wheaton": {
+			"project_id": 400,
+			"meeting_task": 411,
+			"dev_task": 412,
+			"note": "Wheaton (WPM/OMS)"
+		}
+	},
+	"dev_order": ["ITC", "Providence", "Internal", "Wheaton"],
+	"meeting_rules": [
+		{ "keywords": ["itc"], "project": "ITC" },
+		{ "keywords": ["wpm", "oms"], "project": "Wheaton" },
+		{ "keywords": ["providence", "home 4 us"], "project": "Providence" }
+	],
+	"meeting_default_project": "Internal",
+	"social_keywords": ["offsite", "off-site", "retreat", "social", "happy hour"],
+	"long_event_hours": 5.0,
+	"social_day_hours": 4.5,
+	"ooo_keywords": ["ooo", "vacation", "pto", "out of office", "day off"],
+	"github": {
+		"login": "testuser",
+		"orgs": ["testorg"],
+		"author_email_hints": ["testuser"],
+		"scope_rules": [
+			{ "keywords": ["itc"], "project": "ITC" },
+			{ "keywords": ["oms", "wpm", "wheaton"], "project": "Wheaton" }
+		],
+		"scope_default": "Internal"
+	},
+	"azure_devops": {
+		"enabled": false,
+		"project_bucket": "Wheaton",
+		"org": "",
+		"project": "",
+		"repos": [],
+		"author": ""
+	},
+	"holidays": {
+		"region": "CA-BC",
+		"dates": ["2026-08-26"]
+	},
+	"auto_record": true
+}

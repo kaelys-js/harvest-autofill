@@ -384,3 +384,4 @@ packages/products/website/playwright-report/
 packages/products/website/dist/harvest-autofill-releases
 !packages/products/harvest-autofill/visual-baseline/**/*.png
 !packages/products/website/e2e/**/*.png
+!packages/products/harvest-autofill/tests/fixtures/config.json
