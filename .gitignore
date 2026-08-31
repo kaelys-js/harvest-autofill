@@ -375,3 +375,6 @@ run.sh
 packages/products/website/node_modules/
 packages/products/website/dist/
 packages/products/website/.astro/
+
+# website public assets (the shared base ignores *.png)
+!packages/products/website/public/screens/*.png
