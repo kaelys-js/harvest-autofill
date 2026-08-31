@@ -40,7 +40,7 @@ pre-push:
   parallel: true
   commands:
     swift-format:
-      run: cd packages/products/harvest-autofill && mise exec -- swiftformat --lint HarvestApp.swift
+      run: cd packages/products/harvest-autofill && mise exec -- swiftformat --lint HarvestCore.swift HarvestSideEffects.swift HarvestApp.swift SwiftTests
     swift-lint:
       # SwiftLint needs sourcekit from a full Xcode. Use the selected Xcode (CI), or fall
       # back to any installed Xcode.app when only Command Line Tools are selected (local).
@@ -72,6 +72,14 @@ pre-push:
       run: cd packages/products/website && mise exec -- pnpm exec prettier --check "src/**/*.astro"
     css-lint:
       run: cd packages/products/website && mise exec -- pnpm exec stylelint "src/**/*.css"
+    # ── Test suites (unit + behaviour + coverage). Visual regression + Playwright E2E are
+    #    heavier (need a built app / a browser) and run in CI — see .github/workflows/test.yml.
+    python-test:
+      run: cd packages/products/harvest-autofill && mise exec -- uv run --python 3.12 --group dev pytest --cov
+    swift-test:
+      run: cd packages/products/harvest-autofill && ./swift-coverage-gate.sh
+    web-test:
+      run: cd packages/products/website && mise exec -- pnpm exec vitest run --coverage
 
 # ─── Keep the workspace toolchain in sync after branch switches / merges ──────
 post-checkout:

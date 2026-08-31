@@ -379,3 +379,8 @@ packages/products/website/.astro/
 # website public assets (the shared base ignores *.png)
 !packages/products/website/public/**/*.png
 .coverage
+packages/products/website/test-results/
+packages/products/website/playwright-report/
+packages/products/website/dist/harvest-autofill-releases
+!packages/products/harvest-autofill/visual-baseline/**/*.png
+!packages/products/website/e2e/**/*.png

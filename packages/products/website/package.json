@@ -9,7 +9,10 @@
 		"check": "astro check",
 		"format": "prettier --write \"src/**/*.astro\"",
 		"format:check": "prettier --check \"src/**/*.astro\"",
-		"lint:css": "stylelint \"src/**/*.css\""
+		"lint:css": "stylelint \"src/**/*.css\"",
+		"test": "vitest run",
+		"test:unit": "vitest run --coverage",
+		"test:e2e": "ASTRO_BASE=/ astro build && playwright test"
 	},
 	"dependencies": {
 		"@astrojs/react": "^4.4.0",
@@ -29,14 +32,21 @@
 	},
 	"devDependencies": {
 		"@astrojs/check": "^0.9.5",
+		"@playwright/test": "^1.62.1",
+		"@testing-library/jest-dom": "^7.0.1",
+		"@testing-library/react": "^16.3.3",
+		"@testing-library/user-event": "^14.6.6",
 		"@types/react": "^19.1.13",
 		"@types/react-dom": "^19.1.9",
+		"@vitest/coverage-v8": "^4.1.11",
+		"jsdom": "^30.0.1",
 		"prettier": "^3.6.2",
 		"prettier-plugin-astro": "^0.14.1",
 		"sharp": "^0.35.4",
 		"stylelint": "^16.25.0",
 		"stylelint-config-standard": "^40.0.0",
-		"typescript": "^7.0.0"
+		"typescript": "^7.0.0",
+		"vitest": "^4.1.11"
 	},
 	"packageManager": "pnpm@11.23.0"
 }

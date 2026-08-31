@@ -1,0 +1,58 @@
+name: Test
+# The full test matrix: Python engine (pytest), Swift logic (Swift Testing + coverage gate),
+# website units (Vitest), app visual regression, and website E2E + visual (Playwright).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-26 # Swift build + the macOS 26 SDK the app renders with
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: packages/products/harvest-autofill
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          install: true
+          cache: true
+
+      - name: Python engine tests (pytest + coverage)
+        run: uv run --python 3.12 --group dev pytest --cov
+
+      - name: Swift logic tests + coverage gate
+        run: ./swift-coverage-gate.sh
+
+      - name: Build the app (for visual regression)
+        run: ./build.sh
+
+      - name: App visual regression
+        run: uv run --python 3.12 --with pillow visual-check.py
+
+      - name: Install website deps
+        working-directory: packages/products/website
+        run: pnpm install --frozen-lockfile
+
+      - name: Website unit tests (Vitest + coverage)
+        working-directory: packages/products/website
+        run: pnpm exec vitest run --coverage
+
+      - name: Install Playwright browser
+        working-directory: packages/products/website
+        run: pnpm exec playwright install chromium
+
+      - name: Website E2E + visual (Playwright)
+        working-directory: packages/products/website
+        run: pnpm test:e2e
