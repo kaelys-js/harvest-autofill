@@ -1,4 +1,4 @@
-name: Lint
+name: Checks
 # Format-check + lint every file type AND lint commit messages, using the mise-pinned
 # tools via the same lefthook gate that runs on pre-push locally.
 on:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: lint-${{ github.ref }}
+  group: checks-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
     runs-on: macos-26       # SwiftLint needs a full Xcode (present on this runner)
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0          # need history to lint the commit range
           persist-credentials: false

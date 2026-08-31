@@ -1,11 +1,19 @@
 import { expect, test } from "@playwright/test";
 
-// Visual regression on the hero, in both themes. Animations disabled for determinism.
-// Browser font rendering differs machine-to-machine, so these pixel baselines are for LOCAL
-// runs (they match the dev's Mac); in CI the deterministic app-render visual gate covers
-// visual regression, and the E2E specs above cover website behaviour.
+// Visual regression on the hero, in both themes. Runs in CI, not skipped: the suite executes
+// inside the pinned Playwright Docker container (see the web-visual gate), so rendering is
+// byte-identical on every machine. The live GitHub version fetch is stubbed to a fixed tag so
+// the download button — and therefore the screenshot — is deterministic. Animations disabled.
 test.describe("visual", () => {
-	test.skip(!!process.env.CI, "pixel baselines are machine-specific; run locally");
+	test.beforeEach(async ({ page }) => {
+		await page.route("**/api.github.com/**", (route) =>
+			route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({ tag_name: "v0.0.0" }),
+			}),
+		);
+	});
 
 	test("hero — light", async ({ page }) => {
 		await page.goto("./");

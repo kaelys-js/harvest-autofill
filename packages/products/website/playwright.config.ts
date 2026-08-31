@@ -20,10 +20,9 @@ export default defineConfig({
 		{ name: "mobile", use: { ...devices["Pixel 7"] } },
 	],
 	webServer: {
-		// astro preview/build can hang when backgrounded in a sandbox, so `test:e2e` builds
-		// first and this only serves the pre-built dist statically under the base path (a
-		// symlink maps /harvest-autofill-releases/ onto dist root).
-		command: "python3 -m http.server 4321 --directory dist",
+		// `test:e2e` builds first (ASTRO_BASE=/); this serves the pre-built dist with a
+		// portable node server (works on macOS and inside the Playwright container).
+		command: "node serve.mjs",
 		url: base,
 		reuseExistingServer: !process.env.CI,
 		timeout: 120_000,

@@ -39,6 +39,18 @@ pre-commit:
 pre-push:
   parallel: true
   commands:
+    # Gates are unskippable. `bin/git` refuses `git push --no-verify`; this refuses the
+    # LEFTHOOK=0 / LEFTHOOK_EXCLUDE env bypasses (which act at lefthook's own hook wrapper).
+    no-bypass:
+      run: |
+        if [ -n "${LEFTHOOK_EXCLUDE:-}" ] || [ "${LEFTHOOK:-}" = "0" ]; then
+          echo "BLOCKED: lefthook gates are unskippable (LEFTHOOK/LEFTHOOK_EXCLUDE set)." >&2
+          exit 1
+        fi
+      fail_text: "Gate bypass attempted. Fix the failing check, do not skip."
+    # Enforce CI == lefthook parity and that no test input is hidden by .gitignore.
+    preflight:
+      run: ./bin/preflight.sh
     swift-format:
       run: cd packages/products/harvest-autofill && mise exec -- swiftformat --lint HarvestCore.swift HarvestSideEffects.swift HarvestApp.swift SwiftTests
     swift-lint:
@@ -50,9 +62,9 @@ pre-push:
     python-lint:
       run: cd packages/products/harvest-autofill && mise exec -- ruff check *.py
     shell-format:
-      run: cd packages/products/harvest-autofill && mise exec -- shfmt -i 2 -d *.sh
+      run: mise exec -- shfmt -i 2 -d $(git ls-files '*.sh' bin/git)
     shell-lint:
-      run: cd packages/products/harvest-autofill && mise exec -- shellcheck *.sh
+      run: mise exec -- shellcheck $(git ls-files '*.sh' bin/git)
     toml:
       # taplo's formatter panics on mise's `_.path` dotted key (upstream bug), so lint only.
       run: mise exec -- taplo lint mise.toml
@@ -80,6 +92,23 @@ pre-push:
       run: cd packages/products/harvest-autofill && ./swift-coverage-gate.sh
     web-test:
       run: cd packages/products/website && mise exec -- pnpm exec vitest run --coverage
+    # App render visual regression (macOS only — builds the signed app, then pixel-diffs every
+    # screen vs its baseline). Scoped to app sources so unrelated commits don't rebuild.
+    app-visual:
+      glob: "packages/products/harvest-autofill/*.{swift,py}"
+      run: cd packages/products/harvest-autofill && ./build.sh >/dev/null && mise exec -- uv run --python 3.12 --with pillow visual-check.py
+    # Website E2E + visual regression in the pinned Playwright container. Runs wherever Docker
+    # is available (dev machines, the ubuntu CI job); on a Docker-less runner it defers to the
+    # web-e2e.yml CI job. Scoped to website sources.
+    web-e2e:
+      glob: "packages/products/website/**"
+      run: |
+        cd packages/products/website
+        if docker info >/dev/null 2>&1; then
+          ./run-web-e2e.sh
+        else
+          echo "web-e2e: Docker unavailable here — this check runs in the web-e2e.yml CI job."
+        fi
 
 # ─── Keep the workspace toolchain in sync after branch switches / merges ──────
 post-checkout:
