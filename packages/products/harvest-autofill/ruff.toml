@@ -1,0 +1,5 @@
+line-length = 120
+
+[lint]
+# pyflakes (F) + essential pycodestyle (E/W) + import sorting (I) — the pragmatic default.
+select = ["E4", "E7", "E9", "F", "W", "I"]

@@ -31,7 +31,7 @@ ENTITLEMENTS="$(mktemp -t hafent).plist"
 
 # Hardened-runtime entitlements. The app shells out to the bundled python + /bin/bash,
 # so it needs the allow-jit / disable-library-validation pair for the interpreter.
-cat > "$ENTITLEMENTS" <<'PLIST'
+cat >"$ENTITLEMENTS" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
@@ -43,12 +43,12 @@ PLIST
 
 echo "==> Signing nested Mach-O binaries (python, dylibs) first, then the app..."
 # Sign every nested Mach-O (the bundled Python is full of them) with hardened runtime.
-find "$APP/Contents/Resources/python" -type f \( -name "*.dylib" -o -name "*.so" -o -perm -u+x \) -print0 2>/dev/null \
-  | while IFS= read -r -d '' f; do
-      if file "$f" | grep -q "Mach-O"; then
-        codesign --force --timestamp --options runtime -s "$SIGN_ID" "$f" 2>/dev/null || true
-      fi
-    done
+find "$APP/Contents/Resources/python" -type f \( -name "*.dylib" -o -name "*.so" -o -perm -u+x \) -print0 2>/dev/null |
+  while IFS= read -r -d '' f; do
+    if file "$f" | grep -q "Mach-O"; then
+      codesign --force --timestamp --options runtime -s "$SIGN_ID" "$f" 2>/dev/null || true
+    fi
+  done
 
 echo "==> Signing the app bundle..."
 codesign --force --deep --timestamp --options runtime \
@@ -68,6 +68,7 @@ xcrun stapler staple "$APP"
 xcrun stapler validate "$APP"
 
 echo "==> Re-zipping the stapled app for sharing..."
-rm -f "$ZIP"; ditto -c -k --keepParent "$APP" "$ZIP"
+rm -f "$ZIP"
+ditto -c -k --keepParent "$APP" "$ZIP"
 echo "Done. Share: $ZIP  (opens with no Gatekeeper prompt on any Mac)"
 rm -f "$ENTITLEMENTS"

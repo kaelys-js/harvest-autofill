@@ -1,6 +1,6 @@
-import SwiftUI
 import AppKit
 import CryptoKit
+import SwiftUI
 
 // ============================================================ Paths
 enum P {
@@ -18,18 +18,55 @@ enum P {
         try? FileManager.default.createDirectory(atPath: d + "/logs", withIntermediateDirectories: true)
         return d
     }()
-    static var res: String { Bundle.main.resourcePath ?? dataDir }
-    static var summary: String { dataDir + "/logs/summary.json" }
-    static var config: String  { dataDir + "/config.json" }
-    static var configDefault: String { res + "/config.default.json" }
-    static var engine: String  { res + "/engine.sh" }
-    static var discover: String { res + "/discover.py" }
-    static var icon: String    { Bundle.main.path(forResource: "icon", ofType: "png") ?? (res + "/icon.png") }
-    static var setupMarker: String { dataDir + "/.setup_complete" }
-    static var harvestEnv: String { dataDir + "/harvest.env" }
-    static var calEnv: String  { dataDir + "/calendar.env" }
-    static var adoEnv: String  { dataDir + "/ado.env" }
-    static var githubEnv: String { dataDir + "/github.env" }
+
+    static var res: String {
+        Bundle.main.resourcePath ?? dataDir
+    }
+
+    static var summary: String {
+        dataDir + "/logs/summary.json"
+    }
+
+    static var config: String {
+        dataDir + "/config.json"
+    }
+
+    static var configDefault: String {
+        res + "/config.default.json"
+    }
+
+    static var engine: String {
+        res + "/engine.sh"
+    }
+
+    static var discover: String {
+        res + "/discover.py"
+    }
+
+    static var icon: String {
+        Bundle.main.path(forResource: "icon", ofType: "png") ?? (res + "/icon.png")
+    }
+
+    static var setupMarker: String {
+        dataDir + "/.setup_complete"
+    }
+
+    static var harvestEnv: String {
+        dataDir + "/harvest.env"
+    }
+
+    static var calEnv: String {
+        dataDir + "/calendar.env"
+    }
+
+    static var adoEnv: String {
+        dataDir + "/ado.env"
+    }
+
+    static var githubEnv: String {
+        dataDir + "/github.env"
+    }
+
     // Bundled, relocatable Python (so no system python3 is needed); falls back to python3 on PATH.
     static var python: String {
         let b = res + "/python/bin/python3"
@@ -42,33 +79,39 @@ struct Entry: Codable, Identifiable {
     let id = UUID(); let span: String; let project: String; let task: String; let hours: Double
     enum CodingKeys: String, CodingKey { case span, project, task, hours }
 }
+
 struct Day: Codable, Identifiable {
     let id = UUID(); let name: String; let total: Double?; let note: String?; let entries: [Entry]
     enum CodingKeys: String, CodingKey { case name, total, note, entries }
 }
+
 struct Summary: Codable {
     let state: String; let week: String; let total: Double; let daysWorked: Int
     let days: [Day]; let flags: [String]; let issues: [String]?; let message: String
 }
 
-func hrs(_ v: Double) -> String { (v == v.rounded() ? String(Int(v)) : String(format: "%g", v)) + "h" }
+func hrs(_ v: Double) -> String {
+    (v == v.rounded() ? String(Int(v)) : String(format: "%g", v)) + "h"
+}
+
 func projColor(_ p: String) -> Color {
     switch p {
-    case "ITC":        return Color(red: 0.95, green: 0.46, blue: 0.16)
-    case "Internal":   return Color(red: 0.42, green: 0.48, blue: 0.96)
-    case "Wheaton":    return Color(red: 0.13, green: 0.68, blue: 0.62)
-    case "Providence": return Color(red: 0.30, green: 0.72, blue: 0.42)
-    default:           return .gray
+    case "ITC": Color(red: 0.95, green: 0.46, blue: 0.16)
+    case "Internal": Color(red: 0.42, green: 0.48, blue: 0.96)
+    case "Wheaton": Color(red: 0.13, green: 0.68, blue: 0.62)
+    case "Providence": Color(red: 0.30, green: 0.72, blue: 0.42)
+    default: .gray
     }
 }
+
 struct Status { let text: String; let color: Color; let symbol: String }
 func statusFor(_ s: String) -> Status {
     switch s {
-    case "written": return Status(text: "Recorded to Harvest", color: .green, symbol: "checkmark.circle.fill")
-    case "dryrun":  return Status(text: "Live preview · this week", color: .blue, symbol: "clock.fill")
-    case "dedup":   return Status(text: "Already filled", color: .secondary, symbol: "info.circle.fill")
-    case "fail":    return Status(text: "Needs a look", color: .orange, symbol: "exclamationmark.triangle.fill")
-    default:        return Status(text: "Harvest", color: .secondary, symbol: "clock")
+    case "written": Status(text: "Recorded to Harvest", color: .green, symbol: "checkmark.circle.fill")
+    case "dryrun": Status(text: "Live preview · this week", color: .blue, symbol: "clock.fill")
+    case "dedup": Status(text: "Already filled", color: .secondary, symbol: "info.circle.fill")
+    case "fail": Status(text: "Needs a look", color: .orange, symbol: "exclamationmark.triangle.fill")
+    default: Status(text: "Harvest", color: .secondary, symbol: "clock")
     }
 }
 
@@ -83,16 +126,20 @@ final class WeekModel: ObservableObject {
     init() {
         firstRun = !FileManager.default.fileExists(atPath: P.setupMarker)
         load()
-        refresh()                       // refresh on launch
+        refresh() // refresh on launch
         timer = Timer.scheduledTimer(withTimeInterval: 900, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refresh() }   // every 15 min -> current week stays live
+            Task { @MainActor in self?.refresh() } // every 15 min -> current week stays live
         }
     }
 
     func load() {
         if let d = try? Data(contentsOf: URL(fileURLWithPath: P.summary)),
-           let s = try? JSONDecoder().decode(Summary.self, from: d) { summary = s }
+           let s = try? JSONDecoder().decode(Summary.self, from: d)
+        {
+            summary = s
+        }
     }
+
     func run(_ mode: String) {
         guard !refreshing else { return }
         refreshing = true
@@ -103,23 +150,31 @@ final class WeekModel: ObservableObject {
             await MainActor.run { self.load(); self.refreshing = false; self.lastRefresh = Date() }
         }
     }
-    func refresh() { run("dry") }
-    func logNow()  { run("write") }
+
+    func refresh() {
+        run("dry")
+    }
+
+    func logNow() {
+        run("write")
+    }
 
     var menuTitle: String {
         guard let s = summary else { return "—" }
         return hrs(s.total)
     }
+
     // Human menu header: a plain-language headline + a compact detail line.
     var menuHeadline: String {
         guard let s = summary else { return "Adding up this week…" }
         switch s.state {
         case "written": return "Logged to Harvest"
-        case "dedup":   return "This week is already filed"
-        case "fail":    return "This week needs a look"
-        default:        return "This week, so far"
+        case "dedup": return "This week is already filed"
+        case "fail": return "This week needs a look"
+        default: return "This week, so far"
         }
     }
+
     var menuDetail: String {
         guard let s = summary else { return "" }
         return "\(hrs(s.total)) across \(s.daysWorked) day\(s.daysWorked == 1 ? "" : "s")  ·  \(s.week)"
@@ -135,17 +190,24 @@ let UPDATE_PUBKEY_B64 = "QwrTC2P5Xh/A+Eq92spnRGHFESWTxfiX7Hqwk0waays="
 struct UpdateInfo: Equatable { let build: Int; let version: String; let sha256: String; let notes: String; let zip: URL }
 struct WhatsNew: Equatable { let version: String; let notes: String; let date: String; let url: String }
 enum UpdaterState: Equatable { case idle, checking, upToDate, downloading, ready(UpdateInfo), failed(String) }
-struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: String? { m } }
+struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: String? {
+    m
+} }
 
 @MainActor final class Updater: ObservableObject {
     static let shared = Updater()
     @Published var state: UpdaterState = .idle
     @Published var readyAppPath: String?
-    @Published var whatsNew: WhatsNew?          // set to trigger the "What's new" window
+    @Published var whatsNew: WhatsNew? // set to trigger the "What's new" window
     @Published var loadingWhatsNew = false
     private var timer: Timer?
-    var currentBuild: Int { Int((Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "0") ?? 0 }
-    var currentVersion: String { (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "" }
+    var currentBuild: Int {
+        Int((Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "0") ?? 0
+    }
+
+    var currentVersion: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? ""
+    }
 
     func startAuto() {
         maybeShowWhatsNew()
@@ -159,14 +221,19 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
     func maybeShowWhatsNew() {
         let seen = UserDefaults.standard.integer(forKey: "seenBuild")
         let cur = currentBuild
-        if seen == 0 { UserDefaults.standard.set(cur, forKey: "seenBuild"); return }   // fresh install: nothing to show
+        if seen == 0 {
+            UserDefaults.standard.set(cur, forKey: "seenBuild"); return
+        } // fresh install: nothing to show
         if cur > seen {
             Task {
-                if let wn = try? await release(forTag: "v\(currentVersion)"), !wn.notes.isEmpty { self.whatsNew = wn }
+                if let wn = try? await release(forTag: "v\(currentVersion)"), !wn.notes.isEmpty {
+                    self.whatsNew = wn
+                }
                 UserDefaults.standard.set(cur, forKey: "seenBuild")
             }
         }
     }
+
     // Open What's New on demand (from the About button), for the current version.
     func showWhatsNewNow() {
         loadingWhatsNew = true
@@ -176,6 +243,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
             self.whatsNew = wn ?? WhatsNew(version: currentVersion, notes: "No release notes were found for this version.", date: "", url: UPDATE_REPO_URL)
         }
     }
+
     func release(forTag tag: String) async throws -> WhatsNew {
         var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(UPDATE_REPO)/releases/tags/\(tag)")!)
         req.setValue("harvest-fill-updater", forHTTPHeaderField: "User-Agent"); req.timeoutInterval = 15
@@ -186,24 +254,36 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
                         date: Self.pretty(o["published_at"] as? String ?? ""),
                         url: o["html_url"] as? String ?? UPDATE_REPO_URL)
     }
+
     static func pretty(_ iso: String) -> String {
         let f = ISO8601DateFormatter()
         guard let d = f.date(from: iso) else { return "" }
         let out = DateFormatter(); out.dateStyle = .long; out.timeStyle = .none
         return out.string(from: d)
     }
+
     func check(manual: Bool) {
-        if case .downloading = state { return }
-        if case .ready = state { return }
+        if case .downloading = state {
+            return
+        }
+        if case .ready = state {
+            return
+        }
         state = .checking
         Task { await self.doCheck(manual: manual) }
     }
+
     private func doCheck(manual: Bool) async {
         do {
             let info = try await fetchLatest()
-            if info.build > currentBuild { await download(info) } else { state = .upToDate }
+            if info.build > currentBuild {
+                await download(info)
+            } else {
+                state = .upToDate
+            }
         } catch { state = manual ? .failed(error.localizedDescription) : .idle }
     }
+
     private func fetchLatest() async throws -> UpdateInfo {
         var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(UPDATE_REPO)/releases/latest")!)
         req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
@@ -218,7 +298,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
                 .flatMap { ($0["browser_download_url"] as? String).flatMap(URL.init(string:)) }
         }
         guard let mURL = assetURL("manifest.json"), let sURL = assetURL("manifest.json.sig"), let zURL = assetURL("HarvestAutoFill.zip")
-            else { throw UpdErr(m: "This release is missing its update files") }
+        else { throw UpdErr(m: "This release is missing its update files") }
         let (mData, _) = try await URLSession.shared.data(from: mURL)
         let (sData, _) = try await URLSession.shared.data(from: sURL)
         guard let pub = Data(base64Encoded: UPDATE_PUBKEY_B64),
@@ -228,9 +308,10 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
               key.isValidSignature(sig, for: mData) else { throw UpdErr(m: "This update couldn't be verified as genuine, so it wasn't installed") }
         guard let m = try? JSONSerialization.jsonObject(with: mData) as? [String: Any],
               let build = m["build"] as? Int, let version = m["version"] as? String, let sha = m["sha256"] as? String
-            else { throw UpdErr(m: "The update information couldn't be read") }
+        else { throw UpdErr(m: "The update information couldn't be read") }
         return UpdateInfo(build: build, version: version, sha256: sha.lowercased(), notes: m["notes"] as? String ?? "", zip: zURL)
     }
+
     private func download(_ info: UpdateInfo) async {
         state = .downloading
         do {
@@ -250,9 +331,12 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
             let cv = Process(); cv.executableURL = URL(fileURLWithPath: "/usr/bin/codesign"); cv.arguments = ["--verify", "--deep", "--strict", newApp]; try? cv.run(); cv.waitUntilExit()
             guard cv.terminationStatus == 0 else { throw UpdErr(m: "The update's app signature didn't check out, so it wasn't installed") }
             readyAppPath = newApp; state = .ready(info)
-            if Prefs.autoUpdateEnabled() { installAndRelaunch() }
+            if Prefs.autoUpdateEnabled() {
+                installAndRelaunch()
+            }
         } catch { state = .failed(error.localizedDescription) }
     }
+
     func installAndRelaunch() {
         guard let newApp = readyAppPath else { return }
         let target = Bundle.main.bundlePath
@@ -291,6 +375,7 @@ struct EntryRow: View {
         }.padding(.vertical, 2)
     }
 }
+
 struct DayBlock: View {
     let day: Day
     var body: some View {
@@ -298,7 +383,9 @@ struct DayBlock: View {
             HStack {
                 Text(day.name).font(.system(size: 12.5, weight: .semibold))
                 Spacer()
-                if let t = day.total { Text(hrs(t)).font(.system(size: 12, weight: .semibold).monospacedDigit()).foregroundStyle(.secondary) }
+                if let t = day.total {
+                    Text(hrs(t)).font(.system(size: 12, weight: .semibold).monospacedDigit()).foregroundStyle(.secondary)
+                }
             }
             if let note = day.note {
                 Text(note).font(.system(size: 12)).foregroundStyle(.tertiary).padding(.leading, 2)
@@ -308,6 +395,7 @@ struct DayBlock: View {
         }.padding(.vertical, 9)
     }
 }
+
 struct IssueRow: View {
     let text: String
     var body: some View {
@@ -323,8 +411,13 @@ struct IssueRow: View {
 struct MainWindow: View {
     @ObservedObject var model: WeekModel
     var render = false
-    var s: Summary? { model.summary }
-    var issues: [String] { s?.issues ?? [] }
+    var s: Summary? {
+        model.summary
+    }
+
+    var issues: [String] {
+        s?.issues ?? []
+    }
 
     var body: some View {
         let st = statusFor(s?.state ?? "")
@@ -344,7 +437,9 @@ struct MainWindow: View {
                         .font(.system(size: 12)).foregroundStyle(.secondary)
                 }
                 Spacer()
-                if model.refreshing { ProgressView().controlSize(.small) }
+                if model.refreshing {
+                    ProgressView().controlSize(.small)
+                }
             }
             .padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 14)
             Divider()
@@ -353,10 +448,16 @@ struct MainWindow: View {
                 let list = VStack(spacing: 0) {
                     ForEach(Array(s.days.enumerated()), id: \.offset) { i, day in
                         DayBlock(day: day)
-                        if i < s.days.count - 1 { Divider().opacity(0.5) }
+                        if i < s.days.count - 1 {
+                            Divider().opacity(0.5)
+                        }
                     }
                 }.padding(.horizontal, 18).padding(.vertical, 4)
-                if render { list } else { ScrollView { list }.frame(maxHeight: 680) }
+                if render {
+                    list
+                } else {
+                    ScrollView { list }.frame(maxHeight: 680)
+                }
             } else {
                 Text("Run a preview to see this week.").font(.system(size: 13)).foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity).padding(.vertical, 40)
@@ -390,7 +491,11 @@ struct MainWindow: View {
 // ============================================================ Preferences
 enum TestState: Equatable {
     case idle, testing, ok(String), fail(String)
-    var isOK: Bool { if case .ok = self { return true }; return false }
+    var isOK: Bool {
+        if case .ok = self {
+            return true
+        }; return false
+    }
 }
 
 @MainActor
@@ -430,59 +535,121 @@ final class Prefs: ObservableObject {
     @Published var showPAT = false
 
     // ---- validation ----
-    var accountValid: Bool { !harvestAccount.isEmpty && harvestAccount.allSatisfy(\.isNumber) }
-    var tokenValid: Bool { !harvestToken.isEmpty }
-    var calUsed: Bool { !calUrl.isEmpty || !calSecret.isEmpty }
-    var calUrlValid: Bool { !calUsed || calUrl.hasPrefix("https://script.google.com/macros/") }
-    var calSecretValid: Bool { !calUsed || !calSecret.isEmpty }
-    var ghLoginValid: Bool { !ghLogin.isEmpty }
-    var ghOrgsValid: Bool { !ghOrgs.trimmingCharacters(in: .whitespaces).isEmpty }
-    var targetValid: Bool { dailyTarget >= 1 && dailyTarget <= 24 }
-    var workHoursValid: Bool { workStart >= 0 && workEnd > workStart && workEnd <= 24 }
-    var gapValid: Bool { gapCap > 0 && leadIn >= 0 }
-    var regionValid: Bool { SUPPORTED_REGIONS.contains(holidayRegion) }
-    var adoValid: Bool { !adoEnabled || (![adoOrg, adoProject, adoAuthor, adoPAT].contains(where: { $0.isEmpty }) && !adoRepos.trimmingCharacters(in: .whitespaces).isEmpty) }
-    var canSave: Bool { accountValid && tokenValid && calUrlValid && calSecretValid && ghLoginValid && ghOrgsValid && targetValid && workHoursValid && gapValid && regionValid && adoValid }
+    var accountValid: Bool {
+        !harvestAccount.isEmpty && harvestAccount.allSatisfy(\.isNumber)
+    }
+
+    var tokenValid: Bool {
+        !harvestToken.isEmpty
+    }
+
+    var calUsed: Bool {
+        !calUrl.isEmpty || !calSecret.isEmpty
+    }
+
+    var calUrlValid: Bool {
+        !calUsed || calUrl.hasPrefix("https://script.google.com/macros/")
+    }
+
+    var calSecretValid: Bool {
+        !calUsed || !calSecret.isEmpty
+    }
+
+    var ghLoginValid: Bool {
+        !ghLogin.isEmpty
+    }
+
+    var ghOrgsValid: Bool {
+        !ghOrgs.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    var targetValid: Bool {
+        dailyTarget >= 1 && dailyTarget <= 24
+    }
+
+    var workHoursValid: Bool {
+        workStart >= 0 && workEnd > workStart && workEnd <= 24
+    }
+
+    var gapValid: Bool {
+        gapCap > 0 && leadIn >= 0
+    }
+
+    var regionValid: Bool {
+        SUPPORTED_REGIONS.contains(holidayRegion)
+    }
+
+    var adoValid: Bool {
+        !adoEnabled || (![adoOrg, adoProject, adoAuthor, adoPAT].contains(where: \.isEmpty) && !adoRepos.trimmingCharacters(in: .whitespaces).isEmpty)
+    }
+
+    var canSave: Bool {
+        accountValid && tokenValid && calUrlValid && calSecretValid && ghLoginValid && ghOrgsValid && targetValid && workHoursValid && gapValid && regionValid && adoValid
+    }
+
     // Dependency self-check: the engine needs Python (bundled) + curl (system). No install required.
-    var pythonReady: Bool { FileManager.default.isExecutableFile(atPath: P.res + "/python/bin/python3") }
-    var curlReady: Bool { FileManager.default.isExecutableFile(atPath: "/usr/bin/curl") }
+    var pythonReady: Bool {
+        FileManager.default.isExecutableFile(atPath: P.res + "/python/bin/python3")
+    }
 
-    init() { load() }
+    var curlReady: Bool {
+        FileManager.default.isExecutableFile(atPath: "/usr/bin/curl")
+    }
 
-    func cfg() -> [String: Any] { (try? JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: P.config)))) as? [String: Any] ?? [:] }
+    init() {
+        load()
+    }
+
+    func cfg() -> [String: Any] {
+        (try? JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: P.config)))) as? [String: Any] ?? [:]
+    }
+
     func envVal(_ path: String, _ key: String) -> String {
         guard let s = try? String(contentsOfFile: path, encoding: .utf8) else { return "" }
         for line in s.split(separator: "\n") {
             let t = line.trimmingCharacters(in: .whitespaces)
             guard t.hasPrefix(key + "=") else { continue }
             var v = String(t.dropFirst(key.count + 1)).trimmingCharacters(in: .whitespaces)
-            if let q = v.first, q == "\"" || q == "'" {          // quoted -> take content between quotes (ignore trailing comment)
+            if let q = v.first, q == "\"" || q == "'" { // quoted -> take content between quotes (ignore trailing comment)
                 v.removeFirst()
-                if let end = v.firstIndex(of: q) { v = String(v[v.startIndex..<end]) }
-            } else if let hash = v.firstIndex(of: "#") {          // unquoted -> strip inline comment
-                v = String(v[v.startIndex..<hash]).trimmingCharacters(in: .whitespaces)
+                if let end = v.firstIndex(of: q) {
+                    v = String(v[v.startIndex ..< end])
+                }
+            } else if let hash = v.firstIndex(of: "#") { // unquoted -> strip inline comment
+                v = String(v[v.startIndex ..< hash]).trimmingCharacters(in: .whitespaces)
             }
             return v
         }
         return ""
     }
+
     func load() {
         let c = cfg()
         autoRecord = c["auto_record"] as? Bool ?? true
         autoUpdate = c["auto_update"] as? Bool ?? false
         dailyTarget = c["daily_target_hours"] as? Double ?? 9.0
-        if let w = c["work_hours"] as? [String: Any] { workStart = w["start"] as? Int ?? 9; workEnd = w["end"] as? Int ?? 17 }
-        if let t = c["timeline"] as? [String: Any] { gapCap = (t["gap_cap_min"] as? NSNumber)?.doubleValue ?? 90; leadIn = (t["lead_in_min"] as? NSNumber)?.doubleValue ?? 45 }
-        if let g = c["github"] as? [String: Any] { ghLogin = g["login"] as? String ?? ""; ghOrgs = (g["orgs"] as? [String] ?? []).joined(separator: ", ") }
+        if let w = c["work_hours"] as? [String: Any] {
+            workStart = w["start"] as? Int ?? 9; workEnd = w["end"] as? Int ?? 17
+        }
+        if let t = c["timeline"] as? [String: Any] {
+            gapCap = (t["gap_cap_min"] as? NSNumber)?.doubleValue ?? 90; leadIn = (t["lead_in_min"] as? NSNumber)?.doubleValue ?? 45
+        }
+        if let g = c["github"] as? [String: Any] {
+            ghLogin = g["login"] as? String ?? ""; ghOrgs = (g["orgs"] as? [String] ?? []).joined(separator: ", ")
+        }
         if let a = c["azure_devops"] as? [String: Any] {
             adoEnabled = a["enabled"] as? Bool ?? true; adoOrg = a["org"] as? String ?? ""
             adoProject = a["project"] as? String ?? ""; adoRepos = (a["repos"] as? [String] ?? []).joined(separator: ", ")
             adoAuthor = a["author"] as? String ?? ""
         }
-        if let h = c["holidays"] as? [String: Any] { holidayRegion = h["region"] as? String ?? "CA-BC" }
-        if let hv = c["harvest"] as? [String: Any] { harvestUser = String(describing: hv["user_id"] ?? "") }
+        if let h = c["holidays"] as? [String: Any] {
+            holidayRegion = h["region"] as? String ?? "CA-BC"
+        }
+        if let hv = c["harvest"] as? [String: Any] {
+            harvestUser = String(describing: hv["user_id"] ?? "")
+        }
         if let projs = c["projects"] as? [String: Any] {
-            projectsList = projs.compactMap { (k, v) in (v as? [String: Any]).map { (k, String(describing: $0["project_id"] ?? "")) } }.sorted { $0.0 < $1.0 }
+            projectsList = projs.compactMap { k, v in (v as? [String: Any]).map { (k, String(describing: $0["project_id"] ?? "")) } }.sorted { $0.0 < $1.0 }
         }
         harvestAccount = envVal(P.harvestEnv, "HARVEST_ACCOUNT_ID")
         harvestToken = envVal(P.harvestEnv, "HARVEST_ACCESS_TOKEN")
@@ -491,11 +658,13 @@ final class Prefs: ObservableObject {
         adoPAT = envVal(P.adoEnv, "ADO_PAT")
         ghToken = envVal(P.githubEnv, "GITHUB_TOKEN")
     }
+
     func writeEnv(_ path: String, _ kv: [(String, String)]) {
         let body = kv.map { "\($0.0)='\($0.1)'" }.joined(separator: "\n") + "\n"
         try? body.write(toFile: path, atomically: true, encoding: .utf8)
         try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: path)
     }
+
     // writeAll writes config + env files but does NOT mark setup complete — so the
     // onboarding preview can save-then-dry-run without prematurely finishing first-run.
     func writeAll() {
@@ -513,28 +682,46 @@ final class Prefs: ObservableObject {
         a["repos"] = adoRepos.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }; a["author"] = adoAuthor
         c["azure_devops"] = a
         var h = c["holidays"] as? [String: Any] ?? [:]; h["region"] = holidayRegion; c["holidays"] = h
-        if let d = try? JSONSerialization.data(withJSONObject: c, options: [.prettyPrinted]) { try? d.write(to: URL(fileURLWithPath: P.config)) }
+        if let d = try? JSONSerialization.data(withJSONObject: c, options: [.prettyPrinted]) {
+            try? d.write(to: URL(fileURLWithPath: P.config))
+        }
         writeEnv(P.harvestEnv, [("HARVEST_ACCOUNT_ID", harvestAccount), ("HARVEST_ACCESS_TOKEN", harvestToken),
                                 ("HARVEST_PROJECT_MAP", "{}")])
         writeEnv(P.calEnv, [("APPS_SCRIPT_URL", calUrl), ("APPS_SCRIPT_SECRET", calSecret)])
-        if !adoPAT.isEmpty { writeEnv(P.adoEnv, [("ADO_PAT", adoPAT)]) }
-        if !ghToken.isEmpty { writeEnv(P.githubEnv, [("GITHUB_TOKEN", ghToken)]) }
-        else { try? FileManager.default.removeItem(atPath: P.githubEnv) }
+        if !adoPAT.isEmpty {
+            writeEnv(P.adoEnv, [("ADO_PAT", adoPAT)])
+        }
+        if !ghToken.isEmpty {
+            writeEnv(P.githubEnv, [("GITHUB_TOKEN", ghToken)])
+        } else {
+            try? FileManager.default.removeItem(atPath: P.githubEnv)
+        }
     }
+
     static func autoUpdateEnabled() -> Bool {
         guard let d = try? Data(contentsOf: URL(fileURLWithPath: P.config)),
               let c = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else { return false }
         return c["auto_update"] as? Bool ?? false
     }
-    func markComplete() { FileManager.default.createFile(atPath: P.setupMarker, contents: Data()) }
-    func save() { writeAll(); markComplete(); syncAgents(); status = "Saved ✓" }
+
+    func markComplete() {
+        FileManager.default.createFile(atPath: P.setupMarker, contents: Data())
+    }
+
+    func save() {
+        writeAll(); markComplete(); syncAgents(); status = "Saved ✓"
+    }
 
     // Destructive: wipe config + all secret env files + the setup marker, then re-seed a blank
     // template so the engine still has a config. Returns the app to first-run onboarding.
     func resetAll() {
         removeAgents()
-        for f in [P.config, P.harvestEnv, P.calEnv, P.adoEnv, P.githubEnv, P.setupMarker] { try? FileManager.default.removeItem(atPath: f) }
-        if FileManager.default.fileExists(atPath: P.configDefault) { try? FileManager.default.copyItem(atPath: P.configDefault, toPath: P.config) }
+        for f in [P.config, P.harvestEnv, P.calEnv, P.adoEnv, P.githubEnv, P.setupMarker] {
+            try? FileManager.default.removeItem(atPath: f)
+        }
+        if FileManager.default.fileExists(atPath: P.configDefault) {
+            try? FileManager.default.copyItem(atPath: P.configDefault, toPath: P.config)
+        }
         harvestTest = .idle; discovered = false; preview = nil
         load()
         status = ""
@@ -543,26 +730,32 @@ final class Prefs: ObservableObject {
     // ---- launchd agents: Friday auto-write + launch-at-login, per-user, self-installing ----
     // Stable bundle-scoped labels so re-running is idempotent (bootout then bootstrap).
     static let weeklyLabel = "studio.harvestfill.weekly"
-    static let loginLabel  = "studio.harvestfill.menubar"
-    private func laPath(_ label: String) -> String { NSHomeDirectory() + "/Library/LaunchAgents/\(label).plist" }
+    static let loginLabel = "studio.harvestfill.menubar"
+    private func laPath(_ label: String) -> String {
+        NSHomeDirectory() + "/Library/LaunchAgents/\(label).plist"
+    }
+
     private func launchctl(_ args: [String]) {
         let p = Process(); p.executableURL = URL(fileURLWithPath: "/bin/launchctl"); p.arguments = args
         p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice
         try? p.run(); p.waitUntilExit()
     }
+
     private func installPlist(_ label: String, _ xml: String) {
         let dir = NSHomeDirectory() + "/Library/LaunchAgents"
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         let path = laPath(label)
         try? xml.write(toFile: path, atomically: true, encoding: .utf8)
         let uid = String(getuid())
-        launchctl(["bootout", "gui/\(uid)/\(label)"])      // idempotent: clear any prior instance
+        launchctl(["bootout", "gui/\(uid)/\(label)"]) // idempotent: clear any prior instance
         launchctl(["bootstrap", "gui/\(uid)", path])
     }
+
     private func uninstallPlist(_ label: String) {
         launchctl(["bootout", "gui/\(String(getuid()))/\(label)"])
         try? FileManager.default.removeItem(atPath: laPath(label))
     }
+
     // Install the login-launch agent always; the Friday agent only when auto-record is on.
     func syncAgents() {
         let app = Bundle.main.bundlePath
@@ -595,7 +788,10 @@ final class Prefs: ObservableObject {
             uninstallPlist(Self.weeklyLabel)
         }
     }
-    func removeAgents() { uninstallPlist(Self.weeklyLabel); uninstallPlist(Self.loginLabel) }
+
+    func removeAgents() {
+        uninstallPlist(Self.weeklyLabel); uninstallPlist(Self.loginLabel)
+    }
 
     // ---- live connection test (onboarding: verify before advancing) ----
     @Published var harvestTest: TestState = .idle
@@ -637,7 +833,7 @@ final class Prefs: ObservableObject {
             let end = Date(); let start = Calendar.current.date(byAdding: .day, value: -7, to: end) ?? end
             var comps = URLComponents(string: url)
             comps?.queryItems = [.init(name: "secret", value: secret),
-                                 .init(name: "action", value: "events"),   // richer scripts require it; the simple one ignores it
+                                 .init(name: "action", value: "events"), // richer scripts require it; the simple one ignores it
                                  .init(name: "start", value: fmt.string(from: start)),
                                  .init(name: "end", value: fmt.string(from: end))]
             var result: TestState = .fail("Couldn't build the request")
@@ -651,10 +847,12 @@ final class Prefs: ObservableObject {
                             result = .ok("Connected — \(events.count) event\(events.count == 1 ? "" : "s") in the last 7 days")
                         } else if (o["error"] as? String) == "unauthorized" {
                             result = .fail("Reached the script, but the secret doesn't match its APPS_SCRIPT_SECRET")
-                        } else { result = .fail("Reached the script, but it didn't return an events list") }
+                        } else {
+                            result = .fail("Reached the script, but it didn't return an events list")
+                        }
                     } else {
                         result = .fail(code == 0 ? "Couldn't reach that URL — check it's the deployed /exec URL"
-                                       : "That URL didn't return JSON (HTTP \(code)) — redeploy as a Web app with access: Anyone")
+                            : "That URL didn't return JSON (HTTP \(code)) — redeploy as a Web app with access: Anyone")
                     }
                 } catch { result = .fail(error.localizedDescription) }
             }
@@ -677,6 +875,7 @@ final class Prefs: ObservableObject {
             await MainActor.run { self.preview = sum; self.previewing = false }
         }
     }
+
     @Published var logging = false
     func logThisWeek() {
         writeAll(); logging = true
@@ -689,6 +888,7 @@ final class Prefs: ObservableObject {
             await MainActor.run { self.preview = sum; self.logging = false }
         }
     }
+
     @Published var discovering = false
     @Published var discovered = false
     func discover() {
@@ -698,8 +898,10 @@ final class Prefs: ObservableObject {
             var env = ProcessInfo.processInfo.environment
             env["HARVEST_ACCOUNT_ID"] = account; env["HARVEST_ACCESS_TOKEN"] = token
             env["ADO_ORG"] = aorg; env["ADO_PROJECT"] = aproj; env["ADO_PAT"] = apat
-            if !ght.isEmpty { env["GITHUB_TOKEN"] = ght }
-            env["PYTHONDONTWRITEBYTECODE"] = "1"   // keep the signed bundle immutable at runtime
+            if !ght.isEmpty {
+                env["GITHUB_TOKEN"] = ght
+            }
+            env["PYTHONDONTWRITEBYTECODE"] = "1" // keep the signed bundle immutable at runtime
             env["PATH"] = NSHomeDirectory() + "/.local/share/mise/shims:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
             p.environment = env
             // Pasted token wins; else fall back to the gh CLI. Run through the bundled Python.
@@ -712,14 +914,24 @@ final class Prefs: ObservableObject {
                 self.discovering = false
                 guard let o = obj else { self.status = "Discovery failed — check your Harvest account ID + token"; return }
                 self.discovered = true
-                if let hv = o["harvest"] as? [String: Any] { self.harvestUser = String(describing: hv["user_id"] ?? "") }
-                if let gh = o["github"] as? [String: Any] {
-                    if let l = gh["login"] as? String, !l.isEmpty { self.ghLogin = l }
-                    if let orgs = gh["orgs"] as? [String] { self.ghOrgsAvailable = orgs; if self.ghOrgs.isEmpty { self.ghOrgs = orgs.joined(separator: ", ") } }
+                if let hv = o["harvest"] as? [String: Any] {
+                    self.harvestUser = String(describing: hv["user_id"] ?? "")
                 }
-                if let ado = o["azure_devops"] as? [String: Any], let repos = ado["repos"] as? [String] { self.adoReposAvailable = repos }
+                if let gh = o["github"] as? [String: Any] {
+                    if let l = gh["login"] as? String, !l.isEmpty {
+                        self.ghLogin = l
+                    }
+                    if let orgs = gh["orgs"] as? [String] {
+                        self.ghOrgsAvailable = orgs; if self.ghOrgs.isEmpty {
+                            self.ghOrgs = orgs.joined(separator: ", ")
+                        }
+                    }
+                }
+                if let ado = o["azure_devops"] as? [String: Any], let repos = ado["repos"] as? [String] {
+                    self.adoReposAvailable = repos
+                }
                 if let pr = o["harvest_projects"] as? [String: Any] {
-                    self.projectsList = pr.compactMap { (k, v) in (v as? [String: Any]).map { (k, String(describing: $0["project_id"] ?? "")) } }.sorted { $0.0 < $1.0 }
+                    self.projectsList = pr.compactMap { k, v in (v as? [String: Any]).map { (k, String(describing: $0["project_id"] ?? "")) } }.sorted { $0.0 < $1.0 }
                 }
                 self.status = "Found your projects, orgs and repos ✓ — pick the ones to include below"
             }
@@ -731,12 +943,12 @@ let LBL: CGFloat = 190
 let SUPPORTED_REGIONS = ["CA-BC", "CA-ON", "CA-AB", "CA-QC", "US-Federal"]
 func regionName(_ c: String) -> String {
     switch c {
-    case "CA-BC": return "British Columbia, Canada"
-    case "CA-ON": return "Ontario, Canada"
-    case "CA-AB": return "Alberta, Canada"
-    case "CA-QC": return "Québec, Canada"
-    case "US-Federal": return "United States (Federal)"
-    default: return c
+    case "CA-BC": "British Columbia, Canada"
+    case "CA-ON": "Ontario, Canada"
+    case "CA-AB": "Alberta, Canada"
+    case "CA-QC": "Québec, Canada"
+    case "US-Federal": "United States (Federal)"
+    default: c
     }
 }
 
@@ -745,12 +957,16 @@ extension View {
     // Frosted content card: legible over the window's material, modern layered depth.
     // (True Liquid Glass is reserved for floating controls — see primaryProminent — per HIG.)
     func glassBG(_ radius: CGFloat = 12) -> some View {
-        self.background(.thinMaterial, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+        background(.thinMaterial, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(.primary.opacity(0.06)))
     }
+
     @ViewBuilder func primaryProminent() -> some View {
-        if #available(macOS 26.0, *) { self.buttonStyle(.glassProminent) }
-        else { self.buttonStyle(.borderedProminent) }
+        if #available(macOS 26.0, *) {
+            buttonStyle(.glassProminent)
+        } else {
+            buttonStyle(.borderedProminent)
+        }
     }
 }
 
@@ -783,33 +999,50 @@ function doGet(e) {
 
 // Lightweight JS syntax highlighter (keywords / strings / comments / numbers) for the setup snippet.
 func highlightJS(_ src: String) -> AttributedString {
-    let keywords: Set<String> = ["function", "var", "let", "const", "return", "if", "else", "for", "while", "new", "typeof", "true", "false", "null"]
+    let keywords: Set = ["function", "var", "let", "const", "return", "if", "else", "for", "while", "new", "typeof", "true", "false", "null"]
     let kw = Color(red: 0.79, green: 0.20, blue: 0.55)
     let str = Color(red: 0.80, green: 0.28, blue: 0.22)
     let com = Color.secondary
     let num = Color(red: 0.20, green: 0.42, blue: 0.86)
     var out = AttributedString("")
-    func emit(_ s: String, _ c: Color?) { var a = AttributedString(s); if let c { a.foregroundColor = c }; out += a }
-    func ident(_ ch: Character) -> Bool { ch.isLetter || ch.isNumber || ch == "_" || ch == "$" }
+    func emit(_ s: String, _ c: Color?) {
+        var a = AttributedString(s); if let c {
+            a.foregroundColor = c
+        }; out += a
+    }
+    func ident(_ ch: Character) -> Bool {
+        ch.isLetter || ch.isNumber || ch == "_" || ch == "$"
+    }
     let ch = Array(src); var i = 0
     while i < ch.count {
         let c = ch[i]
         if c == "/", i + 1 < ch.count, ch[i + 1] == "/" {
-            var j = i; while j < ch.count && ch[j] != "\n" { j += 1 }
-            emit(String(ch[i..<j]), com); i = j
+            var j = i; while j < ch.count, ch[j] != "\n" {
+                j += 1
+            }
+            emit(String(ch[i ..< j]), com); i = j
         } else if c == "'" || c == "\"" {
-            let q = c; var j = i + 1; while j < ch.count && ch[j] != q { j += 1 }; j = min(j + 1, ch.count)
-            emit(String(ch[i..<j]), str); i = j
+            let q = c; var j = i + 1; while j < ch.count, ch[j] != q {
+                j += 1
+            }; j = min(j + 1, ch.count)
+            emit(String(ch[i ..< j]), str); i = j
         } else if c.isNumber {
-            var j = i; while j < ch.count && (ch[j].isNumber || ch[j] == ".") { j += 1 }
-            emit(String(ch[i..<j]), num); i = j
+            var j = i; while j < ch.count, ch[j].isNumber || ch[j] == "." {
+                j += 1
+            }
+            emit(String(ch[i ..< j]), num); i = j
         } else if ident(c) {
-            var j = i; while j < ch.count && ident(ch[j]) { j += 1 }
-            let w = String(ch[i..<j]); emit(w, keywords.contains(w) ? kw : nil); i = j
-        } else { emit(String(c), nil); i += 1 }
+            var j = i; while j < ch.count, ident(ch[j]) {
+                j += 1
+            }
+            let w = String(ch[i ..< j]); emit(w, keywords.contains(w) ? kw : nil); i = j
+        } else {
+            emit(String(c), nil); i += 1
+        }
     }
     return out
 }
+
 struct CodeBox: View {
     let code: String
     @State private var copied = false
@@ -824,10 +1057,11 @@ struct CodeBox: View {
             Button {
                 NSPasteboard.general.clearContents(); NSPasteboard.general.setString(code, forType: .string); copied = true
             } label: { Label(copied ? "Copied" : "Copy", systemImage: copied ? "checkmark" : "doc.on.doc").font(.system(size: 10)) }
-            .buttonStyle(.borderless).padding(8)
+                .buttonStyle(.borderless).padding(8)
         }
     }
 }
+
 struct Step: View {
     let n: Int; let text: String
     var body: some View {
@@ -839,17 +1073,19 @@ struct Step: View {
         }
     }
 }
+
 struct TestStatusView: View {
     let state: TestState
     var body: some View {
         switch state {
         case .idle: EmptyView()
         case .testing: HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Checking…").font(.system(size: 12)).foregroundStyle(.secondary) }
-        case .ok(let m): Label(m, systemImage: "checkmark.circle.fill").font(.system(size: 12)).foregroundStyle(.green).fixedSize(horizontal: false, vertical: true)
-        case .fail(let m): Label(m, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
+        case let .ok(m): Label(m, systemImage: "checkmark.circle.fill").font(.system(size: 12)).foregroundStyle(.green).fixedSize(horizontal: false, vertical: true)
+        case let .fail(m): Label(m, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
         }
     }
 }
+
 struct CalendarTestRow: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
@@ -861,6 +1097,7 @@ struct CalendarTestRow: View {
         }
     }
 }
+
 struct CalendarHelp: View {
     var body: some View {
         DisclosureGroup {
@@ -877,21 +1114,28 @@ struct CalendarHelp: View {
         } label: { Label("How to connect Google Calendar — step by step", systemImage: "questionmark.circle").font(.system(size: 11.5)) }
     }
 }
+
 func invalidBorder(_ valid: Bool) -> some View {
     RoundedRectangle(cornerRadius: 6).stroke(valid ? Color.clear : Color.red.opacity(0.75), lineWidth: 1)
 }
+
 // Trailing status: green check when the field is valid AND filled, red ! when invalid,
 // reserved blank space otherwise so rows don't shift.
 struct ValidMark: View {
     let valid: Bool; let filled: Bool
     var body: some View {
         Group {
-            if !valid { Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red) }
-            else if filled { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }
-            else { Color.clear }
+            if !valid {
+                Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red)
+            } else if filled {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            } else {
+                Color.clear
+            }
         }.font(.system(size: 12)).frame(width: 14, height: 14)
     }
 }
+
 struct Help: View { let text: String; var body: some View {
     Text(text).font(.system(size: 10.5)).foregroundStyle(.tertiary).padding(.leading, LBL + 8).fixedSize(horizontal: false, vertical: true)
 }}
@@ -904,47 +1148,74 @@ struct Field: View {
                 TextField(hint, text: $text).textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
                 ValidMark(valid: valid, filled: !text.isEmpty)
             }
-            if !help.isEmpty { Help(text: help) }
+            if !help.isEmpty {
+                Help(text: help)
+            }
         }
     }
 }
+
 struct Secret: View {
     let label: String; @Binding var text: String; @Binding var reveal: Bool; var valid = true; var help = ""
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 8) {
                 Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
-                Group { if reveal { TextField("", text: $text) } else { SecureField("", text: $text) } }
-                    .textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
+                Group {
+                    if reveal {
+                        TextField("", text: $text)
+                    } else {
+                        SecureField("", text: $text)
+                    }
+                }
+                .textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
                 Button { reveal.toggle() } label: { Image(systemName: reveal ? "eye.slash" : "eye") }
                     .buttonStyle(.borderless).help(reveal ? "Hide" : "Reveal")
                 ValidMark(valid: valid, filled: !text.isEmpty)
             }
-            if !help.isEmpty { Help(text: help) }
+            if !help.isEmpty {
+                Help(text: help)
+            }
         }
     }
 }
+
 struct MultiSelect: View {
     let label: String; let options: [String]; @Binding var csv: String; var valid = true; var help = ""
-    var selected: Set<String> { Set(csv.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }) }
-    func toggle(_ o: String) { var s = selected; if s.contains(o) { s.remove(o) } else { s.insert(o) }; csv = s.sorted().joined(separator: ", ") }
+    var selected: Set<String> {
+        Set(csv.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty })
+    }
+
+    func toggle(_ o: String) {
+        var s = selected; if s.contains(o) {
+            s.remove(o)
+        } else {
+            s.insert(o)
+        }; csv = s.sorted().joined(separator: ", ")
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 8) {
                 Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
                 Menu {
-                    if options.isEmpty { Text("Loading from your accounts…").disabled(true) }
+                    if options.isEmpty {
+                        Text("Loading from your accounts…").disabled(true)
+                    }
                     ForEach(options, id: \.self) { o in
                         Toggle(o, isOn: Binding(get: { selected.contains(o) }, set: { _ in toggle(o) }))
                     }
                 } label: { Text(csv.isEmpty ? "None selected" : csv).lineLimit(1) }
-                .frame(maxWidth: .infinity, alignment: .leading).overlay(invalidBorder(valid))
+                    .frame(maxWidth: .infinity, alignment: .leading).overlay(invalidBorder(valid))
                 ValidMark(valid: valid, filled: !csv.isEmpty)
             }
-            if !help.isEmpty { Help(text: help) }
+            if !help.isEmpty {
+                Help(text: help)
+            }
         }
     }
 }
+
 struct NumRow: View {
     let label: String; @Binding var value: Double; var width: CGFloat = 60; var valid = true; var trailing = ""; var help = ""
     var body: some View {
@@ -952,14 +1223,19 @@ struct NumRow: View {
             HStack(spacing: 8) {
                 Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
                 TextField("", value: $value, format: .number).frame(width: width).textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
-                if !trailing.isEmpty { Text(trailing).font(.system(size: 11)).foregroundStyle(.secondary) }
+                if !trailing.isEmpty {
+                    Text(trailing).font(.system(size: 11)).foregroundStyle(.secondary)
+                }
                 ValidMark(valid: valid, filled: true)
                 Spacer()
             }
-            if !help.isEmpty { Help(text: help) }
+            if !help.isEmpty {
+                Help(text: help)
+            }
         }
     }
 }
+
 struct PrefCard<C: View>: View {
     let title: String; @ViewBuilder let content: () -> C
     var body: some View {
@@ -983,7 +1259,8 @@ struct AccountsContent: View {
                        help: "From id.getharvest.com → Developers → Create New Personal Access Token.")
                 HStack { Text("User ID").frame(width: LBL, alignment: .leading).font(.system(size: 12))
                     Text(prefs.harvestUser.isEmpty ? "—" : prefs.harvestUser).font(.system(size: 12)).foregroundStyle(.secondary)
-                    Spacer(); Button { prefs.discover() } label: { Label("Discover from my accounts", systemImage: "sparkles") } }
+                    Spacer(); Button { prefs.discover() } label: { Label("Discover from my accounts", systemImage: "sparkles") }
+                }
                 Text("Discover reads your Harvest, GitHub, and (when a PAT is set) Azure DevOps to auto-fill your user ID, project mappings, org list, and repo list — so you never type IDs by hand.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
                 if !prefs.projectsList.isEmpty {
@@ -991,7 +1268,8 @@ struct AccountsContent: View {
                         Text("Projects mapped").font(.system(size: 10.5, weight: .semibold)).foregroundStyle(.secondary).padding(.top, 3)
                         ForEach(prefs.projectsList, id: \.0) { name, id in
                             HStack { Text(name).font(.system(size: 11)).lineLimit(1)
-                                Spacer(); Text(id).font(.system(size: 10.5, design: .monospaced)).foregroundStyle(.tertiary) }
+                                Spacer(); Text(id).font(.system(size: 10.5, design: .monospaced)).foregroundStyle(.tertiary)
+                            }
                         }
                     }
                 }
@@ -1028,6 +1306,7 @@ struct AccountsContent: View {
         }
     }
 }
+
 struct AllocationContent: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
@@ -1042,7 +1321,9 @@ struct AllocationContent: View {
                         Text("to").foregroundStyle(.secondary)
                         TextField("", value: $prefs.workEnd, format: .number).frame(width: 44).textFieldStyle(.roundedBorder).overlay(invalidBorder(prefs.workHoursValid))
                         Text(":00").foregroundStyle(.secondary)
-                        if !prefs.workHoursValid { Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red).font(.system(size: 11)) }
+                        if !prefs.workHoursValid {
+                            Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red).font(.system(size: 11))
+                        }
                         Spacer()
                     }
                     Help(text: "Only commits inside these hours count toward the split — before/after-hours work (e.g. overnight automation) is ignored.")
@@ -1069,12 +1350,16 @@ struct AllocationContent: View {
         }
     }
 }
+
 // Second, stronger confirmation for the destructive reset: type-to-confirm (GitHub-style).
 struct ResetConfirmSheet: View {
     @Binding var typed: String
     var onCancel: () -> Void = {}
     var onConfirm: () -> Void = {}
-    var match: Bool { typed.trimmingCharacters(in: .whitespaces).uppercased() == "RESET" }
+    var match: Bool {
+        typed.trimmingCharacters(in: .whitespaces).uppercased() == "RESET"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Label("Delete everything and restart setup", systemImage: "trash.fill").font(.system(size: 14.5, weight: .semibold)).foregroundStyle(.red)
@@ -1119,11 +1404,11 @@ struct ResetCard: View {
         }
         .sheet(isPresented: $typeSheet) {
             ResetConfirmSheet(typed: $typed,
-                onCancel: { typeSheet = false },
-                onConfirm: {
-                    prefs.resetAll(); typeSheet = false
-                    dismissWindow(id: "prefs"); openWindow(id: "welcome"); NSApp.activate(ignoringOtherApps: true)
-                })
+                              onCancel: { typeSheet = false },
+                              onConfirm: {
+                                  prefs.resetAll(); typeSheet = false
+                                  dismissWindow(id: "prefs"); openWindow(id: "welcome"); NSApp.activate(ignoringOtherApps: true)
+                              })
         }
     }
 }
@@ -1153,6 +1438,7 @@ struct GeneralContent: View {
 func inlineMD(_ s: String) -> AttributedString {
     (try? AttributedString(markdown: s, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(s)
 }
+
 // Renders release notes as a tidy changelog: headings, bullets, and inline emphasis/links.
 struct ChangelogView: View {
     let text: String
@@ -1160,26 +1446,36 @@ struct ChangelogView: View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(Array(text.split(separator: "\n", omittingEmptySubsequences: false).enumerated()), id: \.offset) { _, raw in
                 let t = String(raw).trimmingCharacters(in: .whitespaces)
-                if t.isEmpty { Spacer().frame(height: 3) }
-                else if t.hasPrefix("### ") { Text(String(t.dropFirst(4))).font(.system(size: 12.5, weight: .semibold)).padding(.top, 2) }
-                else if t.hasPrefix("## ") { Text(String(t.dropFirst(3))).font(.system(size: 14, weight: .bold)).padding(.top, 3) }
-                else if t.hasPrefix("# ") { Text(String(t.dropFirst(2))).font(.system(size: 15, weight: .bold)).padding(.top, 3) }
-                else if t.hasPrefix("- ") || t.hasPrefix("* ") {
+                if t.isEmpty {
+                    Spacer().frame(height: 3)
+                } else if t.hasPrefix("### ") {
+                    Text(String(t.dropFirst(4))).font(.system(size: 12.5, weight: .semibold)).padding(.top, 2)
+                } else if t.hasPrefix("## ") {
+                    Text(String(t.dropFirst(3))).font(.system(size: 14, weight: .bold)).padding(.top, 3)
+                } else if t.hasPrefix("# ") {
+                    Text(String(t.dropFirst(2))).font(.system(size: 15, weight: .bold)).padding(.top, 3)
+                } else if t.hasPrefix("- ") || t.hasPrefix("* ") {
                     HStack(alignment: .top, spacing: 8) {
                         Circle().fill(.secondary).frame(width: 4, height: 4).padding(.top, 6)
                         Text(inlineMD(String(t.dropFirst(2)))).font(.system(size: 12.5)).fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
                     }
-                } else { Text(inlineMD(t)).font(.system(size: 12.5)).fixedSize(horizontal: false, vertical: true) }
+                } else {
+                    Text(inlineMD(t)).font(.system(size: 12.5)).fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
 }
+
 struct WhatsNewView: View {
     @ObservedObject var updater = Updater.shared
     @Environment(\.dismissWindow) var dismissWindow
     var render = false
-    var wn: WhatsNew? { updater.whatsNew }
+    var wn: WhatsNew? {
+        updater.whatsNew
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 10) {
@@ -1203,8 +1499,11 @@ struct WhatsNewView: View {
             Divider()
 
             Group {
-                if render { ChangelogView(text: wn?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading) }
-                else { ScrollView { ChangelogView(text: wn?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading) }.frame(maxHeight: 280) }
+                if render {
+                    ChangelogView(text: wn?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    ScrollView { ChangelogView(text: wn?.notes ?? "").frame(maxWidth: .infinity, alignment: .leading) }.frame(maxHeight: 280)
+                }
             }.padding(20)
 
             Divider()
@@ -1226,7 +1525,14 @@ struct WhatsNewView: View {
 struct UpdateCard: View {
     @ObservedObject var prefs: Prefs
     @ObservedObject var updater = Updater.shared
-    var busy: Bool { if case .checking = updater.state { return true }; if case .downloading = updater.state { return true }; return false }
+    var busy: Bool {
+        if case .checking = updater.state {
+            return true
+        }; if case .downloading = updater.state {
+            return true
+        }; return false
+    }
+
     var body: some View {
         PrefCard(title: "Software updates") {
             HStack(spacing: 12) {
@@ -1235,7 +1541,7 @@ struct UpdateCard: View {
                 status
                 Spacer(minLength: 0)
             }
-            if case .ready(let info) = updater.state {
+            if case let .ready(info) = updater.state {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 6) {
                         Text("Version \(info.version) is ready to install").font(.system(size: 12.5, weight: .semibold))
@@ -1254,6 +1560,7 @@ struct UpdateCard: View {
                 .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
         }
     }
+
     @ViewBuilder var status: some View {
         switch updater.state {
         case .idle: EmptyView()
@@ -1261,7 +1568,7 @@ struct UpdateCard: View {
         case .upToDate: Label("You're on the latest version", systemImage: "checkmark.circle.fill").font(.system(size: 12)).foregroundStyle(.green)
         case .downloading: HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Getting the update ready…").font(.system(size: 12)).foregroundStyle(.secondary) }
         case .ready: Label("Update ready", systemImage: "sparkles").font(.system(size: 12)).foregroundStyle(.blue)
-        case .failed(let m): Label(m, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
+        case let .failed(m): Label(m, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
         }
     }
 }
@@ -1269,17 +1576,28 @@ struct UpdateCard: View {
 struct AboutContent: View {
     @ObservedObject var prefs: Prefs
     @ObservedObject var updater = Updater.shared
-    var version: String { (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "—" }
+    var version: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "—"
+    }
+
     var pyVersion: String {
         let vf = P.res + "/python/lib/python3.12"
         return FileManager.default.fileExists(atPath: vf) ? "3.12" : "—"
     }
-    func reveal(_ path: String) { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path) }
+
+    func reveal(_ path: String) {
+        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
+    }
+
     func openLog() {
         let p = P.dataDir + "/logs/last.log"
-        if FileManager.default.fileExists(atPath: p) { NSWorkspace.shared.open(URL(fileURLWithPath: p)) }
-        else { reveal(P.dataDir + "/logs") }
+        if FileManager.default.fileExists(atPath: p) {
+            NSWorkspace.shared.open(URL(fileURLWithPath: p))
+        } else {
+            reveal(P.dataDir + "/logs")
+        }
     }
+
     var body: some View {
         VStack(spacing: 14) {
             VStack(spacing: 9) {
@@ -1296,7 +1614,9 @@ struct AboutContent: View {
                 HStack(spacing: 16) {
                     Button { updater.showWhatsNewNow() } label: {
                         HStack(spacing: 4) {
-                            if updater.loadingWhatsNew { ProgressView().controlSize(.small) }
+                            if updater.loadingWhatsNew {
+                                ProgressView().controlSize(.small)
+                            }
                             Label("What's new", systemImage: "sparkles")
                         }
                     }.buttonStyle(.link).font(.system(size: 12)).disabled(updater.loadingWhatsNew)
@@ -1332,12 +1652,17 @@ struct PreferencesView: View {
     var render = false
     var footer: some View {
         HStack(spacing: 10) {
-            if !prefs.status.isEmpty { Text(prefs.status).foregroundStyle(.secondary).font(.system(size: 11.5)).lineLimit(1) }
+            if !prefs.status.isEmpty {
+                Text(prefs.status).foregroundStyle(.secondary).font(.system(size: 11.5)).lineLimit(1)
+            }
             Spacer()
-            if !prefs.canSave { Label("Fix the highlighted fields", systemImage: "exclamationmark.triangle.fill").font(.system(size: 11)).foregroundStyle(.orange) }
+            if !prefs.canSave {
+                Label("Fix the highlighted fields", systemImage: "exclamationmark.triangle.fill").font(.system(size: 11)).foregroundStyle(.orange)
+            }
             Button("Save") { prefs.save() }.primaryProminent().controlSize(.large).keyboardShortcut(.defaultAction).disabled(!prefs.canSave)
         }.padding(.horizontal, 20).padding(.vertical, 14)
     }
+
     var body: some View {
         if render {
             VStack(alignment: .leading, spacing: 16) {
@@ -1355,7 +1680,11 @@ struct PreferencesView: View {
                 }
                 Divider(); footer
             }.frame(width: 560, height: 600).background(.regularMaterial)
-            .onAppear { if prefs.ghOrgsAvailable.isEmpty && prefs.adoReposAvailable.isEmpty { prefs.discover() } }
+                .onAppear {
+                    if prefs.ghOrgsAvailable.isEmpty, prefs.adoReposAvailable.isEmpty {
+                        prefs.discover()
+                    }
+                }
         }
     }
 }
@@ -1367,13 +1696,14 @@ struct OnbDots: View {
     let step: Int
     var body: some View {
         HStack(spacing: 7) {
-            ForEach(0..<ONB_STEPS.count, id: \.self) { i in
+            ForEach(0 ..< ONB_STEPS.count, id: \.self) { i in
                 Capsule().fill(i == step ? Color.accentColor : (i < step ? Color.accentColor.opacity(0.4) : Color.secondary.opacity(0.22)))
                     .frame(width: i == step ? 22 : 8, height: 8)
             }
         }
     }
 }
+
 struct OnbHeader: View {
     let icon: String; let title: String; let subtitle: String
     var body: some View {
@@ -1384,6 +1714,7 @@ struct OnbHeader: View {
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
 struct ValueBullet: View {
     let icon: String; let title: String; let detail: String
     var body: some View {
@@ -1397,6 +1728,7 @@ struct ValueBullet: View {
         }
     }
 }
+
 struct CheckRow: View {
     let ok: Bool; let text: String
     var body: some View {
@@ -1454,8 +1786,8 @@ struct OnbHarvest: View {
                 switch prefs.harvestTest {
                 case .idle: Text("We'll verify it works before moving on.").font(.system(size: 11.5)).foregroundStyle(.tertiary)
                 case .testing: HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Checking…").font(.system(size: 12)).foregroundStyle(.secondary) }
-                case .ok(let who): Label("Connected as \(who)", systemImage: "checkmark.circle.fill").font(.system(size: 12)).foregroundStyle(.green)
-                case .fail(let why): Label(why, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
+                case let .ok(who): Label("Connected as \(who)", systemImage: "checkmark.circle.fill").font(.system(size: 12)).foregroundStyle(.green)
+                case let .fail(why): Label(why, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
@@ -1465,7 +1797,10 @@ struct OnbHarvest: View {
 
 struct OnbDiscover: View {
     @ObservedObject var prefs: Prefs
-    var orgCount: Int { prefs.ghOrgs.split(separator: ",").count }
+    var orgCount: Int {
+        prefs.ghOrgs.split(separator: ",").count
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             OnbHeader(icon: "sparkles", title: "Let's find your projects automatically",
@@ -1477,7 +1812,9 @@ struct OnbDiscover: View {
                     CheckRow(ok: !prefs.harvestUser.isEmpty, text: "Harvest user \(prefs.harvestUser.isEmpty ? "" : "#\(prefs.harvestUser)") found")
                     CheckRow(ok: !prefs.projectsList.isEmpty, text: "\(prefs.projectsList.count) Harvest projects mapped")
                     CheckRow(ok: !prefs.ghLogin.isEmpty, text: prefs.ghLogin.isEmpty ? "No GitHub account found" : "GitHub @\(prefs.ghLogin) · \(orgCount) org\(orgCount == 1 ? "" : "s")")
-                    if !prefs.adoReposAvailable.isEmpty { CheckRow(ok: true, text: "\(prefs.adoReposAvailable.count) Azure DevOps repos found") }
+                    if !prefs.adoReposAvailable.isEmpty {
+                        CheckRow(ok: true, text: "\(prefs.adoReposAvailable.count) Azure DevOps repos found")
+                    }
                 }
                 Text("You'll pick which of these to include on the next screen.").font(.system(size: 12)).foregroundStyle(.tertiary)
                 Button { prefs.discover() } label: { Label("Scan again", systemImage: "arrow.clockwise") }.controlSize(.small)
@@ -1487,7 +1824,11 @@ struct OnbDiscover: View {
                 Button { prefs.discover() } label: { Label("Scan my accounts", systemImage: "sparkles") }.controlSize(.large).primaryProminent()
             }
         }
-        .onAppear { if !prefs.discovered && !prefs.discovering { prefs.discover() } }
+        .onAppear {
+            if !prefs.discovered, !prefs.discovering {
+                prefs.discover()
+            }
+        }
     }
 }
 
@@ -1588,7 +1929,9 @@ struct OnbFinish: View {
                 VStack(spacing: 0) {
                     ForEach(Array(s.days.enumerated()), id: \.offset) { i, day in
                         DayBlock(day: day)
-                        if i < s.days.count - 1 { Divider().opacity(0.5) }
+                        if i < s.days.count - 1 {
+                            Divider().opacity(0.5)
+                        }
                     }
                 }.padding(.vertical, 4).padding(.horizontal, 14).glassBG(12)
             } else {
@@ -1623,8 +1966,13 @@ struct OnboardingView: View {
         self.onDone = onDone
     }
 
-    var canAdvance: Bool { step == 1 ? prefs.harvestTest.isOK : true }
-    var primaryLabel: String { step == 0 ? "Get started" : (step == ONB_STEPS.count - 1 ? "Done" : "Continue") }
+    var canAdvance: Bool {
+        step == 1 ? prefs.harvestTest.isOK : true
+    }
+
+    var primaryLabel: String {
+        step == 0 ? "Get started" : (step == ONB_STEPS.count - 1 ? "Done" : "Continue")
+    }
 
     @ViewBuilder var content: some View {
         switch step {
@@ -1646,19 +1994,28 @@ struct OnboardingView: View {
             }.padding(.horizontal, 26).padding(.top, 20).padding(.bottom, 16)
 
             Group {
-                if render { content.padding(.horizontal, 26) }
-                else { ScrollView { content.padding(.horizontal, 26).padding(.bottom, 8) } }
+                if render {
+                    content.padding(.horizontal, 26)
+                } else {
+                    ScrollView { content.padding(.horizontal, 26).padding(.bottom, 8) }
+                }
             }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
             Divider()
             HStack(spacing: 10) {
-                if step > 0 { Button("Back") { withAnimation { step -= 1 } }.controlSize(.large) }
+                if step > 0 {
+                    Button("Back") { withAnimation { step -= 1 } }.controlSize(.large)
+                }
                 Spacer()
-                if step == ONB_STEPS.count - 1 && (prefs.preview?.days.isEmpty == false) {
+                if step == ONB_STEPS.count - 1, prefs.preview?.days.isEmpty == false {
                     Button { prefs.logThisWeek() } label: { Text("Log this week now") }.controlSize(.large).disabled(prefs.logging || prefs.previewing)
                 }
                 Button(primaryLabel) {
-                    if step < ONB_STEPS.count - 1 { withAnimation { step += 1 } } else { prefs.markComplete(); prefs.syncAgents(); onDone() }
+                    if step < ONB_STEPS.count - 1 {
+                        withAnimation { step += 1 }
+                    } else {
+                        prefs.markComplete(); prefs.syncAgents(); onDone()
+                    }
                 }.primaryProminent().controlSize(.large).keyboardShortcut(.defaultAction).disabled(!canAdvance)
             }.padding(.horizontal, 26).padding(.vertical, 16)
         }
@@ -1678,7 +2035,7 @@ struct MenuContent: View {
             Text(model.menuDetail).font(.system(size: 11))
             Divider()
         }
-        if case .ready(let info) = updater.state {
+        if case let .ready(info) = updater.state {
             Button("Update ready — install version \(info.version)") { updater.installAndRelaunch() }
             Divider()
         }
@@ -1689,6 +2046,7 @@ struct MenuContent: View {
         Button("Quit") { confirmQuit() }
     }
 }
+
 // Menu-bar apps are easy to quit by accident; confirm, and be honest that the Friday
 // auto-log keeps running on schedule (it's a launchd job, independent of the app).
 func confirmQuit() {
@@ -1699,7 +2057,9 @@ func confirmQuit() {
     a.addButton(withTitle: "Quit")
     a.addButton(withTitle: "Cancel")
     NSApp.activate(ignoringOtherApps: true)
-    if a.runModal() == .alertFirstButtonReturn { NSApp.terminate(nil) }
+    if a.runModal() == .alertFirstButtonReturn {
+        NSApp.terminate(nil)
+    }
 }
 
 struct MenuLabel: View {
@@ -1708,17 +2068,19 @@ struct MenuLabel: View {
     @Environment(\.openWindow) var openWindow
     var body: some View {
         HStack(spacing: 4) { Image(systemName: "clock.badge.checkmark"); Text(model.menuTitle) }
-        .onChange(of: updater.whatsNew) { _, new in
-            if new != nil { openWindow(id: "whatsnew"); NSApp.activate(ignoringOtherApps: true) }
-        }
-        .onAppear {
-            if model.firstRun {                 // new user: run the onboarding wizard once
-                model.firstRun = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    openWindow(id: "welcome"); NSApp.activate(ignoringOtherApps: true)
+            .onChange(of: updater.whatsNew) { _, new in
+                if new != nil {
+                    openWindow(id: "whatsnew"); NSApp.activate(ignoringOtherApps: true)
                 }
             }
-        }
+            .onAppear {
+                if model.firstRun { // new user: run the onboarding wizard once
+                    model.firstRun = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        openWindow(id: "welcome"); NSApp.activate(ignoringOtherApps: true)
+                    }
+                }
+            }
     }
 }
 
@@ -1754,18 +2116,18 @@ struct VerifyView: View {
 
 // ============================================================ App
 class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ n: Notification) {
+    func applicationDidFinishLaunching(_: Notification) {
         let args = CommandLine.arguments
         // hidden self-test: exercise the real update-check path and print the terminal state
         if args.contains("--update-check") {
             Task { @MainActor in
                 let u = Updater.shared; u.check(manual: true)
-                for _ in 0..<80 {
+                for _ in 0 ..< 80 {
                     try? await Task.sleep(nanoseconds: 500_000_000)
                     switch u.state {
                     case .upToDate: print("STATE=upToDate (current build \(u.currentBuild))"); NSApp.terminate(nil)
-                    case .ready(let i): print("STATE=ready version \(i.version) build \(i.build) (current \(u.currentBuild))"); NSApp.terminate(nil)
-                    case .failed(let m): print("STATE=failed \(m)"); NSApp.terminate(nil)
+                    case let .ready(i): print("STATE=ready version \(i.version) build \(i.build) (current \(u.currentBuild))"); NSApp.terminate(nil)
+                    case let .failed(m): print("STATE=failed \(m)"); NSApp.terminate(nil)
                     default: break
                     }
                 }
@@ -1773,26 +2135,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return
         }
-        if args.contains("--self-update-now") {   // check → download → install/relaunch
+        if args.contains("--self-update-now") { // check → download → install/relaunch
             Task { @MainActor in
                 let u = Updater.shared; u.check(manual: true)
-                for _ in 0..<80 {
+                for _ in 0 ..< 80 {
                     try? await Task.sleep(nanoseconds: 500_000_000)
-                    if case .ready = u.state { print("INSTALLING"); u.installAndRelaunch(); return }
-                    if case .upToDate = u.state { print("UPTODATE"); NSApp.terminate(nil) }
-                    if case .failed(let m) = u.state { print("FAILED \(m)"); NSApp.terminate(nil) }
+                    if case .ready = u.state {
+                        print("INSTALLING"); u.installAndRelaunch(); return
+                    }
+                    if case .upToDate = u.state {
+                        print("UPTODATE"); NSApp.terminate(nil)
+                    }
+                    if case let .failed(m) = u.state {
+                        print("FAILED \(m)"); NSApp.terminate(nil)
+                    }
                 }
                 print("TIMEOUT"); NSApp.terminate(nil)
             }
             return
         }
-        if args.contains("--whatsnew-test") {   // force a post-update scenario and report
+        if args.contains("--whatsnew-test") { // force a post-update scenario and report
             UserDefaults.standard.set(Updater.shared.currentBuild - 1, forKey: "seenBuild")
             Task { @MainActor in
                 Updater.shared.maybeShowWhatsNew()
-                for _ in 0..<30 {
+                for _ in 0 ..< 30 {
                     try? await Task.sleep(nanoseconds: 500_000_000)
-                    if let wn = Updater.shared.whatsNew { print("WHATSNEW version=\(wn.version) date=\(wn.date) url=\(wn.url) notesChars=\(wn.notes.count)"); NSApp.terminate(nil) }
+                    if let wn = Updater.shared.whatsNew {
+                        print("WHATSNEW version=\(wn.version) date=\(wn.date) url=\(wn.url) notesChars=\(wn.notes.count)"); NSApp.terminate(nil)
+                    }
                 }
                 print("WHATSNEW none"); NSApp.terminate(nil)
             }
@@ -1803,12 +2173,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let which = args[i + 1], out = args[i + 2]
             let model = WeekModel()
             var view: any View = MainWindow(model: model, render: true)
-            if which == "prefs" { view = PreferencesView(render: true) }
-            else if which == "verify" { view = VerifyView() }
-            else if which.hasPrefix("onb") { view = OnboardingView(prefs: Self.demoPrefs(), startStep: Int(which.dropFirst(3)) ?? 0, render: true) }
-            else if which == "reset" { view = ResetConfirmSheet(typed: .constant("RESET")).background(Color(nsColor: .windowBackgroundColor)) }
-            else if which == "about" { view = AboutContent(prefs: Prefs()).padding(22).frame(width: 480).background(Color(nsColor: .windowBackgroundColor)) }
-            else if which == "whatsnew" {
+            if which == "prefs" {
+                view = PreferencesView(render: true)
+            } else if which == "verify" {
+                view = VerifyView()
+            } else if which.hasPrefix("onb") {
+                view = OnboardingView(prefs: Self.demoPrefs(), startStep: Int(which.dropFirst(3)) ?? 0, render: true)
+            } else if which == "reset" {
+                view = ResetConfirmSheet(typed: .constant("RESET")).background(Color(nsColor: .windowBackgroundColor))
+            } else if which == "about" {
+                view = AboutContent(prefs: Prefs()).padding(22).frame(width: 480).background(Color(nsColor: .windowBackgroundColor))
+            } else if which == "whatsnew" {
                 Updater.shared.whatsNew = WhatsNew(version: "2.11", notes: """
                 ## Auto-update
                 - The app now checks GitHub for **signed** updates and installs them for you.
@@ -1823,13 +2198,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             let renderer = ImageRenderer(content: AnyView(view)); renderer.scale = 2
             if let img = renderer.nsImage, let tiff = img.tiffRepresentation,
-               let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) {
+               let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:])
+            {
                 try? png.write(to: URL(fileURLWithPath: out))
             }
             NSApp.terminate(nil); return
         }
-        NSApp.setActivationPolicy(.accessory)   // menu-bar utility, no dock icon
-        Updater.shared.startAuto()              // check GitHub for signed updates on launch + daily
+        NSApp.setActivationPolicy(.accessory) // menu-bar utility, no dock icon
+        Updater.shared.startAuto() // check GitHub for signed updates on launch + daily
         // seed a default config on first launch so the engine has something to read
         if !FileManager.default.fileExists(atPath: P.config), FileManager.default.fileExists(atPath: P.configDefault) {
             try? FileManager.default.copyItem(atPath: P.configDefault, toPath: P.config)
@@ -1840,6 +2216,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             (NSApp.delegate as? AppDelegate)?.model?.refresh()
         }
     }
+
     var model: WeekModel?
 
     // Populated Prefs for faithfully rendering each onboarding step in verification.
@@ -1854,20 +2231,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         p.adoAuthor = "ttt.cbeuker@wheatonpm.com"; p.adoPAT = "ado-xxxx"
         p.adoReposAvailable = ["OMS-AI", "OMS-BE", "OMS-DevOps", "OMS-FE"]; p.adoRepos = "OMS-BE, OMS-FE"
         p.preview = Summary(state: "dryrun", week: "Aug 24–28", total: 36.0, daysWorked: 4,
-            days: [
-                Day(name: "Mon Aug 24", total: 9.0, note: nil, entries: [
-                    Entry(span: "9:00am–1:30pm", project: "ITC", task: "Development", hours: 4.5),
-                    Entry(span: "1:30pm–5:00pm", project: "Wheaton", task: "Development", hours: 3.5),
-                    Entry(span: "11:00am–11:30am", project: "ITC", task: "Client Meetings", hours: 1.0)]),
-                Day(name: "Tue Aug 25", total: 9.0, note: nil, entries: [
-                    Entry(span: "9:00am–6:00pm", project: "Wheaton", task: "Development", hours: 9.0)]),
-                Day(name: "Wed Aug 26", total: nil, note: "Statutory holiday — skipped", entries: []),
-                Day(name: "Thu Aug 27", total: 9.0, note: nil, entries: [
-                    Entry(span: "9:00am–5:00pm", project: "Internal", task: "Development", hours: 8.0),
-                    Entry(span: "3:00pm–4:00pm", project: "Internal", task: "Internal Meetings", hours: 1.0)]),
-                Day(name: "Fri Aug 28", total: 9.0, note: nil, entries: [
-                    Entry(span: "9:00am–6:00pm", project: "ITC", task: "Development", hours: 9.0)]),
-            ], flags: [], issues: nil, message: "")
+                            days: [
+                                Day(name: "Mon Aug 24", total: 9.0, note: nil, entries: [
+                                    Entry(span: "9:00am–1:30pm", project: "ITC", task: "Development", hours: 4.5),
+                                    Entry(span: "1:30pm–5:00pm", project: "Wheaton", task: "Development", hours: 3.5),
+                                    Entry(span: "11:00am–11:30am", project: "ITC", task: "Client Meetings", hours: 1.0),
+                                ]),
+                                Day(name: "Tue Aug 25", total: 9.0, note: nil, entries: [
+                                    Entry(span: "9:00am–6:00pm", project: "Wheaton", task: "Development", hours: 9.0),
+                                ]),
+                                Day(name: "Wed Aug 26", total: nil, note: "Statutory holiday — skipped", entries: []),
+                                Day(name: "Thu Aug 27", total: 9.0, note: nil, entries: [
+                                    Entry(span: "9:00am–5:00pm", project: "Internal", task: "Development", hours: 8.0),
+                                    Entry(span: "3:00pm–4:00pm", project: "Internal", task: "Internal Meetings", hours: 1.0),
+                                ]),
+                                Day(name: "Fri Aug 28", total: 9.0, note: nil, entries: [
+                                    Entry(span: "9:00am–6:00pm", project: "ITC", task: "Development", hours: 9.0),
+                                ]),
+                            ], flags: [], issues: nil, message: "")
         return p
     }
 }

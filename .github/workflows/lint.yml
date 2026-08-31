@@ -1,0 +1,29 @@
+name: Lint
+# Format-check + lint every file type on push/PR, using the mise-pinned tools via the same
+# lefthook gate that runs on pre-push locally.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: macos-26       # SwiftLint needs a full Xcode (present on this runner)
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          install: true
+          cache: true
+      - name: Format-check + lint (all file types)
+        run: mise exec -- lefthook run pre-push --all-files

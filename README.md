@@ -9,7 +9,7 @@ A macOS menu-bar app that fills your Harvest timesheet from the work you already
 
 ## Build
 
-```
+```bash
 cd packages/products/harvest-autofill
 ./build.sh            # → dist/Harvest Auto-Fill.app  (compiles, bundles Python, ad-hoc signs)
 ```
@@ -18,7 +18,7 @@ cd packages/products/harvest-autofill
 
 Push an annotated version tag; CI builds, signs, and publishes it:
 
-```
+```bash
 git tag -a v2.10 -m "## Changes
 - …"
 git push origin v2.10

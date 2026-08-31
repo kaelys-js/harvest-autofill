@@ -1,0 +1,30 @@
+# Pre-push gate: format-check + lint every file type, using the mise-pinned tools.
+# Run locally via `mise exec -- lefthook install` (wires the git hook); CI runs the same
+# set via `mise exec -- lefthook run pre-push`.
+pre-push:
+  parallel: true
+  commands:
+    swift-format:
+      run: cd packages/products/harvest-autofill && mise exec -- swiftformat --lint HarvestApp.swift
+    swift-lint:
+      # SwiftLint needs sourcekit from a full Xcode. Use the selected Xcode (CI), or fall
+      # back to any installed Xcode.app when only Command Line Tools are selected (local).
+      run: cd packages/products/harvest-autofill && DEV="$(xcode-select -p)"; case "$DEV" in *CommandLineTools*) DEV="$(ls -d /Applications/Xcode*.app/Contents/Developer 2>/dev/null | head -1)";; esac; DEVELOPER_DIR="$DEV" mise exec -- swiftlint lint --strict --quiet
+    python-format:
+      run: cd packages/products/harvest-autofill && mise exec -- ruff format --check *.py
+    python-lint:
+      run: cd packages/products/harvest-autofill && mise exec -- ruff check *.py
+    shell-format:
+      run: cd packages/products/harvest-autofill && mise exec -- shfmt -i 2 -d *.sh
+    shell-lint:
+      run: cd packages/products/harvest-autofill && mise exec -- shellcheck *.sh
+    toml:
+      run: mise exec -- taplo format --check mise.toml && mise exec -- taplo lint mise.toml
+    json-format:
+      run: cd packages/products/harvest-autofill && mise exec -- oxfmt --check config.default.json
+    yaml-lint:
+      run: mise exec -- yamllint .github/workflows/
+    workflow-lint:
+      run: mise exec -- actionlint
+    markdown-lint:
+      run: mise exec -- markdownlint-cli2 "*.md"

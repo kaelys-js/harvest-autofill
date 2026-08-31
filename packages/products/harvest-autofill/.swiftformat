@@ -1,0 +1,3 @@
+--swiftversion 6.3
+--disable docComments
+--exclude vendor,dist

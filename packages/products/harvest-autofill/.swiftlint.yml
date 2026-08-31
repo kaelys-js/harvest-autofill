@@ -1,0 +1,20 @@
+# SwiftLint config for a single-file SwiftUI menu-bar app written in a deliberately
+# compact style. Size/naming/complexity opinion rules are disabled; correctness and
+# clarity rules stay on.
+included:
+  - HarvestApp.swift
+
+disabled_rules:
+  - file_length              # one-file app by design
+  - type_body_length
+  - function_body_length
+  - cyclomatic_complexity
+  - identifier_name          # short locals (d, e, i, wn) are idiomatic here
+  - type_name
+  - line_length
+  - large_tuple
+  - function_parameter_count
+  - nesting
+  - for_where                # style preference, not correctness
+  - trailing_comma
+  - opening_brace            # brace formatting is owned by SwiftFormat (avoids a fight)
