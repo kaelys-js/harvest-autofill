@@ -75,7 +75,13 @@ struct MainWindow: View {
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
-                        Image(systemName: st.symbol).foregroundStyle(st.color).font(.system(size: 13))
+                        // The mockup marks the "this week" status with an 8px dot (size-2); other
+                        // states keep their SF Symbol (check / warning / clock).
+                        if st.symbol == "circle.fill" {
+                            Circle().fill(st.color).frame(width: 8, height: 8)
+                        } else {
+                            Image(systemName: st.symbol).foregroundStyle(st.color).font(.system(size: 13))
+                        }
                         Text(st.text).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(st.color)
                     }
                     Text(s.map { "\(hrs($0.total)) across \($0.daysWorked) day\($0.daysWorked == 1 ? "" : "s")  ·  \($0.week)" } ?? "No data yet — refreshing…")
@@ -126,11 +132,8 @@ struct MainWindow: View {
             }.padding(.horizontal, 18).padding(.vertical, 14)
         }
         .frame(width: 470)
-        // Match the website card color exactly (white in light, #171717 in dark).
-        .background(render ? AnyShapeStyle(Color(nsColor: NSColor(name: nil) { appearance in
-            appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
-                ? NSColor(red: 0.091, green: 0.091, blue: 0.091, alpha: 1) : .white
-        })) : AnyShapeStyle(.regularMaterial))
+        // Solid site card colour in both render and the running app, matching the mockup.
+        .background(Web.card)
     }
 }
 
@@ -144,12 +147,23 @@ extension View {
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(.primary.opacity(0.06)))
     }
 
-    @ViewBuilder func primaryProminent() -> some View {
-        if #available(macOS 26.0, *) {
-            buttonStyle(.glassProminent)
-        } else {
-            buttonStyle(.borderedProminent)
-        }
+    func primaryProminent() -> some View {
+        buttonStyle(MockupPrimaryStyle())
+    }
+}
+
+// The site's primary button: solid --primary fill, --primary-foreground text, --radius-md
+// corners (circular, matching CSS border-radius, not a squircle). Replaces the system-accent
+// glass/bordered style so every primary button matches the marketing mockup exactly.
+struct MockupPrimaryStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(Web.primaryForeground)
+            .padding(.horizontal, 16).padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: 8.4).fill(Web.primary))
+            .contentShape(RoundedRectangle(cornerRadius: 8.4))
+            .opacity(configuration.isPressed ? 0.85 : 1)
     }
 }
 
@@ -177,7 +191,7 @@ struct Step: View {
     var body: some View {
         HStack(alignment: .top, spacing: 9) {
             Text("\(n)").font(.system(size: 10, weight: .bold)).foregroundStyle(.white)
-                .frame(width: 17, height: 17).background(Circle().fill(Color.accentColor))
+                .frame(width: 17, height: 17).background(Circle().fill(Web.primary))
             Text(text).font(.system(size: 11.5)).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
@@ -603,15 +617,15 @@ struct WhatsNewView: View {
                 Text("What's New").font(.system(size: 22, weight: .bold))
                 HStack(spacing: 8) {
                     Text("Version \(wn?.version ?? updater.currentVersion)")
-                        .font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.accentColor)
+                        .font(.system(size: 11, weight: .semibold)).foregroundStyle(Web.primary)
                         .padding(.horizontal, 9).padding(.vertical, 3)
-                        .background(Capsule().fill(Color.accentColor.opacity(0.14)))
+                        .background(Capsule().fill(Web.primary.opacity(0.14)))
                     if let d = wn?.date, !d.isEmpty {
                         Text(d).font(.system(size: 11)).foregroundStyle(.secondary)
                     }
                 }
             }.padding(.top, 30).padding(.bottom, 18).frame(maxWidth: .infinity)
-                .background(render ? AnyShapeStyle(Color(nsColor: .windowBackgroundColor)) : AnyShapeStyle(.regularMaterial))
+                .background(Web.card)
 
             Divider()
 
@@ -630,9 +644,9 @@ struct WhatsNewView: View {
                                     VStack(alignment: .leading, spacing: 6) {
                                         HStack(spacing: 8) {
                                             Text("Version \(r.version)")
-                                                .font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Color.accentColor)
+                                                .font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Web.primary)
                                                 .padding(.horizontal, 8).padding(.vertical, 2)
-                                                .background(Capsule().fill(Color.accentColor.opacity(0.14)))
+                                                .background(Capsule().fill(Web.primary.opacity(0.14)))
                                             if !r.date.isEmpty {
                                                 Text(r.date).font(.system(size: 10.5)).foregroundStyle(.secondary)
                                             }
@@ -662,7 +676,7 @@ struct WhatsNewView: View {
             }.padding(.horizontal, 20).padding(.vertical, 14)
         }
         .frame(width: 460)
-        .background(render ? AnyShapeStyle(Color(nsColor: .windowBackgroundColor)) : AnyShapeStyle(.regularMaterial))
+        .background(Web.card)
     }
 }
 
@@ -817,7 +831,7 @@ struct PreferencesView: View {
                 Text("Harvest Auto-Fill — Preferences").font(.system(size: 15, weight: .bold))
                 GeneralContent(prefs: prefs); AccountsContent(prefs: prefs); AllocationContent(prefs: prefs)
                 footer
-            }.padding(20).frame(width: 560).background(Color(nsColor: .windowBackgroundColor))
+            }.padding(20).frame(width: 560).background(Web.card)
         } else {
             VStack(spacing: 0) {
                 TabView(selection: $tab) {
@@ -830,7 +844,7 @@ struct PreferencesView: View {
                 if tab != 3, prefs.hasChanges {
                     Divider(); footer
                 }
-            }.frame(width: 560, height: 600).background(.regularMaterial)
+            }.frame(width: 560, height: 600).background(Web.card)
                 .onAppear {
                     if prefs.ghOrgsAvailable.isEmpty, prefs.adoReposAvailable.isEmpty {
                         prefs.discover()
@@ -848,7 +862,7 @@ struct OnbDots: View {
     var body: some View {
         HStack(spacing: 7) {
             ForEach(0 ..< ONB_STEPS.count, id: \.self) { i in
-                Capsule().fill(i == step ? Color.accentColor : (i < step ? Color.accentColor.opacity(0.4) : Color.secondary.opacity(0.22)))
+                Capsule().fill(i == step ? Web.primary : (i < step ? Web.primary.opacity(0.4) : Color.secondary.opacity(0.22)))
                     .frame(width: i == step ? 22 : 8, height: 8)
             }
         }
@@ -859,7 +873,7 @@ struct OnbHeader: View {
     let icon: String; let title: String; let subtitle: String
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Image(systemName: icon).font(.system(size: 26)).foregroundStyle(Color.accentColor)
+            Image(systemName: icon).font(.system(size: 26)).foregroundStyle(Web.primary)
             Text(title).font(.system(size: 21, weight: .bold))
             Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }.frame(maxWidth: .infinity, alignment: .leading)
@@ -870,7 +884,7 @@ struct ValueBullet: View {
     let icon: String; let title: String; let detail: String
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon).font(.system(size: 16)).foregroundStyle(Color.accentColor).frame(width: 24)
+            Image(systemName: icon).font(.system(size: 16)).foregroundStyle(Web.primary).frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.system(size: 13, weight: .semibold))
                 Text(detail).font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -1171,7 +1185,7 @@ struct OnboardingView: View {
             }.padding(.horizontal, 26).padding(.vertical, 16)
         }
         .frame(width: 560, height: 640)
-        .background(render ? AnyShapeStyle(Color(nsColor: .windowBackgroundColor)) : AnyShapeStyle(.regularMaterial))
+        .background(Web.card)
     }
 }
 
@@ -1261,7 +1275,7 @@ struct VerifyView: View {
                     }
                 }
             }
-        }.padding(22).frame(width: 640).background(Color(nsColor: .windowBackgroundColor))
+        }.padding(22).frame(width: 640).background(Web.card)
     }
 }
 
@@ -1345,9 +1359,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             } else if which.hasPrefix("onb") {
                 view = OnboardingView(prefs: Self.demoPrefs(), startStep: Int(which.dropFirst(3)) ?? 0, render: true)
             } else if which == "reset" {
-                view = ResetConfirmSheet(typed: .constant("RESET")).background(Color(nsColor: .windowBackgroundColor))
+                view = ResetConfirmSheet(typed: .constant("RESET")).background(Web.card)
             } else if which == "about" {
-                view = AboutContent(prefs: Prefs()).padding(22).frame(width: 480).background(Color(nsColor: .windowBackgroundColor))
+                view = AboutContent(prefs: Prefs()).padding(22).frame(width: 480).background(Web.card)
             } else if which == "main-empty" {
                 let m = WeekModel(); m.summary = nil; m.refreshing = false
                 view = MainWindow(model: m, render: true)
@@ -1375,7 +1389,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 """, date: "August 31, 2026", url: UPDATE_REPO_URL)
                 view = WhatsNewView(render: true)
             }
-            let renderer = ImageRenderer(content: AnyView(view)); renderer.scale = 2
+            let renderer = ImageRenderer(content: AnyView(AnyView(view).tint(Web.primary))); renderer.scale = 2
             if let img = renderer.nsImage, let tiff = img.tiffRepresentation,
                let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:])
             {
@@ -1440,21 +1454,21 @@ struct HarvestMenuApp: App {
     @StateObject var model = WeekModel()
     var body: some Scene {
         MenuBarExtra {
-            MenuContent(model: model).onAppear { delegate.model = model; model.refresh() }
+            MenuContent(model: model).onAppear { delegate.model = model; model.refresh() }.tint(Web.primary)
         } label: {
             MenuLabel(model: model)
         }
         Window("Harvest — This Week", id: "main") {
-            MainWindow(model: model).onAppear { delegate.model = model }
+            MainWindow(model: model).onAppear { delegate.model = model }.tint(Web.primary)
         }.windowResizability(.contentSize)
         Window("Preferences", id: "prefs") {
-            PreferencesView().onAppear { NSApp.activate(ignoringOtherApps: true) }
+            PreferencesView().onAppear { NSApp.activate(ignoringOtherApps: true) }.tint(Web.primary)
         }.windowResizability(.contentSize)
         Window("Welcome to Harvest Auto-Fill", id: "welcome") {
-            OnboardingWindowHost()
+            OnboardingWindowHost().tint(Web.primary)
         }.windowResizability(.contentSize)
         Window("What's New", id: "whatsnew") {
-            WhatsNewView().onAppear { NSApp.activate(ignoringOtherApps: true) }
+            WhatsNewView().onAppear { NSApp.activate(ignoringOtherApps: true) }.tint(Web.primary)
         }.windowResizability(.contentSize)
     }
 }

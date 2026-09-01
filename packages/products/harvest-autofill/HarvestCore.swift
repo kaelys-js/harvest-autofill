@@ -111,8 +111,18 @@ func projColor(_ p: String) -> Color {
 // Website palette (oklch tokens from the site's global.css, converted to sRGB) so the app
 // matches the marketing site exactly.
 enum Web {
-    static let primary = Color(red: 0.980, green: 0.433, blue: 0.112) // --primary dark  #fa6e1d
-    static let cardDark = Color(red: 0.091, green: 0.091, blue: 0.091) // --card dark      #171717
+    // Appearance-aware colours mirroring the website's design tokens (oklch → sRGB), so the app
+    // renders the same light/dark palette as the marketing mockup instead of the system accent.
+    private static func tok(_ light: (Double, Double, Double), _ dark: (Double, Double, Double)) -> Color {
+        Color(nsColor: NSColor(name: nil) { ap in
+            let c = ap.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? dark : light
+            return NSColor(red: c.0, green: c.1, blue: c.2, alpha: 1)
+        })
+    }
+
+    static let primary = tok((0.925, 0.337, 0.0), (0.98, 0.431, 0.114)) // --primary  #ec5600 / #fa6e1d
+    static let primaryForeground = tok((1.0, 0.965, 0.922), (0.157, 0.051, 0.008)) // --primary-foreground
+    static let card = tok((1, 1, 1), (0.09, 0.09, 0.09)) // --card  #ffffff / #171717
 }
 
 struct Status { let text: String; let color: Color; let symbol: String }
