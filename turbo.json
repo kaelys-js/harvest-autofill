@@ -26,7 +26,8 @@
 				"packages/products/harvest-autofill/*.py",
 				"packages/products/harvest-autofill/build.sh",
 				"packages/products/harvest-autofill/Info.plist",
-				"packages/products/harvest-autofill/icon.icns"
+				"packages/products/harvest-autofill/icon.icns",
+				"packages/products/harvest-autofill/icon.png"
 			],
 			"outputs": [],
 			"outputLogs": "new-only"
@@ -174,7 +175,9 @@
 				"packages/products/harvest-autofill/*.py",
 				"packages/products/harvest-autofill/visual-baseline/**",
 				"packages/products/harvest-autofill/build.sh",
-				"packages/products/harvest-autofill/Info.plist"
+				"packages/products/harvest-autofill/Info.plist",
+				"packages/products/harvest-autofill/icon.icns",
+				"packages/products/harvest-autofill/icon.png"
 			],
 			"outputs": [],
 			"outputLogs": "new-only"
