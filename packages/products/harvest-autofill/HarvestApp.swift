@@ -92,7 +92,7 @@ struct MainWindow: View {
                     ProgressView().controlSize(.small)
                 }
             }
-            .padding(.horizontal, 18).padding(.top, render ? 18 : 30).padding(.bottom, 14)
+            .padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 14)
             Divider()
 
             if let s, !s.days.isEmpty {
@@ -403,7 +403,7 @@ struct AccountsContent: View {
                     Text(prefs.harvestUser.isEmpty ? "—" : prefs.harvestUser).font(.system(size: 12)).foregroundStyle(.secondary)
                     Spacer(); Button { prefs.discover() } label: { Label("Discover from my accounts", systemImage: "sparkles") }
                 }
-                Text("Discover reads your Harvest, GitHub, and (when a PAT is set) Azure DevOps to auto-fill your user ID, project mappings, org list, and repo list — so you never type IDs by hand.")
+                Text("Discover reads your Harvest, GitHub, and (when an Azure DevOps token is set) Azure DevOps to auto-fill your user ID, project mappings, org list, and repo list — so you never type IDs by hand.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
                 if !prefs.projectsList.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
@@ -444,11 +444,11 @@ struct AccountsContent: View {
                     Field(label: "Org", text: $prefs.adoOrg, valid: !prefs.adoOrg.isEmpty)
                     Field(label: "Project", text: $prefs.adoProject, valid: !prefs.adoProject.isEmpty)
                     MultiSelect(label: "Repos", options: prefs.adoReposAvailable, csv: $prefs.adoRepos, valid: !prefs.adoRepos.trimmingCharacters(in: .whitespaces).isEmpty,
-                                help: "Tick the repos to scan for your commits + pushes — loaded automatically once Org, Project, and PAT are set.")
+                                help: "Tick the repos to scan for your commits + pushes — loaded automatically once Org, Project, and the token are set.")
                     Field(label: "Author (email)", text: $prefs.adoAuthor, hint: "you@org.com", valid: !prefs.adoAuthor.isEmpty,
                           help: "Your commit-author email in Azure DevOps.")
-                    Secret(label: "Read PAT", text: $prefs.adoPAT, reveal: $prefs.showPAT, valid: !prefs.adoPAT.isEmpty,
-                           help: "A read-only Code PAT: dev.azure.com → User settings → Personal access tokens → Code: Read.")
+                    Secret(label: "Access token", text: $prefs.adoPAT, reveal: $prefs.showPAT, valid: !prefs.adoPAT.isEmpty,
+                           help: "A read-only token from dev.azure.com → User settings → Personal access tokens → Code: Read.")
                 }
             }
         }
@@ -831,7 +831,7 @@ struct AboutContent: View {
 
             UpdateCard(prefs: prefs)
             PrefCard(title: "Your privacy") {
-                Text("Your Harvest, GitHub, Azure DevOps, and calendar tokens live only on this Mac, in a locked folder, and are sent to nowhere but those services themselves. No account, no cloud, no telemetry.")
+                Text("Everything you connect — Harvest, GitHub, Azure DevOps, your calendar — stays on this Mac, in a locked folder, and is sent nowhere but those services themselves. No account, no cloud, no tracking.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 10) {
                     Button { reveal(P.dataDir) } label: { Label("Reveal data folder", systemImage: "folder") }
@@ -850,7 +850,7 @@ let PREFS_TABS: [(name: String, icon: String)] = [
 struct PreferencesView: View {
     @StateObject var prefs = Prefs()
     @State private var tab = 0 // 0 General, 1 Accounts, 2 Allocation, 3 About
-    @State private var slideTrailing = true // slide direction for the tab transition
+    @Namespace private var tabPill // slides the active-tab highlight between tabs
     @ObservedObject private var nav = PrefsNav.shared
     var render = false
     var footer: some View {
@@ -873,7 +873,6 @@ struct PreferencesView: View {
             ForEach(Array(PREFS_TABS.enumerated()), id: \.offset) { i, t in
                 Button {
                     if tappable, i != tab {
-                        slideTrailing = i > tab
                         withAnimation(.easeInOut(duration: 0.22)) { tab = i }
                     }
                 } label: {
@@ -883,7 +882,14 @@ struct PreferencesView: View {
                     }
                     .frame(maxWidth: .infinity).padding(.vertical, 7)
                     .foregroundStyle(active == i ? Web.primary : Color.secondary)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(active == i ? Web.primary.opacity(0.12) : .clear))
+                    // The highlight is a single pill that slides to the active tab (matched
+                    // geometry), rather than appearing/disappearing per tab.
+                    .background {
+                        if active == i {
+                            RoundedRectangle(cornerRadius: 8).fill(Web.primary.opacity(0.12))
+                                .matchedGeometryEffect(id: "tabPill", in: tabPill)
+                        }
+                    }
                     .contentShape(RoundedRectangle(cornerRadius: 8))
                 }.buttonStyle(.plain)
             }
@@ -904,7 +910,6 @@ struct PreferencesView: View {
             }.frame(width: 560).background(Web.card)
         } else {
             VStack(spacing: 0) {
-                Color.clear.frame(height: 22) // clear the floating traffic-light controls
                 tabBar(active: tab, tappable: true)
                 Divider()
                 ScrollView {
@@ -916,9 +921,7 @@ struct PreferencesView: View {
                         default: AboutContent(prefs: prefs)
                         }
                     }.padding(20)
-                        .id(tab)
-                        .transition(.push(from: slideTrailing ? .trailing : .leading))
-                }.clipped()
+                }
                 // Save appears only when there's something to save, and never on the About tab.
                 if tab != 3, prefs.hasChanges {
                     Divider(); footer
@@ -970,11 +973,52 @@ struct ScanBullet: View {
     }
 }
 
+// Renders a Lucide icon from its exact SVG (the same icons the website mockup uses), as a
+// tintable template image so it can be filled white inside the orange badge.
+struct LucideIcon: View {
+    let svg: String
+    var body: some View {
+        Image(nsImage: makeImage()).resizable().renderingMode(.template)
+    }
+
+    private func makeImage() -> NSImage {
+        let img = NSImage(data: Data(svg.utf8)) ?? NSImage(size: NSSize(width: 24, height: 24))
+        img.isTemplate = true
+        return img
+    }
+}
+
+private func lucideSVG(_ body: String) -> String {
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\(body)</svg>"
+}
+
+// The exact Lucide icon nodes for onboarding steps 2–6 (KeyRound, Sparkles, Workflow,
+// CalendarClock, BadgeCheck) — identical to the marketing site.
+let LUCIDE_KEY = lucideSVG("<path d=\"M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z\"/><circle cx=\"16.5\" cy=\"7.5\" r=\".5\" fill=\"#000\"/>")
+let LUCIDE_SPARKLES = lucideSVG("<path d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z\"/><path d=\"M20 2v4\"/><path d=\"M22 4h-4\"/><circle cx=\"4\" cy=\"20\" r=\"2\"/>")
+let LUCIDE_WORKFLOW = lucideSVG("<rect width=\"8\" height=\"8\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M7 11v4a2 2 0 0 0 2 2h4\"/><rect width=\"8\" height=\"8\" x=\"13\" y=\"13\" rx=\"2\"/>")
+let LUCIDE_CALENDAR_CLOCK = lucideSVG("<path d=\"M16 14v2.2l1.6 1\"/><path d=\"M16 2v3\"/><path d=\"M21 7.338V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h2.338\"/><path d=\"M3 9h5.859\"/><path d=\"M8 2v3\"/><circle cx=\"16\" cy=\"16\" r=\"6\"/>")
+let LUCIDE_BADGE_CHECK = lucideSVG("<path d=\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\"/><path d=\"m16 9-5.5 5.5L8 12\"/>")
+
 struct OnbHeader: View {
-    let icon: String; let title: String; let subtitle: String
+    let lucide: String; let title: String; let subtitle: String
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
-            Image(systemName: icon).font(.system(size: 26)).foregroundStyle(Web.primary).frame(width: 32)
+            // White Lucide icon in the orange gradient badge — matches the website mockup and the
+            // app-icon look of step 1.
+            LucideIcon(svg: lucide)
+                .foregroundStyle(.white)
+                .frame(width: 28, height: 28)
+                .frame(width: 52, height: 52)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.965, green: 0.565, blue: 0.227),
+                                 Color(red: 0.886, green: 0.329, blue: 0.122)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing,
+                    ),
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .shadow(color: .black.opacity(0.18), radius: 4, y: 1)
             VStack(alignment: .leading, spacing: 5) {
                 Text(title).font(.system(size: 21, weight: .bold))
                 Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -1040,13 +1084,13 @@ struct OnbHarvest: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            OnbHeader(icon: "key.horizontal", title: "Connect your Harvest account",
-                      subtitle: "This is the one account we truly need — it's where your hours get written.")
+            OnbHeader(lucide: LUCIDE_KEY, title: "Connect your Harvest account",
+                      subtitle: "The one account the app truly needs — it's where your hours are written.")
             VStack(spacing: 12) {
                 Field(label: "Account ID", text: $prefs.harvestAccount, hint: "e.g. 123456", valid: prefs.harvestAccount.isEmpty || prefs.accountValid,
-                      help: "Your numeric Harvest account, sent as the Harvest-Account-Id header.")
+                      help: "The number in your Harvest web address — id.getharvest.com shows it under Settings.")
                 Secret(label: "Access token", text: $prefs.harvestToken, reveal: $prefs.showToken, valid: true,
-                       help: "Get one at id.getharvest.com → Developers → Create New Personal Access Token.")
+                       help: "Create one at id.getharvest.com → Developers → Create New Personal Access Token, then paste it here.")
             }
             HStack(spacing: 12) {
                 Button { prefs.testHarvest() } label: { Label("Test connection", systemImage: "bolt.horizontal.circle") }
@@ -1071,7 +1115,7 @@ struct OnbDiscover: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            OnbHeader(icon: "sparkles", title: "Let's find your projects automatically",
+            OnbHeader(lucide: LUCIDE_SPARKLES, title: "Let's find your projects automatically",
                       subtitle: "It scans your connected accounts so you never type a project number by hand.")
             if prefs.discovering {
                 HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Scanning your Harvest, GitHub, and Azure DevOps…").font(.system(size: 12.5)).foregroundStyle(.secondary) }
@@ -1112,13 +1156,13 @@ struct OnbSources: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            OnbHeader(icon: "point.3.filled.connected.trianglepath.dotted", title: "Where your work lives",
-                      subtitle: "Pick the sources we should turn into hours. GitHub is the main one; the rest are optional.")
+            OnbHeader(lucide: LUCIDE_WORKFLOW, title: "Where your work lives",
+                      subtitle: "Choose what the app turns into hours. GitHub is the main one; the rest are optional.")
             PrefCard(title: "GitHub") {
                 Field(label: "Login", text: $prefs.ghLogin, hint: "your-username", valid: prefs.ghLogin.isEmpty || prefs.ghLoginValid,
                       help: "The GitHub account whose commits count toward your time.")
                 Secret(label: "Access token", text: $prefs.ghToken, reveal: $prefs.showGHToken, valid: true,
-                       help: "Optional read-only token (github.com → Settings → Developer settings → Fine-grained tokens → Repository: read). Skip it if the GitHub CLI (gh) is installed and signed in. Then Scan again to load orgs.")
+                       help: "Optional. A read-only token (github.com → Settings → Developer settings → Fine-grained tokens → Repository: read). Leave it blank if the GitHub CLI (gh) is already signed in, then Scan again to load your orgs.")
                 MultiSelect(label: "Orgs", options: prefs.ghOrgsAvailable, csv: $prefs.ghOrgs, valid: true,
                             help: "Tick the orgs whose commits count — loaded from your GitHub above.")
             }
@@ -1129,17 +1173,17 @@ struct OnbSources: View {
                     Field(label: "Project", text: $prefs.adoProject, valid: true)
                     Field(label: "Author (email)", text: $prefs.adoAuthor, hint: "you@org.com", valid: true,
                           help: "Your commit-author email in Azure DevOps.")
-                    Secret(label: "Read PAT", text: $prefs.adoPAT, reveal: $prefs.showPAT, valid: true,
-                           help: "A read-only Code PAT: dev.azure.com → User settings → Personal access tokens → Code: Read. Then Scan again on the previous step to load repos.")
+                    Secret(label: "Access token", text: $prefs.adoPAT, reveal: $prefs.showPAT, valid: true,
+                           help: "A read-only token from dev.azure.com → User settings → Personal access tokens → Code: Read. Then Scan again on the previous step to load repos.")
                     MultiSelect(label: "Repos", options: prefs.adoReposAvailable, csv: $prefs.adoRepos, valid: true,
                                 help: "Tick the repos to scan for your commits and pushes.")
                 }
             }
             PrefCard(title: "Google Calendar — optional") {
-                Text("Adds meeting hours from your calendar. Skip it and only commits/pushes count.")
+                Text("Adds your meetings as hours. Skip it and only your commits and pushes count.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Field(label: "Web-app URL", text: $prefs.calUrl, hint: "https://script.google.com/macros/s/…/exec", valid: prefs.calUrlValid,
-                      help: "The /exec URL of your deployed Apps Script web app.")
+                      help: "The web-app link the setup below gives you (it ends in /exec).")
                 Secret(label: "Shared secret", text: $prefs.calSecret, reveal: $prefs.showSecret, valid: prefs.calSecretValid)
                 CalendarTestRow(prefs: prefs)
                 CalendarHelp()
@@ -1152,7 +1196,7 @@ struct OnbWorkday: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            OnbHeader(icon: "clock.badge", title: "Your workday",
+            OnbHeader(lucide: LUCIDE_CALENDAR_CLOCK, title: "Your workday",
                       subtitle: "Sensible defaults are already set — adjust only if yours differ, then continue.")
             PrefCard(title: "Hours") {
                 NumRow(label: "Daily target", value: $prefs.dailyTarget, width: 60, valid: prefs.targetValid, trailing: "hours",
@@ -1191,7 +1235,7 @@ struct OnbFinish: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            OnbHeader(icon: "checkmark.seal", title: "Here's your week",
+            OnbHeader(lucide: LUCIDE_BADGE_CHECK, title: "Here's your week",
                       subtitle: "A live preview from everything you connected — nothing is written yet.")
             if prefs.previewing || prefs.logging {
                 HStack(spacing: 8) { ProgressView().controlSize(.small); Text(prefs.logging ? "Writing to Harvest…" : "Building this week's preview…").font(.system(size: 12.5)).foregroundStyle(.secondary) }
@@ -1265,7 +1309,7 @@ struct OnboardingView: View {
                 OnbDots(step: step)
                 Spacer()
                 Text("Step \(step + 1) of \(ONB_STEPS.count)").font(.system(size: 11)).foregroundStyle(.tertiary)
-            }.padding(.horizontal, 26).padding(.top, render ? 20 : 30).padding(.bottom, 16)
+            }.padding(.horizontal, 26).padding(.top, 20).padding(.bottom, 16)
 
             Group {
                 if render {
