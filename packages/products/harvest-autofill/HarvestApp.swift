@@ -157,13 +157,23 @@ extension View {
 // glass/bordered style so every primary button matches the marketing mockup exactly.
 struct MockupPrimaryStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(Web.primaryForeground)
-            .padding(.horizontal, 16).padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 8.4).fill(Web.primary))
-            .contentShape(RoundedRectangle(cornerRadius: 8.4))
-            .opacity(configuration.isPressed ? 0.85 : 1)
+        Styled(configuration: configuration)
+    }
+
+    // Nested so it can read the environment's isEnabled and dim a disabled button — a bare
+    // ButtonStyle can't, which previously left disabled primary buttons looking active.
+    struct Styled: View {
+        let configuration: Configuration
+        @Environment(\.isEnabled) private var isEnabled
+        var body: some View {
+            configuration.label
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Web.primaryForeground)
+                .padding(.horizontal, 16).padding(.vertical, 8)
+                .background(RoundedRectangle(cornerRadius: 8.4).fill(Web.primary))
+                .contentShape(RoundedRectangle(cornerRadius: 8.4))
+                .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
+        }
     }
 }
 
@@ -665,7 +675,7 @@ struct WhatsNewView: View {
             HStack {
                 Button { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL + "/releases")!) } label: {
                     Label("All releases on GitHub", systemImage: "arrow.up.right.square")
-                }.buttonStyle(.link).font(.system(size: 12))
+                }.buttonStyle(.plain).foregroundStyle(Web.primary).font(.system(size: 12))
                 Spacer()
                 // "Got It" is a post-update acknowledgement; when browsing from About the
                 // window is just closed via its title bar, so no button is shown.
@@ -677,6 +687,13 @@ struct WhatsNewView: View {
         }
         .frame(width: 460)
         .background(Web.card)
+        .onAppear {
+            // Opened from the Window menu (nothing populated it) — load the current release
+            // notes so the window isn't blank.
+            if !render, updater.whatsNew == nil {
+                updater.showWhatsNewNow()
+            }
+        }
     }
 }
 
@@ -777,13 +794,13 @@ struct AboutContent: View {
                             }
                             Label("What's new", systemImage: "sparkles")
                         }
-                    }.buttonStyle(.link).font(.system(size: 12)).disabled(updater.loadingWhatsNew)
+                    }.buttonStyle(.plain).foregroundStyle(Web.primary).font(.system(size: 12)).disabled(updater.loadingWhatsNew)
                     Button { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) } label: {
                         Label("Website", systemImage: "safari")
-                    }.buttonStyle(.link).font(.system(size: 12))
+                    }.buttonStyle(.plain).foregroundStyle(Web.primary).font(.system(size: 12))
                     Button { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) } label: {
                         Label("View on GitHub", systemImage: "arrow.up.right.square")
-                    }.buttonStyle(.link).font(.system(size: 12))
+                    }.buttonStyle(.plain).foregroundStyle(Web.primary).font(.system(size: 12))
                 }.padding(.top, 2)
             }.frame(maxWidth: .infinity).padding(.top, 4)
 
@@ -808,6 +825,11 @@ struct AboutContent: View {
     }
 }
 
+let PREFS_TABS: [(name: String, icon: String)] = [
+    ("General", "gearshape"), ("Accounts", "person.crop.circle"),
+    ("Allocation", "chart.pie"), ("About", "info.circle"),
+]
+
 struct PreferencesView: View {
     @StateObject var prefs = Prefs()
     @State private var tab = 0 // 0 General, 1 Accounts, 2 Allocation, 3 About
@@ -825,20 +847,54 @@ struct PreferencesView: View {
         }.padding(.horizontal, 20).padding(.vertical, 14)
     }
 
+    // Custom tab bar matching the marketing mockup: icon-above-label pills, the active tab
+    // tinted with the site primary. Shared by the interactive window and the render baseline.
+    func tabBar(active: Int, tappable: Bool) -> some View {
+        HStack(spacing: 4) {
+            ForEach(Array(PREFS_TABS.enumerated()), id: \.offset) { i, t in
+                Button {
+                    if tappable {
+                        tab = i
+                    }
+                } label: {
+                    VStack(spacing: 3) {
+                        Image(systemName: t.icon).font(.system(size: 15))
+                        Text(t.name).font(.system(size: 11, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity).padding(.vertical, 7)
+                    .foregroundStyle(active == i ? Web.primary : Color.secondary)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(active == i ? Web.primary.opacity(0.12) : .clear))
+                    .contentShape(RoundedRectangle(cornerRadius: 8))
+                }.buttonStyle(.plain)
+            }
+        }.padding(.horizontal, 10).padding(.vertical, 8)
+    }
+
     var body: some View {
         if render {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Harvest Auto-Fill — Preferences").font(.system(size: 15, weight: .bold))
-                GeneralContent(prefs: prefs); AccountsContent(prefs: prefs); AllocationContent(prefs: prefs)
-                footer
-            }.padding(20).frame(width: 560).background(Web.card)
+            // The baseline shows the mockup's tab bar (General active) above every section
+            // stacked, so both the tab style and all masked fields stay covered.
+            VStack(alignment: .leading, spacing: 0) {
+                tabBar(active: 0, tappable: false)
+                Divider()
+                VStack(alignment: .leading, spacing: 16) {
+                    GeneralContent(prefs: prefs); AccountsContent(prefs: prefs); AllocationContent(prefs: prefs)
+                    footer
+                }.padding(20)
+            }.frame(width: 560).background(Web.card)
         } else {
             VStack(spacing: 0) {
-                TabView(selection: $tab) {
-                    ScrollView { GeneralContent(prefs: prefs).padding(20) }.tabItem { Label("General", systemImage: "gearshape") }.tag(0)
-                    ScrollView { AccountsContent(prefs: prefs).padding(20) }.tabItem { Label("Accounts", systemImage: "person.crop.circle") }.tag(1)
-                    ScrollView { AllocationContent(prefs: prefs).padding(20) }.tabItem { Label("Allocation", systemImage: "chart.pie") }.tag(2)
-                    ScrollView { AboutContent(prefs: prefs).padding(20) }.tabItem { Label("About", systemImage: "info.circle") }.tag(3)
+                tabBar(active: tab, tappable: true)
+                Divider()
+                ScrollView {
+                    Group {
+                        switch tab {
+                        case 0: GeneralContent(prefs: prefs)
+                        case 1: AccountsContent(prefs: prefs)
+                        case 2: AllocationContent(prefs: prefs)
+                        default: AboutContent(prefs: prefs)
+                        }
+                    }.padding(20)
                 }
                 // Save appears only when there's something to save, and never on the About tab.
                 if tab != 3, prefs.hasChanges {
@@ -1132,7 +1188,11 @@ struct OnboardingView: View {
     }
 
     var canAdvance: Bool {
-        step == 1 ? prefs.harvestTest.isOK : true
+        // The Harvest step normally waits for a passing connection test. But when onboarding is
+        // re-opened with an account already saved, don't force a re-test — valid saved creds
+        // are enough to move on.
+        guard step == 1 else { return true }
+        return prefs.harvestTest.isOK || (!prefs.harvestAccount.isEmpty && !prefs.harvestToken.isEmpty)
     }
 
     var primaryLabel: String {
@@ -1201,12 +1261,18 @@ struct MenuContent: View {
             Divider()
         }
         if case let .ready(info) = updater.state {
-            Button("Update ready — install version \(info.version)") { updater.installAndRelaunch() }
+            Button("Install update — version \(info.version) & relaunch") { updater.installAndRelaunch() }
             Divider()
         }
         Button("Open") { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) }
         Button("Preferences…") { openWindow(id: "prefs"); NSApp.activate(ignoringOtherApps: true) }
         Button(model.refreshing ? "Recalculating…" : "Recalculate this week now") { model.refresh() }.disabled(model.refreshing)
+        Divider()
+        Button(updater.state == .checking ? "Checking for updates…" : "Check for Updates") { updater.check(manual: true) }
+            .disabled(updater.state == .checking)
+        Button("What's New") { openWindow(id: "whatsnew"); NSApp.activate(ignoringOtherApps: true) }
+        Button("Website") { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) }
+        Button("View on GitHub") { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) }
         Divider()
         Button("Quit") { confirmQuit() }
     }
@@ -1237,6 +1303,9 @@ struct MenuLabel: View {
                 if new != nil {
                     openWindow(id: "whatsnew"); NSApp.activate(ignoringOtherApps: true)
                 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openMainWindow)) { _ in
+                openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true)
             }
             .onAppear {
                 if model.firstRun { // new user: run the onboarding wizard once
@@ -1280,6 +1349,10 @@ struct VerifyView: View {
 }
 
 // ============================================================ App
+extension Notification.Name {
+    static let openMainWindow = Notification.Name("HarvestOpenMainWindow")
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_: Notification) {
         let args = CommandLine.arguments
@@ -1409,6 +1482,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { _ in
             (NSApp.delegate as? AppDelegate)?.model?.refresh()
         }
+    }
+
+    // Clicking the Dock icon brings existing windows forward; if none are open, it opens the
+    // main "This Week" window (posted to MenuLabel, which holds the SwiftUI openWindow action).
+    func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        NSApp.activate(ignoringOtherApps: true)
+        if !hasVisibleWindows {
+            NotificationCenter.default.post(name: .openMainWindow, object: nil)
+        }
+        return true
     }
 
     var model: WeekModel?
