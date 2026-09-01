@@ -8,7 +8,7 @@ import { faqItems } from "@/data/faq";
 <div class="w-full">
 	{
 		faqItems.map((it) => (
-			<details class="group border-b last:border-b-0">
+			<details class="faq-item group border-b last:border-b-0">
 				<summary class="flex flex-1 list-none items-center justify-between gap-4 py-4 text-left text-base font-medium transition-all hover:underline cursor-pointer [&::-webkit-details-marker]:hidden">
 					{it.q}
 					<svg

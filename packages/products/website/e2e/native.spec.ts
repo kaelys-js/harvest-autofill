@@ -7,17 +7,21 @@ test.beforeEach(async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });
 });
 
-// Both mockups keep every slide/panel in the DOM and show one at a time, so a marker string can
-// exist (hidden) in more than one section — assertions are scoped to the section under test, where
-// each marker is unique. Clicks are retried until the tab is present and the panel has switched.
-async function clickUntil(
+// Every slide/panel stays in the DOM (only the active one is opaque + interactive), so assertions
+// target the [data-active] element rather than mere text presence — opacity:0 still counts as
+// "visible" to Playwright, so a text-presence check would pass without the switch happening. The
+// click is retried until the active slide/panel has actually switched, to ride out hydration.
+async function switchTo(
 	scope: import("@playwright/test").Locator,
-	name: string | RegExp,
-	marker: RegExp | string,
+	tab: string | RegExp,
+	activeSelector: string,
+	marker: string,
 ) {
 	await expect(async () => {
-		await scope.getByRole("tab", { name }).click();
-		await expect(scope.getByText(marker)).toBeVisible({ timeout: 1000 });
+		await scope.getByRole("tab", { name: tab }).click();
+		await expect(scope.locator(`${activeSelector}[data-active]`)).toContainText(marker, {
+			timeout: 1000,
+		});
 	}).toPass({ timeout: 10000 });
 }
 
@@ -33,19 +37,21 @@ test.describe("made to feel native", () => {
 			"Here's your week",
 		];
 		for (const [i, title] of titles.entries()) {
-			await clickUntil(carousel, new RegExp(`^Step ${i + 2}:`), title);
+			await switchTo(carousel, new RegExp(`^Step ${i + 2}:`), "[data-onb-slide]", title);
 		}
 		// Next from the last step wraps back to Welcome.
 		await carousel.getByRole("button", { name: "Next step" }).click();
-		await expect(
-			carousel.getByRole("heading", { name: "Welcome to Harvest Auto-Fill" }),
-		).toBeVisible();
+		await expect(carousel.locator("[data-onb-slide][data-active]")).toContainText(
+			"Welcome to Harvest Auto-Fill",
+		);
 	});
 
 	test("preferences mockup switches between all four tabs", async ({ page }) => {
 		await page.goto("./");
 		const prefs = page.locator("[data-prefs-mockup]");
-		await expect(prefs.getByText("Automatic recording")).toBeVisible();
+		await expect(prefs.locator("[data-prefs-panel][data-active]")).toContainText(
+			"Automatic recording",
+		);
 		const tabs: [string, string][] = [
 			["Accounts", "Where your hours are written — the one account the app truly needs."],
 			["Allocation", "How commits, pushes, and meetings weight across your projects."],
@@ -53,7 +59,23 @@ test.describe("made to feel native", () => {
 			["General", "Files your week to Harvest every Friday at 6pm, even if the app is closed."],
 		];
 		for (const [tab, marker] of tabs) {
-			await clickUntil(prefs, tab, marker);
+			await switchTo(prefs, tab, "[data-prefs-panel]", marker);
 		}
+	});
+
+	// The auto-advance must not run until the mockup is on screen (a carousel nobody's looking at
+	// shouldn't burn cycles), and must run once it is. Motion is allowed here so the timer is live.
+	test("carousel auto-advances only once scrolled into view", async ({ page }) => {
+		await page.emulateMedia({ reducedMotion: "no-preference" });
+		await page.goto("./");
+		const carousel = page.locator("[data-onb-carousel]");
+		const step = carousel.locator("[data-onb-step]");
+		// Below the fold on load: still on step 1 after more than one auto-advance interval (5s).
+		await expect(step).toHaveText("Step 1 of 6");
+		await page.waitForTimeout(5600);
+		await expect(step).toHaveText("Step 1 of 6");
+		// Scroll it into view; now the interval elapses and it advances.
+		await carousel.scrollIntoViewIfNeeded();
+		await expect(step).toHaveText("Step 2 of 6", { timeout: 7000 });
 	});
 });

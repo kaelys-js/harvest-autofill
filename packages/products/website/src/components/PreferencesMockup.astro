@@ -1,8 +1,8 @@
 ---
 // Neutral recreation of the app's Preferences window — all four tabs, clickable, framework-free.
-// The tab bar swaps panels with a few lines of vanilla JS instead of a React island, so the
-// mockup ships no framework. Markup and classes mirror the old PreferencesMockup.tsx exactly, and
-// tab 0 (General) renders active by default, so the screenshot is byte-for-byte the same.
+// A few lines of vanilla JS slide the active-tab pill and cross-fade the panels (which stack in
+// one grid cell, so the frame is the tallest panel's height); tab 0 (General) is active by
+// default. Mirrors the app's own matched-geometry tab pill.
 import * as v from "valibot";
 import { PrefsTabsSchema } from "@/lib/schemas";
 
@@ -90,10 +90,12 @@ v.parse(PrefsTabsSchema, TABS);
 	</div>
 
 	<div
-		class="flex gap-1 border-b border-border/60 px-3 py-2"
+		class="relative flex gap-1 border-b border-border/60 px-3 py-2"
 		role="tablist"
 		aria-label="Preferences tabs"
 	>
+		<span data-prefs-pill class="rounded-md bg-primary/10" aria-hidden="true" style="--tab: 0"
+		></span>
 		{
 			TABS.map((x, n) => (
 				<button
@@ -102,8 +104,8 @@ v.parse(PrefsTabsSchema, TABS);
 					aria-selected={n === 0}
 					data-prefs-tab={n}
 					class:list={[
-						"flex flex-1 flex-col items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium transition-colors",
-						n === 0 ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted",
+						"relative z-10 flex flex-1 flex-col items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium transition-colors",
+						n === 0 ? "text-primary" : "text-muted-foreground hover:text-foreground",
 					]}
 				>
 					<svg
@@ -123,37 +125,50 @@ v.parse(PrefsTabsSchema, TABS);
 		}
 	</div>
 
-	{
-		TABS.map((tab, n) => (
-			<div data-prefs-panel={n} class="space-y-3 px-5 py-5" hidden={n !== 0}>
-				{tab.rows.map((r) => (
-					<div class="rounded-xl border border-border/60 bg-background/40 px-4 py-3">
-						<div class="text-sm font-semibold">{r.title}</div>
-						<div class="mt-0.5 text-xs leading-relaxed text-muted-foreground">{r.body}</div>
-					</div>
-				))}
-			</div>
-		))
-	}
+	<div data-prefs-panels>
+		{
+			TABS.map((tab, n) => (
+				<div
+					data-prefs-panel={n}
+					data-active={n === 0 ? "" : undefined}
+					inert={n !== 0}
+					class="space-y-3 px-5 py-5"
+				>
+					{tab.rows.map((r) => (
+						<div class="rounded-xl border border-border/60 bg-background/40 px-4 py-3">
+							<div class="text-sm font-semibold">{r.title}</div>
+							<div class="mt-0.5 text-xs leading-relaxed text-muted-foreground">{r.body}</div>
+						</div>
+					))}
+				</div>
+			))
+		}
+	</div>
 </div>
 
 <script>
-	// Swap the active tab: toggle each button's active/inactive classes and show its panel.
+	// Swap the active tab: slide the pill to the clicked tab, recolour the labels, and cross-fade
+	// to its panel.
 	for (const root of document.querySelectorAll<HTMLElement>("[data-prefs-mockup]")) {
 		const tabs = [...root.querySelectorAll<HTMLElement>("[data-prefs-tab]")];
 		const panels = [...root.querySelectorAll<HTMLElement>("[data-prefs-panel]")];
+		const pill = root.querySelector<HTMLElement>("[data-prefs-pill]");
 		for (const btn of tabs) {
 			btn.addEventListener("click", () => {
 				const n = btn.dataset.prefsTab;
+				if (pill && n != null) pill.style.setProperty("--tab", n);
 				for (const b of tabs) {
 					const on = b.dataset.prefsTab === n;
 					b.setAttribute("aria-selected", String(on));
-					b.classList.toggle("bg-primary/10", on);
 					b.classList.toggle("text-primary", on);
 					b.classList.toggle("text-muted-foreground", !on);
-					b.classList.toggle("hover:bg-muted", !on);
+					b.classList.toggle("hover:text-foreground", !on);
 				}
-				for (const p of panels) p.hidden = p.dataset.prefsPanel !== n;
+				for (const p of panels) {
+					const on = p.dataset.prefsPanel === n;
+					p.toggleAttribute("data-active", on);
+					p.inert = !on;
+				}
 			});
 		}
 	}

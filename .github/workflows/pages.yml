@@ -3,9 +3,9 @@ name: Pages
 # Requires Pages to be set to "GitHub Actions" as its source (repo Settings -> Pages).
 on:
   push:
-    # Deploy on main (site content) and on every app release tag, so the live site stays in
-    # lockstep with the app — a vX.Y tag rebuilds the site with that version baked in.
-    branches: [main]
+    # Deploy only on an app release tag, so the live site moves in lockstep with the app — a
+    # vX.Y tag rebuilds the site with that version baked in. Site content changes ride along with
+    # the next release rather than deploying on their own. workflow_dispatch covers manual redeploys.
     tags: ["v*"]
   workflow_dispatch:
 
@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: 0          # tags needed for the `git describe` version fallback on main pushes
+          fetch-depth: 0 # tags needed for the `git describe` version fallback on a manual dispatch
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
           install: true

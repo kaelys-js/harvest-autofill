@@ -1,9 +1,10 @@
 ---
-// Neutral recreation of the app's 6-step first-run wizard, framework-free. All six slides ship
-// in the markup (only the active one shown); a few lines of vanilla JS auto-advance, pause on
-// hover/focus, and honour reduced-motion — the same behaviour the React island had, minus the
-// framework. Icons are lucide's own paths inlined (stroke 1.8, white in the orange badge), so the
-// initial slide is byte-for-byte the same as before.
+// Neutral recreation of the app's 6-step first-run wizard, framework-free. All six slides stack
+// in one grid cell (the frame is the tallest step's height, so it never jumps); the active one
+// is opaque and interactive, the rest sit a nudge to either side at opacity 0 and cross-fade in
+// when selected. A few lines of vanilla JS drive it: it auto-advances only while on screen (an
+// IntersectionObserver gate), pauses on hover/focus, and honours reduced-motion. Icons are
+// lucide's own paths inlined (stroke 1.8, white in the orange badge).
 import * as v from "valibot";
 import { OnboardingStepsSchema } from "@/lib/schemas";
 
@@ -60,37 +61,39 @@ v.parse(OnboardingStepsSchema, STEPS);
 		</span>
 	</div>
 
-	{
-		STEPS.map((s, n) => (
-			<div
-				data-onb-slide={n}
-				class="flex items-start gap-4 px-7 py-8"
-				aria-live="polite"
-				hidden={n !== 0}
-			>
-				<div class="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#f6903a] to-[#e2541f] shadow-md">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="24"
-						height="24"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.8"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						class="size-8 text-white"
-						aria-hidden="true"
-						set:html={s.icon}
-					/>
+	<div data-onb-track aria-live="polite">
+		{
+			STEPS.map((s, n) => (
+				<div
+					data-onb-slide={n}
+					data-active={n === 0 ? "" : undefined}
+					inert={n !== 0}
+					class="flex items-start gap-4 px-7 py-8"
+				>
+					<div class="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#f6903a] to-[#e2541f] shadow-md">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="24"
+							height="24"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.8"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="size-8 text-white"
+							aria-hidden="true"
+							set:html={s.icon}
+						/>
+					</div>
+					<div>
+						<h3 class="text-xl font-bold tracking-tight">{s.title}</h3>
+						<p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+					</div>
 				</div>
-				<div>
-					<h3 class="text-xl font-bold tracking-tight">{s.title}</h3>
-					<p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-				</div>
-			</div>
-		))
-	}
+			))
+		}
+	</div>
 
 	<div class="flex items-center justify-between border-t border-border/60 px-5 py-4">
 		<button
@@ -142,10 +145,18 @@ v.parse(OnboardingStepsSchema, STEPS);
 		const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 		let i = 0;
 		let paused = false;
+		let inView = false;
 		let timer: ReturnType<typeof setTimeout> | undefined;
 
 		const render = () => {
-			slides.forEach((s, n) => (s.hidden = n !== i));
+			slides.forEach((s, n) => {
+				const on = n === i;
+				s.toggleAttribute("data-active", on);
+				s.inert = !on;
+				// steps before the active one sit to its left, steps after sit to its right, so the
+				// incoming step always slides in from the side it "comes from".
+				s.style.setProperty("--onb-dir", n < i ? "-1" : "1");
+			});
 			dots.forEach((d, n) => {
 				const on = n === i;
 				d.setAttribute("aria-selected", String(on));
@@ -159,7 +170,8 @@ v.parse(OnboardingStepsSchema, STEPS);
 		};
 		const schedule = () => {
 			if (timer) clearTimeout(timer);
-			if (!paused && !reduced) timer = setTimeout(() => go(i + 1), AUTO_MS);
+			// Only auto-advance while the mockup is on screen, not paused, and motion is allowed.
+			if (inView && !paused && !reduced) timer = setTimeout(() => go(i + 1), AUTO_MS);
 		};
 		const go = (n: number) => {
 			i = (n + N) % N;
@@ -182,6 +194,17 @@ v.parse(OnboardingStepsSchema, STEPS);
 		root.addEventListener("mouseleave", resume);
 		root.addEventListener("focusin", pause);
 		root.addEventListener("focusout", resume);
-		schedule();
+
+		// Don't start the auto-advance until the carousel scrolls into view, and stop it when it
+		// leaves — a mockup nobody's looking at shouldn't be cycling.
+		const io = new IntersectionObserver(
+			(entries) => {
+				inView = entries[0].isIntersecting;
+				if (inView) schedule();
+				else if (timer) clearTimeout(timer);
+			},
+			{ threshold: 0.4 },
+		);
+		io.observe(root);
 	}
 </script>

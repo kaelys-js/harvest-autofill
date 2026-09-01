@@ -179,3 +179,99 @@
 		animation-duration: 0.3s;
 	}
 }
+
+/* FAQ open/close glide. `interpolate-size: allow-keywords` lets the panel height animate to and
+   from `auto` — the 2026 standard for auto-height transitions. The @supports guard means a
+   browser without it still opens and closes the row correctly, just without the glide. Gated by
+   reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+	@supports (interpolate-size: allow-keywords) {
+		:root {
+			interpolate-size: allow-keywords;
+		}
+
+		.faq-item::details-content {
+			height: 0;
+			overflow: clip;
+			transition:
+				height 0.2s ease,
+				content-visibility 0.2s ease allow-discrete;
+		}
+
+		.faq-item[open]::details-content {
+			height: auto;
+		}
+	}
+}
+
+/* Onboarding carousel: cross-fade with a small directional slide between steps, mirroring the
+   app's first-run wizard. Slides stack in one grid cell so the frame is the height of the
+   tallest step and never jumps; only the active step is visible and interactive. `--onb-dir`
+   (set per slide in JS: -1 for steps before the active one, +1 for those after) makes the
+   incoming step slide in from the correct side. Transition gated by reduced-motion; the layout
+   itself (stack + opacity) still applies so exactly one step shows. */
+[data-onb-track] {
+	display: grid;
+}
+
+[data-onb-slide] {
+	grid-area: 1 / 1;
+	opacity: 0;
+	transform: translateX(calc(var(--onb-dir, 1) * 1.5rem));
+	pointer-events: none;
+}
+
+[data-onb-slide][data-active] {
+	opacity: 1;
+	transform: none;
+	pointer-events: auto;
+}
+
+/* Preferences mockup: the active-tab pill slides between tabs, and panels cross-fade the same
+   way the carousel steps do (stacked so the frame is the tallest panel's height). The pill is
+   positioned purely from the tab index (--tab), so it sits under the right tab even before the
+   script runs: the tab strip has px-3 (0.75rem) side padding, py-2 (0.5rem) top/bottom, gap-1
+   (0.25rem) between four equal tabs — so each tab is (100% - 2.25rem)/4 wide and one step over is
+   its own width plus the gap. */
+[data-prefs-pill] {
+	position: absolute;
+	top: 0.5rem;
+	bottom: 0.5rem;
+	left: 0.75rem;
+	width: calc((100% - 2.25rem) / 4);
+	transform: translateX(calc(var(--tab, 0) * (100% + 0.25rem)));
+	pointer-events: none;
+}
+
+[data-prefs-panels] {
+	display: grid;
+}
+
+[data-prefs-panel] {
+	grid-area: 1 / 1;
+	opacity: 0;
+	pointer-events: none;
+}
+
+[data-prefs-panel][data-active] {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	[data-onb-slide] {
+		transition:
+			opacity 0.35s ease,
+			transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	[data-prefs-pill] {
+		transition:
+			transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+			width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	[data-prefs-panel] {
+		transition: opacity 0.25s ease;
+	}
+}
