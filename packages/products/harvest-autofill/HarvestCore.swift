@@ -97,21 +97,29 @@ func hrs(_ v: Double) -> String {
     (v == v.rounded() ? String(Int(v)) : String(format: "%g", v)) + "h"
 }
 
+// Per-project dot colors, matched exactly to the website's WindowMockup.
 func projColor(_ p: String) -> Color {
     switch p {
-    case "ITC": Color(red: 0.95, green: 0.46, blue: 0.16)
-    case "Internal": Color(red: 0.42, green: 0.48, blue: 0.96)
-    case "Wheaton": Color(red: 0.13, green: 0.68, blue: 0.62)
-    case "Providence": Color(red: 0.30, green: 0.72, blue: 0.42)
+    case "Website": Color(red: 0.949, green: 0.463, blue: 0.165) // #f2762a
+    case "Design": Color(red: 0.302, green: 0.729, blue: 0.420) // #4dba6b
+    case "Mobile App": Color(red: 0.133, green: 0.686, blue: 0.627) // #22afa0
+    case "Internal": Color(red: 0.420, green: 0.471, blue: 0.965) // #6b78f6
     default: .gray
     }
+}
+
+// Website palette (oklch tokens from the site's global.css, converted to sRGB) so the app
+// matches the marketing site exactly.
+enum Web {
+    static let primary = Color(red: 0.980, green: 0.433, blue: 0.112) // --primary dark  #fa6e1d
+    static let cardDark = Color(red: 0.091, green: 0.091, blue: 0.091) // --card dark      #171717
 }
 
 struct Status { let text: String; let color: Color; let symbol: String }
 func statusFor(_ s: String) -> Status {
     switch s {
     case "written": Status(text: "Recorded to Harvest", color: .green, symbol: "checkmark.circle.fill")
-    case "dryrun": Status(text: "Live preview · this week", color: .blue, symbol: "clock.fill")
+    case "dryrun": Status(text: "This week, so far", color: Web.primary, symbol: "circle.fill")
     case "dedup": Status(text: "Already filled", color: .secondary, symbol: "info.circle.fill")
     case "fail": Status(text: "Needs a look", color: .orange, symbol: "exclamationmark.triangle.fill")
     default: Status(text: "Harvest", color: .secondary, symbol: "clock")

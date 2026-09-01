@@ -12,15 +12,16 @@ struct HelpersTests {
 
     @Test func `status for maps engine states`() {
         #expect(statusFor("written").symbol == "checkmark.circle.fill")
-        #expect(statusFor("dryrun").text.contains("preview"))
+        #expect(statusFor("dryrun").text == "This week, so far")
         #expect(statusFor("fail").symbol == "exclamationmark.triangle.fill")
         #expect(statusFor("anything-else").text == "Harvest")
     }
 
     @Test func `proj color covers every project and default`() {
-        // Just exercise every branch; distinct-ness is enough.
-        let colors = ["ITC", "Internal", "Wheaton", "Providence", "Unknown"].map { projColor($0) }
-        #expect(colors.count == 5)
+        // Exercise every named branch with the app's neutral project names, then the fallback.
+        let colors = ["Website", "Design", "Mobile App", "Internal"].map { projColor($0) }
+        #expect(colors.count == 4)
+        #expect(projColor("Unknown") == .gray) // anything unmapped falls back to gray
     }
 
     @Test func `status for covers dedup and default`() {

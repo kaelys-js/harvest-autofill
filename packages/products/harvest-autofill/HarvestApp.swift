@@ -78,7 +78,7 @@ struct MainWindow: View {
                         Image(systemName: st.symbol).foregroundStyle(st.color).font(.system(size: 13))
                         Text(st.text).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(st.color)
                     }
-                    Text(s.map { "\($0.week)  ·  \(hrs($0.total))  ·  \($0.daysWorked) day\($0.daysWorked == 1 ? "" : "s")" } ?? "No data yet — refreshing…")
+                    Text(s.map { "\(hrs($0.total)) across \($0.daysWorked) day\($0.daysWorked == 1 ? "" : "s")  ·  \($0.week)" } ?? "No data yet — refreshing…")
                         .font(.system(size: 12)).foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -118,18 +118,19 @@ struct MainWindow: View {
 
             Divider()
             HStack(spacing: 10) {
-                Button { model.refresh() } label: { Label("Refresh", systemImage: "arrow.clockwise") }
-                    .disabled(model.refreshing)
-                if let lr = model.lastRefresh {
-                    Text("updated \(lr.formatted(date: .omitted, time: .shortened))").font(.system(size: 11)).foregroundStyle(.tertiary)
-                }
+                // Auto-refreshes every 15 minutes; the mockup's footer line replaces the manual Refresh.
+                Text("Files to Harvest every Friday").font(.system(size: 12)).foregroundStyle(.secondary)
                 Spacer()
-                Button { model.logNow() } label: { Text("Log this week to Harvest") }
+                Button { model.logNow() } label: { Text("Log this week") }
                     .primaryProminent().controlSize(.large).disabled(model.refreshing)
             }.padding(.horizontal, 18).padding(.vertical, 14)
         }
         .frame(width: 470)
-        .background(render ? AnyShapeStyle(Color(nsColor: .windowBackgroundColor)) : AnyShapeStyle(.regularMaterial))
+        // Match the website card color exactly (white in light, #171717 in dark).
+        .background(render ? AnyShapeStyle(Color(nsColor: NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                ? NSColor(red: 0.091, green: 0.091, blue: 0.091, alpha: 1) : .white
+        })) : AnyShapeStyle(.regularMaterial))
     }
 }
 
@@ -362,7 +363,7 @@ struct AccountsContent: View {
     var body: some View {
         VStack(spacing: 14) {
             PrefCard(title: "Harvest") {
-                Field(label: "Account ID", text: $prefs.harvestAccount, hint: "e.g. 582834", valid: prefs.accountValid,
+                Field(label: "Account ID", text: $prefs.harvestAccount, hint: "e.g. 123456", valid: prefs.accountValid,
                       help: "Your numeric Harvest account, sent as the Harvest-Account-Id request header.")
                 Secret(label: "Access token", text: $prefs.harvestToken, reveal: $prefs.showToken, valid: prefs.tokenValid,
                        help: "From id.getharvest.com → Developers → Create New Personal Access Token.")
@@ -399,7 +400,7 @@ struct AccountsContent: View {
                 MultiSelect(label: "Orgs", options: prefs.ghOrgsAvailable, csv: $prefs.ghOrgs, valid: prefs.ghOrgsValid,
                             help: "Tick the orgs whose commits count toward your time — loaded automatically from your GitHub.")
             }
-            PrefCard(title: "Azure DevOps — optional (Wheaton)") {
+            PrefCard(title: "Azure DevOps — optional") {
                 Toggle("Enabled", isOn: $prefs.adoEnabled).font(.system(size: 12)).toggleStyle(.switch)
                 if prefs.adoEnabled {
                     Field(label: "Org", text: $prefs.adoOrg, valid: !prefs.adoOrg.isEmpty)
@@ -925,7 +926,7 @@ struct OnbHarvest: View {
             OnbHeader(icon: "key.horizontal", title: "Connect your Harvest account",
                       subtitle: "This is the one account we truly need — it's where your hours get written.")
             VStack(spacing: 12) {
-                Field(label: "Account ID", text: $prefs.harvestAccount, hint: "e.g. 582834", valid: prefs.harvestAccount.isEmpty || prefs.accountValid,
+                Field(label: "Account ID", text: $prefs.harvestAccount, hint: "e.g. 123456", valid: prefs.harvestAccount.isEmpty || prefs.accountValid,
                       help: "Your numeric Harvest account, sent as the Harvest-Account-Id header.")
                 Secret(label: "Access token", text: $prefs.harvestToken, reveal: $prefs.showToken, valid: true,
                        help: "Get one at id.getharvest.com → Developers → Create New Personal Access Token.")
@@ -1334,6 +1335,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let i = args.firstIndex(of: "--render"), i + 2 < args.count {
             let which = args[i + 1], out = args[i + 2]
             let model = WeekModel()
+            model.summary = Self.demoPrefs().preview // show the generic demo week, matching the site mockup
+            model.refreshing = false // no spinner in a static render (ImageRenderer can't draw ProgressView)
             var view: any View = MainWindow(model: model, render: true)
             if which == "prefs" {
                 view = PreferencesView(render: true)
@@ -1345,6 +1348,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 view = ResetConfirmSheet(typed: .constant("RESET")).background(Color(nsColor: .windowBackgroundColor))
             } else if which == "about" {
                 view = AboutContent(prefs: Prefs()).padding(22).frame(width: 480).background(Color(nsColor: .windowBackgroundColor))
+            } else if which == "main-empty" {
+                let m = WeekModel(); m.summary = nil; m.refreshing = false
+                view = MainWindow(model: m, render: true)
+            } else if which == "main-issues" {
+                let s = Self.demoPrefs().preview!
+                let withIssues = Summary(state: s.state, week: s.week, total: s.total, daysWorked: s.daysWorked,
+                                         days: s.days, flags: s.flags,
+                                         issues: [
+                                             "Tuesday's meetings exceed the 9h daily target — nothing was logged for that day.",
+                                             "Azure DevOps org isn't set — pushes won't be counted until you add it in Preferences.",
+                                         ], message: s.message)
+                let m = WeekModel(); m.summary = withIssues; m.refreshing = false
+                view = MainWindow(model: m, render: true)
             } else if which.hasPrefix("whatsnew") {
                 Updater.shared.whatsNewManual = (which == "whatsnewmanual") // manual = no "Continue"
                 Updater.shared.whatsNew = WhatsNew(version: "2.11", notes: """
@@ -1385,32 +1401,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Populated Prefs for faithfully rendering each onboarding step in verification.
     @MainActor static func demoPrefs() -> Prefs {
+        // All demo values are generic — no real client, account, or repo names ever render.
         let p = Prefs()
-        p.harvestAccount = "582834"; p.harvestToken = "pat-xxxxxxxx"
-        p.harvestTest = .ok("Cole Beuker · cole.beuker@ttt.studio")
-        p.harvestUser = "5692603"; p.discovered = true
-        p.projectsList = [("ITC", "47292703"), ("Internal", "48661670"), ("Providence", "47573403"), ("Wheaton", "48917029")]
-        p.ghLogin = "kaelys-js"; p.ghOrgsAvailable = ["resistjs", "tttstudios"]; p.ghOrgs = "resistjs, tttstudios"
-        p.adoEnabled = true; p.adoOrg = "wheatonpreciousmetals"; p.adoProject = "OMS"
-        p.adoAuthor = "ttt.cbeuker@wheatonpm.com"; p.adoPAT = "ado-xxxx"
-        p.adoReposAvailable = ["OMS-AI", "OMS-BE", "OMS-DevOps", "OMS-FE"]; p.adoRepos = "OMS-BE, OMS-FE"
-        p.preview = Summary(state: "dryrun", week: "Aug 24–28", total: 36.0, daysWorked: 4,
+        p.harvestAccount = "123456"; p.harvestToken = "pat-xxxxxxxx"
+        p.harvestTest = .ok("Alex Rivera · you@example.com")
+        p.harvestUser = "654321"; p.discovered = true
+        p.projectsList = [("Website", "100001"), ("Design", "100002"), ("Mobile App", "100003"), ("Internal", "100004")]
+        p.ghLogin = "octocat"; p.ghOrgsAvailable = ["acme-inc", "acme-labs"]; p.ghOrgs = "acme-inc, acme-labs"
+        p.adoEnabled = true; p.adoOrg = "acme"; p.adoProject = "Platform"
+        p.adoAuthor = "you@example.com"; p.adoPAT = "ado-xxxx"
+        p.adoReposAvailable = ["web-app", "mobile-app", "api", "infra"]; p.adoRepos = "web-app, mobile-app"
+        p.preview = Summary(state: "dryrun", week: "Aug 31 – Sep 4", total: 36.0, daysWorked: 4,
                             days: [
-                                Day(name: "Mon Aug 24", total: 9.0, note: nil, entries: [
-                                    Entry(span: "9:00am–1:30pm", project: "ITC", task: "Development", hours: 4.5),
-                                    Entry(span: "1:30pm–5:00pm", project: "Wheaton", task: "Development", hours: 3.5),
-                                    Entry(span: "11:00am–11:30am", project: "ITC", task: "Client Meetings", hours: 1.0),
+                                Day(name: "Mon Aug 31", total: 9.0, note: nil, entries: [
+                                    Entry(span: "9:00 AM–1:30 PM", project: "Website", task: "Development", hours: 4.5),
+                                    Entry(span: "1:30 PM–5:00 PM", project: "Design", task: "Development", hours: 3.5),
+                                    Entry(span: "11:00 AM–11:30 AM", project: "Website", task: "Client meeting", hours: 1.0),
                                 ]),
-                                Day(name: "Tue Aug 25", total: 9.0, note: nil, entries: [
-                                    Entry(span: "9:00am–6:00pm", project: "Wheaton", task: "Development", hours: 9.0),
+                                Day(name: "Tue Sep 1", total: 9.0, note: nil, entries: [
+                                    Entry(span: "9:00 AM–6:00 PM", project: "Mobile App", task: "Development", hours: 9.0),
                                 ]),
-                                Day(name: "Wed Aug 26", total: nil, note: "Statutory holiday — skipped", entries: []),
-                                Day(name: "Thu Aug 27", total: 9.0, note: nil, entries: [
-                                    Entry(span: "9:00am–5:00pm", project: "Internal", task: "Development", hours: 8.0),
-                                    Entry(span: "3:00pm–4:00pm", project: "Internal", task: "Internal Meetings", hours: 1.0),
+                                Day(name: "Wed Sep 2", total: nil, note: "Statutory holiday — skipped", entries: []),
+                                Day(name: "Thu Sep 3", total: 9.0, note: nil, entries: [
+                                    Entry(span: "9:00 AM–5:00 PM", project: "Internal", task: "Development", hours: 8.0),
+                                    Entry(span: "3:00 PM–4:00 PM", project: "Internal", task: "Internal meeting", hours: 1.0),
                                 ]),
-                                Day(name: "Fri Aug 28", total: 9.0, note: nil, entries: [
-                                    Entry(span: "9:00am–6:00pm", project: "ITC", task: "Development", hours: 9.0),
+                                Day(name: "Fri Sep 4", total: 9.0, note: nil, entries: [
+                                    Entry(span: "9:00 AM–6:00 PM", project: "Website", task: "Development", hours: 9.0),
                                 ]),
                             ], flags: [], issues: nil, message: "")
         return p

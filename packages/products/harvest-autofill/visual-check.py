@@ -19,6 +19,8 @@ APP = os.path.join(HERE, "dist", "Harvest Auto-Fill.app", "Contents", "MacOS", "
 BASELINE = os.path.join(HERE, "visual-baseline")
 SCREENS = [
     "main",
+    "main-empty",
+    "main-issues",
     "prefs",
     "about",
     "whatsnew",
