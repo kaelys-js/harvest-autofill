@@ -5,8 +5,8 @@ import OnboardingCarousel from "@/components/OnboardingCarousel.tsx";
 import PreferencesMockup from "@/components/PreferencesMockup.tsx";
 import WhatsNewMockup from "@/components/WhatsNewMockup.astro";
 import GithubMark from "@/components/GithubMark.astro";
-import ThemeToggle from "@/components/ThemeToggle.tsx";
-import DownloadButton from "@/components/DownloadButton.tsx";
+import ThemeToggle from "@/components/ThemeToggle.astro";
+import DownloadButton from "@/components/DownloadButton.astro";
 import Faq from "@/components/Faq.tsx";
 import { faqItems } from "@/data/faq";
 import * as v from "valibot";
@@ -137,8 +137,8 @@ v.parse(HowItWorksStepsSchema, steps);
 					class="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 					aria-label="View on GitHub (opens in a new tab)"><GithubMark class="size-5" /></a
 				>
-				<ThemeToggle client:load />
-				<span class="hidden sm:block"><DownloadButton client:load size="default" /></span>
+				<ThemeToggle />
+				<span class="hidden sm:block"><DownloadButton size="default" /></span>
 			</div>
 		</nav>
 	</header>
@@ -172,7 +172,7 @@ v.parse(HowItWorksStepsSchema, steps);
 					hours, split across the right projects and filed for you every Friday.
 				</p>
 				<div data-hero style="--hd:200ms" class="mt-8 flex flex-wrap items-center gap-3">
-					<DownloadButton client:load />
+					<DownloadButton />
 					<a href={REPO} target="_blank" rel="noopener noreferrer"
 						><span
 							class="inline-flex h-11 items-center gap-2 rounded-md border border-border bg-background px-6 text-base font-medium shadow-xs transition-colors hover:bg-accent"
@@ -300,7 +300,7 @@ v.parse(HowItWorksStepsSchema, steps);
 				<p class="mt-3 text-muted-foreground">
 					macOS 26 or newer, Apple Silicon. Free and open source.
 				</p>
-				<div class="mt-8 flex justify-center"><DownloadButton client:visible /></div>
+				<div class="mt-8 flex justify-center"><DownloadButton /></div>
 				<ol class="mx-auto mt-10 max-w-xl space-y-4 text-left">
 					<li class="flex items-start gap-4">
 						<span
@@ -346,7 +346,7 @@ v.parse(HowItWorksStepsSchema, steps);
 				class="mt-12 flex flex-col items-center gap-4 rounded-2xl border border-border/60 bg-card p-8 text-center"
 			>
 				<h3 class="text-xl font-semibold">Ready to stop filling timesheets?</h3>
-				<DownloadButton client:visible />
+				<DownloadButton />
 			</div>
 		</section>
 	</main>
@@ -376,7 +376,7 @@ v.parse(HowItWorksStepsSchema, steps);
 						Your macOS timesheet, filled from the work you already did. Private, open source, and
 						free.
 					</p>
-					<div class="mt-6"><DownloadButton client:visible size="default" /></div>
+					<div class="mt-6"><DownloadButton size="default" /></div>
 				</div>
 
 				<nav aria-label="Product">

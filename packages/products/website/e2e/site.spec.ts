@@ -12,14 +12,15 @@ test("loads with the right title and a skip link", async ({ page }) => {
 test("the theme toggle flips light and dark", async ({ page }) => {
 	const html = page.locator("html");
 	const toggle = page.getByRole("button", { name: /toggle dark mode/i });
-	// Retry until the island has hydrated (a click before hydration is a no-op). Reading the
-	// before-state fresh each attempt keeps a pre-hydration click from being double-counted.
-	await expect(async () => {
-		const before = await html.evaluate((el) => el.classList.contains("dark"));
-		await toggle.click();
-		const after = await html.evaluate((el) => el.classList.contains("dark"));
-		expect(after).toBe(!before);
-	}).toPass({ timeout: 10000 });
+	const isDark = () => html.evaluate((el) => el.classList.contains("dark"));
+	const before = await isDark();
+	// The toggle is a plain server-rendered button, so one click is enough — no hydration wait.
+	// The class flip lands inside a View Transition, so poll for it to settle before asserting
+	// (and before the next click) rather than reading synchronously, which would race the frame.
+	await toggle.click();
+	await expect.poll(isDark).toBe(!before);
+	await toggle.click();
+	await expect.poll(isDark).toBe(before);
 });
 
 test("an FAQ answer expands when its question is clicked", async ({ page }) => {

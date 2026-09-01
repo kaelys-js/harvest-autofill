@@ -1,0 +1,45 @@
+---
+// A plain server-rendered download link — no framework, so the primary CTA adds no JS to the
+// initial load. The version tag beside "Download for macOS" is filled in after load by one
+// shared script (fillDownloadVersions), regardless of how many buttons the page renders.
+import { buttonVariants } from "@/components/ui/button";
+import { parseDownloadSize, type DownloadSize } from "@/lib/schemas";
+import { DOWNLOAD_ZIP } from "@/lib/download";
+
+interface Props {
+	size?: DownloadSize;
+}
+const { size = "lg" } = Astro.props;
+const btnSize = parseDownloadSize(size);
+---
+
+<a href={DOWNLOAD_ZIP} rel="noopener noreferrer" class="inline-block">
+	<button type="button" class={buttonVariants({ size: btnSize })}>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class="lucide lucide-download"
+			aria-hidden="true"
+		>
+			<path d="M12 15V3"></path>
+			<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+			<path d="m7 10 5 5 5-5"></path>
+		</svg>
+		<span>Download for macOS</span>
+		<span
+			class="inline-block min-w-[5.5ch] text-left font-normal tabular-nums opacity-80"
+			data-download-version></span>
+	</button>
+</a>
+
+<script>
+	import { fillDownloadVersions } from "@/lib/download";
+	fillDownloadVersions();
+</script>
