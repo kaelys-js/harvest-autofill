@@ -3,18 +3,23 @@ import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
+import { parseVersion } from "./src/lib/schemas.ts";
 
 // The app version this site ships in lockstep with. On a release-tag deploy it comes from the
-// tag (GITHUB_REF_NAME); otherwise from the latest git tag. Empty when neither is available
-// (e.g. the E2E container, which has no .git) — components then show a neutral "latest release".
+// tag (GITHUB_REF_NAME); otherwise from the latest git tag. Each candidate is validated with the
+// same valibot schema the client uses, so a malformed ref never reaches the page. Empty when
+// nothing valid is available (e.g. the E2E container, which has no .git) — components then show
+// a neutral "latest release".
 function appVersion() {
-	const tag = process.env.GITHUB_REF_NAME;
-	if (tag && /^v\d/.test(tag)) return tag.replace(/^v/, "");
+	const fromTag = parseVersion(process.env.GITHUB_REF_NAME);
+	if (fromTag) return fromTag;
 	try {
-		return execSync("git describe --tags --abbrev=0", { stdio: ["ignore", "pipe", "ignore"] })
+		const described = execSync("git describe --tags --abbrev=0", {
+			stdio: ["ignore", "pipe", "ignore"],
+		})
 			.toString()
-			.trim()
-			.replace(/^v/, "");
+			.trim();
+		return parseVersion(described) ?? "";
 	} catch {
 		return "";
 	}
