@@ -16,8 +16,8 @@ struct ConfigIOTests {
       "timeline": { "gap_cap_min": 120, "lead_in_min": 30 },
       "harvest": { "user_id": 4242, "user_agent": "ua" },
       "projects": {
-        "ITC": { "project_id": 100, "meeting_task": 111, "dev_task": 112 },
-        "Wheaton": { "project_id": 400, "meeting_task": 411, "dev_task": 412 }
+        "Website": { "project_id": 100, "meeting_task": 111, "dev_task": 112 },
+        "Mobile App": { "project_id": 400, "meeting_task": 411, "dev_task": 412 }
       },
       "github": { "login": "gito", "orgs": ["orgA", "orgB"] },
       "azure_devops": { "enabled": true, "org": "o", "project": "p", "repos": ["r1", "r2"], "author": "a@b" },
@@ -39,7 +39,7 @@ struct ConfigIOTests {
         #expect(p.adoEnabled && p.adoOrg == "o" && p.adoRepos == "r1, r2")
         #expect(p.holidayRegion == "CA-ON")
         #expect(p.harvestUser == "4242")
-        #expect(p.projectsList.contains { $0.0 == "ITC" })
+        #expect(p.projectsList.contains { $0.0 == "Website" })
         #expect(p.autoUpdate && p.showDockIcon && !p.autoRecord)
     }
 

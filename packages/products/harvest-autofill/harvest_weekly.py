@@ -177,7 +177,7 @@ def split_props(budget, props):
         return {}
     tot = sum(props.values())
     if tot <= 0:
-        return {"Wheaton": budget}
+        return {"Work": budget}
     raw = {p: budget * props[p] / tot for p in props if props[p] > 0}
     r = {p: q(v) for p, v in raw.items()}
     drift = round(budget - sum(r.values()), 2)
@@ -252,8 +252,8 @@ def build_plan(days, meet, off, social_h, day_events, week_mins, *, cfg):
                     "started_time": fmt(a),
                     "ended_time": fmt(b),
                     "notes": (
-                        cfg["wheaton_note"]
-                        if p == "Wheaton"
+                        cfg["ado_note"]
+                        if p == cfg["ado_bucket"]
                         else ("Client/Internal meetings (calendar)" if kind == "meeting" else "Development")
                     ),
                 }
@@ -351,6 +351,9 @@ def load_config(path):
 def derive(cfg, tz, holidays, gh_n=0, ado_n=0):
     """Fold config.json into the flat dict build_plan / summary expect."""
     proj = {k: v["project_id"] for k, v in cfg["projects"].items()}
+    # The Azure DevOps commits/pushes all bucket into one project (configurable); its note,
+    # if any, is stamped on those entries. Both are config-driven so no project name is baked in.
+    ado_bucket = cfg.get("azure_devops", {}).get("project_bucket", "Work")
     return {
         "target": float(cfg.get("daily_target_hours", 9.0)),
         "work_start": int(cfg.get("work_hours", {}).get("start", 9)),
@@ -362,7 +365,8 @@ def derive(cfg, tz, holidays, gh_n=0, ado_n=0):
         "proj": proj,
         "mtask": {k: v["meeting_task"] for k, v in cfg["projects"].items()},
         "dtask": {k: v["dev_task"] for k, v in cfg["projects"].items()},
-        "wheaton_note": cfg["projects"].get("Wheaton", {}).get("note", ""),
+        "ado_bucket": ado_bucket,
+        "ado_note": cfg["projects"].get(ado_bucket, {}).get("note", ""),
         "user": cfg["harvest"]["user_id"],
         "order": cfg.get("dev_order", list(proj.keys())),
         "social_kw": tuple(k.lower() for k in cfg.get("social_keywords", [])),
@@ -526,7 +530,7 @@ def main():
         proj = ado.get("project")
         author = ado.get("author")
         repos = ado.get("repos", [])
-        bucket = ado.get("project_bucket", "Wheaton")
+        bucket = ado.get("project_bucket", "Work")
         if org and proj and author and repos:
             hdr = {
                 "Authorization": "Basic " + base64.b64encode((":" + pat).encode()).decode(),
@@ -574,7 +578,7 @@ def main():
                 except Exception:
                     pass
 
-    ado_n = sum(1 for d in day_events for (dt, p) in day_events[d] if p == ado.get("project_bucket", "Wheaton"))
+    ado_n = sum(1 for d in day_events for (dt, p) in day_events[d] if p == ado.get("project_bucket", "Work"))
     flags.append(
         f"per-day timeline split — GitHub {gh_n} commits, Azure DevOps {ado_n} commits/pushes "
         f"(work-hours {cfg['work_start']}:00–{cfg['work_end']}:00)"

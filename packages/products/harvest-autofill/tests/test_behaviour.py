@@ -23,10 +23,10 @@ def week(hw, cfg, tz):
     )
     day_events = {
         dt.date(2026, 8, 24): [
-            (dt.datetime(2026, 8, 24, 10, 0, tzinfo=tz), "ITC"),
-            (dt.datetime(2026, 8, 24, 14, 0, tzinfo=tz), "ITC"),
+            (dt.datetime(2026, 8, 24, 10, 0, tzinfo=tz), "Website"),
+            (dt.datetime(2026, 8, 24, 14, 0, tzinfo=tz), "Website"),
         ],
-        dt.date(2026, 8, 25): [(dt.datetime(2026, 8, 25, 11, 0, tzinfo=tz), "Wheaton")],
+        dt.date(2026, 8, 25): [(dt.datetime(2026, 8, 25, 11, 0, tzinfo=tz), "Mobile App")],
     }
     from collections import defaultdict
 
@@ -48,8 +48,8 @@ def test_worked_day_splits_target_between_meeting_and_dev(hw, cfg, week):
     c = {**cfg, "gh_n": 3, "ado_n": 0}
     plan, posts, issues = hw.build_plan(days, meet, off, social_h, day_events, week_mins, cfg=c)
     mon = next(entries for d, kind, entries in plan if d == dt.date(2026, 8, 24) and kind == "work")
-    # ITC meeting 0.5h then ITC dev fills the rest of the 9h day.
-    assert [(p, kind, h) for p, _, kind, h, _, _ in mon] == [("ITC", "meeting", 0.5), ("ITC", "dev", 8.5)]
+    # Website meeting 0.5h then Website dev fills the rest of the 9h day.
+    assert [(p, kind, h) for p, _, kind, h, _, _ in mon] == [("Website", "meeting", 0.5), ("Website", "dev", 8.5)]
     assert sum(h for *_, h, _, _ in mon) == 9.0
 
 
@@ -76,7 +76,7 @@ def test_quiet_day_is_skipped_when_no_meetings_and_no_commits(hw, cfg, tz):
 def test_meetings_over_target_are_flagged_overbooked_and_write_nothing(hw, cfg):
     d = dt.date(2026, 8, 24)
     c = {**cfg, "gh_n": 1, "ado_n": 0}
-    plan, posts, issues = hw.build_plan([d], {d: {"ITC": 10.0}}, set(), {d: 0.0}, {}, {}, cfg=c)
+    plan, posts, issues = hw.build_plan([d], {d: {"Website": 10.0}}, set(), {d: 0.0}, {}, {}, cfg=c)
     assert _kinds(plan)[d] == "overbooked"
     assert posts == []
     assert any("exceed" in msg for msg in issues)

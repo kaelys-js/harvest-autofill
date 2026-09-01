@@ -15,41 +15,41 @@
 		"user_agent": "harvest-fill (you@example.com)"
 	},
 	"projects": {
-		"ITC": {
+		"Website": {
 			"project_id": 0,
-			"meeting_task": 26347195,
-			"dev_task": 5451510
+			"meeting_task": 0,
+			"dev_task": 0
 		},
-		"Providence": {
+		"Design": {
 			"project_id": 0,
-			"meeting_task": 26347195,
-			"dev_task": 5451510
+			"meeting_task": 0,
+			"dev_task": 0
 		},
 		"Internal": {
 			"project_id": 0,
-			"meeting_task": 12123517,
-			"dev_task": 5451510
+			"meeting_task": 0,
+			"dev_task": 0
 		},
-		"Wheaton": {
+		"Mobile App": {
 			"project_id": 0,
-			"meeting_task": 26347195,
-			"dev_task": 5451510,
-			"note": "Wheaton (WPM/OMS)"
+			"meeting_task": 0,
+			"dev_task": 0,
+			"note": "Example project backed by Azure DevOps"
 		}
 	},
-	"dev_order": ["ITC", "Providence", "Internal", "Wheaton"],
+	"dev_order": ["Website", "Design", "Internal", "Mobile App"],
 	"meeting_rules": [
 		{
-			"keywords": ["itc"],
-			"project": "ITC"
+			"keywords": ["website", "web"],
+			"project": "Website"
 		},
 		{
-			"keywords": ["wpm", "oms"],
-			"project": "Wheaton"
+			"keywords": ["mobile", "app"],
+			"project": "Mobile App"
 		},
 		{
-			"keywords": ["providence", "home 4 us"],
-			"project": "Providence"
+			"keywords": ["design", "ux"],
+			"project": "Design"
 		}
 	],
 	"meeting_default_project": "Internal",
@@ -88,22 +88,22 @@
 	"github": {
 		"login": "",
 		"orgs": [],
-		"author_email_hints": ["kaelys", "cole.beuker", "cole.c.bieker"],
+		"author_email_hints": ["your-name", "you@example.com"],
 		"scope_rules": [
 			{
-				"keywords": ["itc", "hand_itc"],
-				"project": "ITC"
+				"keywords": ["website", "web"],
+				"project": "Website"
 			},
 			{
-				"keywords": ["oms", "wpm", "wheaton"],
-				"project": "Wheaton"
+				"keywords": ["mobile", "app"],
+				"project": "Mobile App"
 			}
 		],
 		"scope_default": "Internal"
 	},
 	"azure_devops": {
 		"enabled": false,
-		"project_bucket": "Wheaton",
+		"project_bucket": "Work",
 		"org": "",
 		"project": "",
 		"repos": [],

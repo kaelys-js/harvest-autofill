@@ -12,8 +12,8 @@ struct ModelsTests {
       "daysWorked": 2,
       "days": [
         {"name": "Mon Aug 24", "total": 9.0, "note": null, "entries": [
-          {"span": "9:00 AM–9:30 AM", "project": "ITC", "task": "Client Meetings", "hours": 0.5},
-          {"span": "9:45 AM–6:00 PM", "project": "ITC", "task": "Development", "hours": 8.5}
+          {"span": "9:00 AM–9:30 AM", "project": "Website", "task": "Client Meetings", "hours": 0.5},
+          {"span": "9:45 AM–6:00 PM", "project": "Website", "task": "Development", "hours": 8.5}
         ]},
         {"name": "Wed Aug 26", "total": null, "note": "holiday · skipped", "entries": []}
       ],
@@ -32,7 +32,7 @@ struct ModelsTests {
         let mon = s.days[0]
         #expect(mon.total == 9.0)
         #expect(mon.entries.count == 2)
-        #expect(mon.entries[0].project == "ITC")
+        #expect(mon.entries[0].project == "Website")
         #expect(mon.entries[0].hours == 0.5)
         let holiday = s.days[1]
         #expect(holiday.total == nil)
@@ -41,7 +41,7 @@ struct ModelsTests {
     }
 
     @Test func `entry and day are identifiable`() {
-        let e = Entry(span: "9–10", project: "ITC", task: "Development", hours: 1)
+        let e = Entry(span: "9–10", project: "Website", task: "Development", hours: 1)
         let d = Day(name: "Mon", total: 1, note: nil, entries: [e])
         #expect(d.entries.first?.id != nil)
         #expect(d.id != d.id ? false : true) // stable within the instance

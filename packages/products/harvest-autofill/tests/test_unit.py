@@ -34,9 +34,9 @@ def test_span_reads_as_am_pm_range(hw):
 @pytest.mark.parametrize(
     "project,kind,expected",
     [
-        ("ITC", "dev", "Development"),
+        ("Website", "dev", "Development"),
         ("Internal", "meeting", "Internal meetings"),
-        ("ITC", "meeting", "Client Meetings"),
+        ("Website", "meeting", "Client Meetings"),
     ],
 )
 def test_plain_task(hw, project, kind, expected):
@@ -75,26 +75,26 @@ def test_select_days_future_week_is_empty(hw):
 
 # ---------- split_props ----------
 def test_split_props_is_proportional(hw):
-    assert hw.split_props(8, {"ITC": 60, "Wheaton": 20}) == {"ITC": 6.0, "Wheaton": 2.0}
+    assert hw.split_props(8, {"Website": 60, "Mobile App": 20}) == {"Website": 6.0, "Mobile App": 2.0}
 
 
 def test_split_props_absorbs_rounding_drift_into_largest(hw):
-    out = hw.split_props(9, {"ITC": 100, "Internal": 100, "Wheaton": 100})
+    out = hw.split_props(9, {"Website": 100, "Internal": 100, "Mobile App": 100})
     assert round(sum(out.values()), 2) == 9.0  # exact budget despite quarter-hour rounding
 
 
 def test_split_props_zero_budget_is_empty(hw):
-    assert hw.split_props(0, {"ITC": 60}) == {}
+    assert hw.split_props(0, {"Website": 60}) == {}
 
 
-def test_split_props_all_zero_props_falls_back_to_wheaton(hw):
-    assert hw.split_props(8, {"ITC": 0}) == {"Wheaton": 8}
+def test_split_props_all_zero_props_falls_back_to_work(hw):
+    assert hw.split_props(8, {"Website": 0}) == {"Work": 8}
 
 
 # ---------- classification ----------
 @pytest.mark.parametrize(
     "title,expected",
-    [("ITC standup", "ITC"), ("OMS sync", "Wheaton"), ("Providence chat", "Providence"), ("Random", "Internal")],
+    [("Website standup", "Website"), ("Mobile sync", "Mobile App"), ("Design chat", "Design"), ("Random", "Internal")],
 )
 def test_meeting_project(hw, cfg, title, expected):
     assert hw.meeting_project(title, cfg["meeting_rules"], cfg["meeting_default"]) == expected
@@ -102,7 +102,11 @@ def test_meeting_project(hw, cfg, title, expected):
 
 @pytest.mark.parametrize(
     "msg,br,expected",
-    [("itc: build", "", "ITC"), ("oms: fix", "feature/oms", "Wheaton"), ("chore: bump", "main", "Internal")],
+    [
+        ("web: build", "", "Website"),
+        ("mobile: fix", "feature/mobile", "Mobile App"),
+        ("chore: bump", "main", "Internal"),
+    ],
 )
 def test_scope_of(hw, cfg, msg, br, expected):
     assert hw.scope_of(msg, br, cfg["scope_rules"], cfg["scope_default"]) == expected
@@ -132,15 +136,15 @@ def test_gh_mine_by_login_or_email_hint(hw):
 # ---------- timeline attribution ----------
 def test_attribute_credits_lead_in_plus_capped_gap(hw, tz):
     events = [
-        (dt.datetime(2026, 8, 24, 10, 0, tzinfo=tz), "ITC"),
-        (dt.datetime(2026, 8, 24, 14, 0, tzinfo=tz), "ITC"),  # 4h gap, capped at 90
+        (dt.datetime(2026, 8, 24, 10, 0, tzinfo=tz), "Website"),
+        (dt.datetime(2026, 8, 24, 14, 0, tzinfo=tz), "Website"),  # 4h gap, capped at 90
     ]
     out = hw.attribute(events, dt.date(2026, 8, 24), work_start=9, work_end=17, tz=tz, lead_in=45, gap_cap=90)
-    assert out == {"ITC": 45 + 90}
+    assert out == {"Website": 45 + 90}
 
 
 def test_attribute_ignores_commits_outside_work_hours(hw, tz):
-    events = [(dt.datetime(2026, 8, 24, 3, 0, tzinfo=tz), "ITC")]  # 3am, before work
+    events = [(dt.datetime(2026, 8, 24, 3, 0, tzinfo=tz), "Website")]  # 3am, before work
     out = hw.attribute(events, dt.date(2026, 8, 24), work_start=9, work_end=17, tz=tz, lead_in=45, gap_cap=90)
     assert dict(out) == {}
 
@@ -160,7 +164,7 @@ def test_classify_calendar_splits_meetings_ooo_and_social(hw, cfg, tz):
         meeting_rules=cfg["meeting_rules"],
         meeting_default=cfg["meeting_default"],
     )
-    assert meet[dt.date(2026, 8, 24)] == {"ITC": 0.5}  # ITC standup, 30 min
+    assert meet[dt.date(2026, 8, 24)] == {"Website": 0.5}  # Website standup, 30 min
     assert off == {dt.date(2026, 8, 27)}  # vacation day
     assert social_h[dt.date(2026, 8, 28)] == 9.0  # 9h offsite
 
@@ -173,6 +177,6 @@ def test_week_label(hw):
 
 def test_derive_maps_config(hw, cfg):
     assert cfg["target"] == 9.0
-    assert cfg["proj"]["ITC"] == 100
-    assert cfg["order"] == ["ITC", "Providence", "Internal", "Wheaton"]
+    assert cfg["proj"]["Website"] == 100
+    assert cfg["order"] == ["Website", "Design", "Internal", "Mobile App"]
     assert "2026-08-26" in cfg["holidays"]

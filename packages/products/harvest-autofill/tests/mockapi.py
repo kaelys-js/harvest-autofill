@@ -1,8 +1,8 @@
 """Shared canned API responses + a urllib.urlopen replacement for the engine tests.
 
 The fixture covers a full week (Mon 2026-08-24 … Fri 2026-08-28, all in the past relative
-to any realistic test date, so select_days includes all five): ITC + Wheaton commit
-timelines, an ITC standup, a vacation day, a Wednesday holiday (config), and a Friday
+to any realistic test date, so select_days includes all five): Website + Mobile App commit
+timelines, a Website standup, a vacation day, a Wednesday holiday (config), and a Friday
 offsite that trips the social-day rule."""
 
 import json
@@ -12,14 +12,14 @@ WEEK_START = "2026-08-24"
 # Vancouver is UTC-7 in August; commit authoredDate is UTC, so Van 10:00 == 17:00Z.
 GH_NODES = [
     {
-        "headRefName": "feature/itc-thing",
+        "headRefName": "feature/web-thing",
         "commits": {
             "nodes": [
                 {
                     "commit": {
                         "oid": "a1",
                         "authoredDate": "2026-08-24T17:00:00Z",
-                        "messageHeadline": "itc: build the thing",
+                        "messageHeadline": "web: build the thing",
                         "author": {"email": "testuser@example.com", "user": {"login": "testuser"}},
                     }
                 },
@@ -27,7 +27,7 @@ GH_NODES = [
                     "commit": {
                         "oid": "a2",
                         "authoredDate": "2026-08-24T21:00:00Z",
-                        "messageHeadline": "itc: more work",
+                        "messageHeadline": "web: more work",
                         "author": {"email": "testuser@example.com", "user": {"login": "testuser"}},
                     }
                 },
@@ -35,14 +35,14 @@ GH_NODES = [
         },
     },
     {
-        "headRefName": "feature/oms-thing",
+        "headRefName": "feature/mobile-thing",
         "commits": {
             "nodes": [
                 {
                     "commit": {
                         "oid": "b1",
                         "authoredDate": "2026-08-25T18:00:00Z",
-                        "messageHeadline": "oms: fix the bug",
+                        "messageHeadline": "mobile: fix the bug",
                         "author": {"email": "testuser@example.com", "user": {"login": "testuser"}},
                     }
                 }
@@ -53,7 +53,7 @@ GH_NODES = [
 
 CAL_EVENTS = [
     {
-        "title": "ITC standup",
+        "title": "Website standup",
         "start": "2026-08-24T09:00:00-07:00",
         "end": "2026-08-24T09:30:00-07:00",
         "allDay": False,
