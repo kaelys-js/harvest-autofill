@@ -1,4 +1,6 @@
 import { useState } from "react";
+import * as v from "valibot";
+import { PrefsTabsSchema } from "@/lib/schemas";
 
 // Neutral recreation of the app's Preferences window — all four tabs, clickable. Semantic
 // tokens only, so it renders true light/dark with the page. Content mirrors the app's tabs
@@ -70,6 +72,9 @@ const TABS: Tab[] = [
 		],
 	},
 ];
+
+// Build-time guard: every tab needs a name, an icon path, and at least one row of copy.
+v.parse(PrefsTabsSchema, TABS);
 
 export default function PreferencesMockup() {
 	const [t, setT] = useState(0);

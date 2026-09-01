@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import * as v from "valibot";
+import { OnboardingStepsSchema } from "@/lib/schemas";
 
 // A neutral recreation of the app's 6-step first-run wizard. Semantic tokens only, so it
 // renders true light/dark with the page. Clickable dots + arrows, auto-advance that pauses
@@ -37,6 +39,9 @@ const STEPS: Step[] = [
 		path: "M9 12l2 2 4-4M12 3a9 9 0 1 0 .01 0",
 	},
 ];
+
+// Build-time guard: every slide needs copy and a real icon path.
+v.parse(OnboardingStepsSchema, STEPS);
 
 const AUTO_MS = 5000;
 

@@ -1,5 +1,7 @@
 ---
 // A neutral recreation of the app's "This week" window (no real client data).
+import * as v from "valibot";
+import { MockupDaysSchema } from "@/lib/schemas";
 const dot: Record<string, string> = {
 	Website: "bg-[#f2762a]",
 	"Mobile App": "bg-[#22afa0]",
@@ -9,34 +11,38 @@ const dot: Record<string, string> = {
 type Row = { span: string; project: keyof typeof dot; task: string; hours: string };
 const days: { name: string; total: string; note?: string; rows: Row[] }[] = [
 	{
-		name: "Mon",
+		name: "Mon Aug 31",
 		total: "9h",
 		rows: [
-			{ span: "9:00–1:30", project: "Website", task: "Development", hours: "4.5h" },
-			{ span: "1:30–5:00", project: "Design", task: "Development", hours: "3.5h" },
-			{ span: "11:00–11:30", project: "Website", task: "Client meeting", hours: "1h" },
+			{ span: "9:00 AM–1:30 PM", project: "Website", task: "Development", hours: "4.5h" },
+			{ span: "1:30 PM–5:00 PM", project: "Design", task: "Development", hours: "3.5h" },
+			{ span: "11:00 AM–11:30 AM", project: "Website", task: "Client meeting", hours: "1h" },
 		],
 	},
 	{
-		name: "Tue",
+		name: "Tue Sep 1",
 		total: "9h",
-		rows: [{ span: "9:00–6:00", project: "Mobile App", task: "Development", hours: "9h" }],
+		rows: [{ span: "9:00 AM–6:00 PM", project: "Mobile App", task: "Development", hours: "9h" }],
 	},
-	{ name: "Wed", total: "", note: "Statutory holiday — skipped", rows: [] },
+	{ name: "Wed Sep 2", total: "", note: "Statutory holiday — skipped", rows: [] },
 	{
-		name: "Thu",
+		name: "Thu Sep 3",
 		total: "9h",
 		rows: [
-			{ span: "9:00–5:00", project: "Internal", task: "Development", hours: "8h" },
-			{ span: "3:00–4:00", project: "Internal", task: "Internal meeting", hours: "1h" },
+			{ span: "9:00 AM–5:00 PM", project: "Internal", task: "Development", hours: "8h" },
+			{ span: "3:00 PM–4:00 PM", project: "Internal", task: "Internal meeting", hours: "1h" },
 		],
 	},
 	{
-		name: "Fri",
+		name: "Fri Sep 4",
 		total: "9h",
-		rows: [{ span: "9:00–6:00", project: "Website", task: "Development", hours: "9h" }],
+		rows: [{ span: "9:00 AM–6:00 PM", project: "Website", task: "Development", hours: "9h" }],
 	},
 ];
+
+// Guard the shape at build time: known project keys (so every row has a dot colour), valid
+// "h:mm AM–h:mm PM" ranges, and "Nh" hours. A typo here fails the build, not the layout.
+v.parse(MockupDaysSchema, days);
 ---
 
 <div
@@ -84,7 +90,7 @@ const days: { name: string; total: string; note?: string; rows: Row[] }[] = [
 						d.rows.map((r) => (
 							<div class="flex items-center gap-2.5 py-1 text-[13px]">
 								<span class={`size-1.5 shrink-0 rounded-full ${dot[r.project]}`} />
-								<span class="w-24 shrink-0 font-mono text-[11px] text-muted-foreground">
+								<span class="w-32 shrink-0 font-mono text-[11px] text-muted-foreground">
 									{r.span}
 								</span>
 								<span class="font-medium">{r.project}</span>

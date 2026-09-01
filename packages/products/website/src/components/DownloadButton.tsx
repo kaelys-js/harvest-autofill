@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { parseRelease } from "@/lib/schemas";
+import { parseRelease, parseDownloadSize, type DownloadSize } from "@/lib/schemas";
 
 const REPO = "kaelys-js/harvest-autofill-releases";
 const ZIP = `https://github.com/${REPO}/releases/latest/download/HarvestAutoFill.zip`;
 
-export default function DownloadButton({ size = "lg" }: { size?: "lg" | "default" }) {
+export default function DownloadButton({ size = "lg" }: { size?: DownloadSize }) {
+	const btnSize = parseDownloadSize(size);
 	const [ver, setVer] = useState<string | null>(null);
 	useEffect(() => {
 		fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
@@ -21,7 +22,7 @@ export default function DownloadButton({ size = "lg" }: { size?: "lg" | "default
 	}, []);
 	return (
 		<a href={ZIP} rel="noopener noreferrer" className="inline-block">
-			<Button size={size} className="gap-2">
+			<Button size={btnSize} className="gap-2">
 				<Download />
 				Download for macOS
 				{/* Width reserved from first paint so the async version tag doesn't reflow the

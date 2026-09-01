@@ -1,7 +1,16 @@
 ---
 import "@/styles/global.css";
+import { parseBasePath, type FaqItem } from "@/lib/schemas";
 
-const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+interface Props {
+	// When a page passes its FAQ, a FAQPage node is added to the JSON-LD graph so the
+	// questions are machine-readable in the initial server-rendered HTML (the React
+	// accordion is a client island and wouldn't be seen by crawlers on its own).
+	faq?: readonly FaqItem[];
+}
+const { faq } = Astro.props;
+
+const base = parseBasePath(import.meta.env.BASE_URL.replace(/\/$/, ""));
 const site = Astro.site?.href.replace(/\/$/, "") ?? "https://kaelys-js.github.io";
 const canonical = `${site}${base}/`;
 const title = "Harvest Auto-Fill — your timesheet fills itself";
@@ -41,6 +50,18 @@ const structuredData = {
 			license: `${repo}/blob/main/LICENSE`,
 		},
 		{ "@type": "WebSite", name: "Harvest Auto-Fill", url: canonical },
+		...(faq && faq.length
+			? [
+					{
+						"@type": "FAQPage",
+						mainEntity: faq.map((it) => ({
+							"@type": "Question",
+							name: it.q,
+							acceptedAnswer: { "@type": "Answer", text: it.a },
+						})),
+					},
+				]
+			: []),
 	],
 };
 
