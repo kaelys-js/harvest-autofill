@@ -389,11 +389,16 @@ struct AccountsContent: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         VStack(spacing: 14) {
+            Text("Connect the accounts the app reads from. Only Harvest is required — the others are optional and add more of your week automatically.")
+                .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
             PrefCard(title: "Harvest") {
+                Text("Where your hours are written — the one account the app truly needs.")
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Field(label: "Account ID", text: $prefs.harvestAccount, hint: "e.g. 123456", valid: prefs.accountValid,
-                      help: "Your numeric Harvest account, sent as the Harvest-Account-Id request header.")
+                      help: "The number in your Harvest web address — id.getharvest.com shows it under Settings.")
                 Secret(label: "Access token", text: $prefs.harvestToken, reveal: $prefs.showToken, valid: prefs.tokenValid,
-                       help: "From id.getharvest.com → Developers → Create New Personal Access Token.")
+                       help: "Create one at id.getharvest.com → Developers → Create New Personal Access Token, then paste it here.")
                 HStack { Text("User ID").frame(width: LBL, alignment: .leading).font(.system(size: 12))
                     Text(prefs.harvestUser.isEmpty ? "—" : prefs.harvestUser).font(.system(size: 12)).foregroundStyle(.secondary)
                     Spacer(); Button { prefs.discover() } label: { Label("Discover from my accounts", systemImage: "sparkles") }
@@ -411,15 +416,19 @@ struct AccountsContent: View {
                     }
                 }
             }
-            PrefCard(title: "Calendar — Google, via Apps Script") {
+            PrefCard(title: "Calendar — Google") {
+                Text("Optional. Adds your meetings as hours. The step-by-step below sets up the small script that shares them.")
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Field(label: "Web-app URL", text: $prefs.calUrl, hint: "https://script.google.com/macros/s/…/exec", valid: prefs.calUrlValid,
-                      help: "The /exec URL of your deployed Apps Script web app.")
+                      help: "The web-app link the setup script gives you (it ends in /exec).")
                 Secret(label: "Shared secret", text: $prefs.calSecret, reveal: $prefs.showSecret, valid: prefs.calSecretValid,
-                       help: "The APPS_SCRIPT_SECRET you set as a Script Property.")
+                       help: "The secret word you chose during the setup, so only this app can read your calendar.")
                 CalendarTestRow(prefs: prefs)
                 CalendarHelp()
             }
             PrefCard(title: "GitHub") {
+                Text("Optional but recommended. Turns your commits into development hours.")
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Field(label: "Login", text: $prefs.ghLogin, hint: "your-username", valid: prefs.ghLoginValid,
                       help: "The GitHub account whose commits count toward your time.")
                 Secret(label: "Access token", text: $prefs.ghToken, reveal: $prefs.showGHToken, valid: true,
@@ -428,6 +437,8 @@ struct AccountsContent: View {
                             help: "Tick the orgs whose commits count toward your time — loaded automatically from your GitHub.")
             }
             PrefCard(title: "Azure DevOps — optional") {
+                Text("Turn on to count your Azure DevOps commits and pushes alongside GitHub.")
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Toggle("Enabled", isOn: $prefs.adoEnabled).font(.system(size: 12)).toggleStyle(.switch)
                 if prefs.adoEnabled {
                     Field(label: "Org", text: $prefs.adoOrg, valid: !prefs.adoOrg.isEmpty)
@@ -560,7 +571,12 @@ struct GeneralContent: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         VStack(spacing: 14) {
+            Text("How the app behaves day to day — when it files your week, and where it lives on your Mac.")
+                .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
             PrefCard(title: "Automatic recording") {
+                Text("Choose whether the app files your finished week for you, or waits until you say so.")
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Toggle("Log the finished week to Harvest every Friday at 6pm", isOn: $prefs.autoRecord).font(.system(size: 12.5)).toggleStyle(.switch)
                 Text("On — the app records your week for you every Friday evening and won't double-book if it already ran. Off — nothing reaches Harvest until you open the app and click \u{201C}Log this week.\u{201D}")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
@@ -582,7 +598,7 @@ struct GeneralContent: View {
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
                 Label("Hands-off Fridays — the finished week is filed to Harvest at 6pm on its own, even if the app is closed (turn this off above).", systemImage: "calendar.badge.checkmark")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
-                Label("Yours alone — every token stays on this Mac and is never sent anywhere.", systemImage: "lock.shield")
+                Label("Yours alone — everything you connect stays on this Mac and is never sent anywhere else.", systemImage: "lock.shield")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
             }
             ResetCard(prefs: prefs)
@@ -796,7 +812,7 @@ struct AboutContent: View {
                     .font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 8)
                 HStack(spacing: 16) {
-                    Button { updater.showWhatsNewNow() } label: {
+                    Button { NotificationCenter.default.post(name: .openWhatsNew, object: nil) } label: {
                         HStack(spacing: 4) {
                             if updater.loadingWhatsNew {
                                 ProgressView().controlSize(.small)
@@ -1303,7 +1319,7 @@ struct MenuContent: View {
         Divider()
         Button(updater.state == .checking ? "Checking for updates…" : "Check for Updates") { updater.check(manual: true) }
             .disabled(updater.state == .checking)
-        Button("What's New") { openWindow(id: "whatsnew"); NSApp.activate(ignoringOtherApps: true) }
+        Button("What's New") { NotificationCenter.default.post(name: .openWhatsNew, object: nil) }
         Button("Website") { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) }
         Button("View on GitHub") { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) }
         Divider()
@@ -1342,6 +1358,12 @@ struct MenuLabel: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
                 openWindow(id: "prefs"); NSApp.activate(ignoringOtherApps: true)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openWhatsNew)) { _ in
+                // Load the current notes and open the window directly, so it opens even when
+                // whatsNew is already set (e.g. the window was closed by its close button).
+                updater.showWhatsNewNow()
+                openWindow(id: "whatsnew"); NSApp.activate(ignoringOtherApps: true)
             }
             .onAppear {
                 if model.firstRun { // new user: run the onboarding wizard once
@@ -1388,6 +1410,7 @@ struct VerifyView: View {
 extension Notification.Name {
     static let openMainWindow = Notification.Name("HarvestOpenMainWindow")
     static let openSettings = Notification.Name("HarvestOpenSettings")
+    static let openWhatsNew = Notification.Name("HarvestOpenWhatsNew")
 }
 
 // Lets the app menu ask Settings to open on a specific tab (e.g. About).
@@ -1537,6 +1560,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
+    // Right-clicking the Dock icon lists the app's open windows (the active one checked); each
+    // brings its window forward. With none open it offers to open the main window.
+    private func appWindows() -> [NSWindow] {
+        NSApp.windows.filter { $0.isVisible && $0.canBecomeMain && !$0.title.isEmpty }
+    }
+
+    func applicationDockMenu(_: NSApplication) -> NSMenu? {
+        let menu = NSMenu()
+        let windows = appWindows()
+        if windows.isEmpty {
+            let item = NSMenuItem(title: "This Week", action: #selector(openMainFromDock), keyEquivalent: "")
+            item.target = self
+            menu.addItem(item)
+            return menu
+        }
+        for w in windows {
+            let item = NSMenuItem(title: w.title, action: #selector(focusWindow(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = w
+            if w == NSApp.keyWindow {
+                item.state = .on
+            }
+            menu.addItem(item)
+        }
+        return menu
+    }
+
+    @objc private func focusWindow(_ sender: NSMenuItem) {
+        (sender.representedObject as? NSWindow)?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc private func openMainFromDock() {
+        NotificationCenter.default.post(name: .openMainWindow, object: nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
     var model: WeekModel?
 
     // Populated Prefs for faithfully rendering each onboarding step in verification.
@@ -1607,6 +1667,16 @@ struct HarvestMenuApp: App {
                     Button("Quit Harvest Auto-Fill") { confirmQuit() }
                         .keyboardShortcut("q", modifiers: .command)
                 }
+                // Replace the dead "Harvest Auto-Fill Help" (there's no Apple Help book) with
+                // links that work.
+                CommandGroup(replacing: .help) {
+                    Button("Harvest Auto-Fill Website") { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) }
+                    Button("View on GitHub") { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) }
+                }
+                // Drop SwiftUI's per-scene "open this window" entries from the Window menu; the
+                // standard AppKit list below them already shows the open windows with the active
+                // one checked.
+                CommandGroup(replacing: .windowList) {}
             }
         Window("Settings", id: "prefs") {
             PreferencesView().onAppear { NSApp.activate(ignoringOtherApps: true) }.tint(Web.primary)

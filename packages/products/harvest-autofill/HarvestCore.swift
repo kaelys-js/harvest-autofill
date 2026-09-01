@@ -241,9 +241,22 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
         req.setValue("harvest-fill-updater", forHTTPHeaderField: "User-Agent")
         req.timeoutInterval = 20
         let (data, resp) = try await URLSession.shared.data(for: req)
-        guard (resp as? HTTPURLResponse)?.statusCode == 200,
-              let o = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let assets = o["assets"] as? [[String: Any]] else { throw UpdErr(m: "No updates available yet") }
+        // Distinguish the failure modes so a rate-limit or outage doesn't read as "no updates".
+        // The app makes unauthenticated public requests, so a 403/429 is almost always the
+        // 60-per-hour rate limit rather than a permissions problem.
+        let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+        if code == 403 || code == 429 {
+            throw UpdErr(m: "GitHub is rate-limiting update checks right now — please try again in a little while.")
+        }
+        if code == 404 {
+            throw UpdErr(m: "No published release was found to update to.")
+        }
+        guard code == 200, let o = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw UpdErr(m: "Couldn't reach GitHub to check for updates. Check your connection and try again.")
+        }
+        guard let assets = o["assets"] as? [[String: Any]], !assets.isEmpty else {
+            throw UpdErr(m: "The latest release is still being prepared — please try again shortly.")
+        }
         func assetURL(_ name: String) -> URL? {
             assets.first { ($0["name"] as? String) == name }
                 .flatMap { ($0["browser_download_url"] as? String).flatMap(URL.init(string:)) }
