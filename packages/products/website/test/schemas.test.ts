@@ -5,6 +5,12 @@ import {
 	parseVersion,
 	parseBasePath,
 	parseDownloadSize,
+	parseUrl,
+	parseRepoSlug,
+	parseNonEmpty,
+	parsePositiveInt,
+	StructuredDataSchema,
+	DotMapSchema,
 	BasePathSchema,
 	FaqItemsSchema,
 	FeaturesSchema,
@@ -80,6 +86,66 @@ describe("parseBasePath", () => {
 		expect(ok(BasePathSchema, "harvest-autofill-releases")).toBe(false);
 		expect(ok(BasePathSchema, "/trailing/")).toBe(false);
 		expect(ok(BasePathSchema, 42)).toBe(false);
+	});
+});
+
+describe("data-const guards", () => {
+	it("parseUrl accepts real URLs and rejects non-URLs", () => {
+		expect(parseUrl("https://github.com/x/y")).toBe("https://github.com/x/y");
+		expect(() => parseUrl("not a url")).toThrow();
+		expect(() => parseUrl("/relative/path")).toThrow();
+		expect(() => parseUrl(42)).toThrow();
+	});
+
+	it("parseRepoSlug accepts owner/repo and rejects a full URL or bare word", () => {
+		expect(parseRepoSlug("kaelys-js/harvest-autofill-releases")).toBe(
+			"kaelys-js/harvest-autofill-releases",
+		);
+		expect(() => parseRepoSlug("https://github.com/x/y")).toThrow();
+		expect(() => parseRepoSlug("justowner")).toThrow();
+	});
+
+	it("parseNonEmpty rejects blank and non-strings", () => {
+		expect(parseNonEmpty("Title")).toBe("Title");
+		expect(() => parseNonEmpty("   ")).toThrow();
+		expect(() => parseNonEmpty(null)).toThrow();
+	});
+
+	it("parsePositiveInt rejects zero, negatives, and non-integers", () => {
+		expect(parsePositiveInt(5000)).toBe(5000);
+		expect(() => parsePositiveInt(0)).toThrow();
+		expect(() => parsePositiveInt(-1)).toThrow();
+		expect(() => parsePositiveInt(1.5)).toThrow();
+	});
+
+	it("StructuredDataSchema requires a schema.org context and at least one typed node", () => {
+		expect(
+			ok(StructuredDataSchema, {
+				"@context": "https://schema.org",
+				"@graph": [{ "@type": "WebSite" }],
+			}),
+		).toBe(true);
+		expect(
+			ok(StructuredDataSchema, {
+				"@context": "https://example.com",
+				"@graph": [{ "@type": "WebSite" }],
+			}),
+		).toBe(false);
+		expect(ok(StructuredDataSchema, { "@context": "https://schema.org", "@graph": [] })).toBe(
+			false,
+		);
+		expect(
+			ok(StructuredDataSchema, {
+				"@context": "https://schema.org",
+				"@graph": [{ name: "no type" }],
+			}),
+		).toBe(false);
+	});
+
+	it("DotMapSchema rejects an unknown project key or an empty colour class", () => {
+		expect(ok(DotMapSchema, { Website: "bg-[#f2762a]", Internal: "bg-[#6b78f6]" })).toBe(true);
+		expect(ok(DotMapSchema, { Marketing: "bg-red-500" })).toBe(false);
+		expect(ok(DotMapSchema, { Website: "" })).toBe(false);
 	});
 });
 

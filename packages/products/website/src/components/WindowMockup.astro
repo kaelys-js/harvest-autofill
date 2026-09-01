@@ -1,13 +1,14 @@
 ---
 // A neutral recreation of the app's "This week" window (no real client data).
 import * as v from "valibot";
-import { MockupDaysSchema } from "@/lib/schemas";
+import { MockupDaysSchema, DotMapSchema } from "@/lib/schemas";
 const dot: Record<string, string> = {
 	Website: "bg-[#f2762a]",
 	"Mobile App": "bg-[#22afa0]",
 	Internal: "bg-[#6b78f6]",
 	Design: "bg-[#4dba6b]",
 };
+v.parse(DotMapSchema, dot); // build-time guard: known project keys, non-empty colour classes
 type Row = { span: string; project: keyof typeof dot; task: string; hours: string };
 const days: { name: string; total: string; note?: string; rows: Row[] }[] = [
 	{

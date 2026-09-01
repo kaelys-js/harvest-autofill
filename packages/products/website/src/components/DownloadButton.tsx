@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { parseRelease, parseDownloadSize, type DownloadSize } from "@/lib/schemas";
+import {
+	parseRelease,
+	parseDownloadSize,
+	parseRepoSlug,
+	parseUrl,
+	type DownloadSize,
+} from "@/lib/schemas";
 
-const REPO = "kaelys-js/harvest-autofill-releases";
-const ZIP = `https://github.com/${REPO}/releases/latest/download/HarvestAutoFill.zip`;
+const REPO: string = parseRepoSlug("kaelys-js/harvest-autofill-releases");
+const ZIP: string = parseUrl(
+	`https://github.com/${REPO}/releases/latest/download/HarvestAutoFill.zip`,
+);
 
 export default function DownloadButton({ size = "lg" }: { size?: DownloadSize }) {
 	const btnSize = parseDownloadSize(size);

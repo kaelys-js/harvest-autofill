@@ -2,8 +2,8 @@
 // A neutral recreation of the app's "What's New" changelog window. Semantic tokens only,
 // so it renders true light/dark — no rasterized screenshot, no placeholder artifacts.
 import * as v from "valibot";
-import { NotesSchema } from "@/lib/schemas";
-const notes = [
+import { NotesSchema, parseVersion } from "@/lib/schemas";
+const notes: string[] = [
 	"Live preview now shows only the days you've actually worked.",
 	"Dark-mode polish across every window.",
 	"Faster account discovery on first run.",
@@ -12,9 +12,9 @@ const notes = [
 v.parse(NotesSchema, notes); // build-time guard: no blank changelog lines
 
 // Kept in lockstep with the app: the version is injected from the release tag at build time
-// (see astro.config.mjs). Falls back to a neutral label when no tag is available.
-const version = import.meta.env.PUBLIC_APP_VERSION ?? "";
-const versionLabel = version ? `Version ${version}` : "Latest release";
+// (see astro.config.mjs) and re-validated here. Falls back to a neutral label when no tag is available.
+const version: string = parseVersion(import.meta.env.PUBLIC_APP_VERSION) ?? "";
+const versionLabel: string = version ? `Version ${version}` : "Latest release";
 ---
 
 <div

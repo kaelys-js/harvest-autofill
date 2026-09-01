@@ -1,6 +1,13 @@
 ---
 import "@/styles/global.css";
-import { parseBasePath, type FaqItem } from "@/lib/schemas";
+import * as v from "valibot";
+import {
+	parseBasePath,
+	parseUrl,
+	parseNonEmpty,
+	StructuredDataSchema,
+	type FaqItem,
+} from "@/lib/schemas";
 
 interface Props {
 	// When a page passes its FAQ, a FAQPage node is added to the JSON-LD graph so the
@@ -10,14 +17,15 @@ interface Props {
 }
 const { faq } = Astro.props;
 
-const base = parseBasePath(import.meta.env.BASE_URL.replace(/\/$/, ""));
-const site = Astro.site?.href.replace(/\/$/, "") ?? "https://kaelys-js.github.io";
-const canonical = `${site}${base}/`;
-const title = "Harvest Auto-Fill — your timesheet fills itself";
-const description =
-	"A macOS menu-bar app that fills your Harvest timesheet from your commits, pushes, and meetings — hours filed for you every Friday. Private and open source.";
-const ogImage = `${site}${base}/og.png`;
-const repo = "https://github.com/kaelys-js/harvest-autofill-releases";
+const base: string = parseBasePath(import.meta.env.BASE_URL.replace(/\/$/, ""));
+const site: string = parseUrl(Astro.site?.href.replace(/\/$/, "") ?? "https://kaelys-js.github.io");
+const canonical: string = parseUrl(`${site}${base}/`);
+const title: string = parseNonEmpty("Harvest Auto-Fill — your timesheet fills itself");
+const description: string = parseNonEmpty(
+	"A macOS menu-bar app that fills your Harvest timesheet from your commits, pushes, and meetings — hours filed for you every Friday. Private and open source.",
+);
+const ogImage: string = parseUrl(`${site}${base}/og.png`);
+const repo: string = parseUrl("https://github.com/kaelys-js/harvest-autofill-releases");
 
 // schema.org structured data (JSON-LD). No aggregateRating/review is included: the app has
 // no real reviews, and fabricating ratings for a rich-result star is against Google policy.
@@ -64,21 +72,26 @@ const structuredData = {
 			: []),
 	],
 };
+// Validate the graph shape before it is serialised into <head> (parsed for the throw; the
+// original object is what gets stringified, so no node fields are dropped).
+v.parse(StructuredDataSchema, structuredData);
 
 // GitHub Pages can't set real HTTP response headers, so we set what's possible via <meta>.
-const csp = [
-	"default-src 'self'",
-	"img-src 'self' data:",
-	"style-src 'self' 'unsafe-inline'",
-	"script-src 'self' 'unsafe-inline'",
-	"connect-src 'self' https://api.github.com",
-	"font-src 'self'",
-	"base-uri 'self'",
-	"form-action 'self'",
-	// frame-ancestors is intentionally omitted: it is ignored in a <meta> CSP (and logs a
-	// console error). Clickjacking protection needs a real response header, which static
-	// GitHub Pages can't set.
-].join("; ");
+const csp: string = parseNonEmpty(
+	[
+		"default-src 'self'",
+		"img-src 'self' data:",
+		"style-src 'self' 'unsafe-inline'",
+		"script-src 'self' 'unsafe-inline'",
+		"connect-src 'self' https://api.github.com",
+		"font-src 'self'",
+		"base-uri 'self'",
+		"form-action 'self'",
+		// frame-ancestors is intentionally omitted: it is ignored in a <meta> CSP (and logs a
+		// console error). Clickjacking protection needs a real response header, which static
+		// GitHub Pages can't set.
+	].join("; "),
+);
 ---
 
 <!doctype html>

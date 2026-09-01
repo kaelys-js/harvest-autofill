@@ -12,15 +12,17 @@ export default function ThemeToggle() {
 	useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
 
 	function toggle() {
-		const root = document.documentElement;
-		const next = !root.classList.contains("dark");
-		const apply = () => {
+		// These hold a DOM node, booleans, and functions — not external data — so there is no
+		// value shape for valibot to check; each carries an explicit type instead.
+		const root: HTMLElement = document.documentElement;
+		const next: boolean = !root.classList.contains("dark");
+		const apply: () => void = () => {
 			root.classList.toggle("dark", next);
 			writeTheme(next ? "dark" : "light");
 			setDark(next);
 		};
 
-		const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+		const reduce: boolean = matchMedia("(prefers-reduced-motion: reduce)").matches;
 		if (reduce) {
 			apply();
 			return;

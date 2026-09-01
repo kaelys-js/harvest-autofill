@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import * as v from "valibot";
-import { OnboardingStepsSchema } from "@/lib/schemas";
+import { OnboardingStepsSchema, parsePositiveInt } from "@/lib/schemas";
 
 // A neutral recreation of the app's 6-step first-run wizard. Semantic tokens only, so it
 // renders true light/dark with the page. Clickable dots + arrows, auto-advance that pauses
@@ -43,7 +43,7 @@ const STEPS: Step[] = [
 // Build-time guard: every slide needs copy and a real icon path.
 v.parse(OnboardingStepsSchema, STEPS);
 
-const AUTO_MS = 5000;
+const AUTO_MS: number = parsePositiveInt(5000);
 
 export default function OnboardingCarousel() {
 	const [i, setI] = useState(0);
@@ -56,15 +56,18 @@ export default function OnboardingCarousel() {
 
 	useEffect(() => {
 		if (paused || reduced) return;
-		const t = setTimeout(() => setI((n) => (n + 1) % STEPS.length), AUTO_MS);
+		const t: ReturnType<typeof setTimeout> = setTimeout(
+			() => setI((n) => (n + 1) % STEPS.length),
+			AUTO_MS,
+		);
 		return () => clearTimeout(t);
 		// reduced is stable (set once at hydration); listed for exhaustive-deps, flagged
 		// as "extra" only because it never changes — safe to keep.
 		// oxlint-disable-next-line react/exhaustive-effect-dependencies
 	}, [i, paused, reduced]);
 
-	const go = (n: number) => setI((n + STEPS.length) % STEPS.length);
-	const step = STEPS[i];
+	const go: (n: number) => void = (n) => setI((n + STEPS.length) % STEPS.length);
+	const step: Step = STEPS[i];
 
 	return (
 		<div

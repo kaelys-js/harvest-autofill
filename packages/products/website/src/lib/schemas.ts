@@ -71,6 +71,42 @@ export function parseRelease(data: unknown): GithubRelease | null {
 
 const NonEmpty = v.pipe(v.string(), v.trim(), v.minLength(1, "must not be empty"));
 
+// Reusable guards so every data const — not just external payloads — is parsed rather than
+// trusted. TypeScript's types are erased at runtime; these throw at build if a value's actual
+// shape drifts from what the code assumes (a mistyped URL, a blank title, a bad slug).
+export const UrlSchema = v.pipe(v.string(), v.url("expected a URL"));
+export function parseUrl(input: unknown): string {
+	return v.parse(UrlSchema, input);
+}
+
+export const RepoSlugSchema = v.pipe(
+	v.string(),
+	v.regex(/^[\w.-]+\/[\w.-]+$/u, "expected an owner/repo slug"),
+);
+export function parseRepoSlug(input: unknown): string {
+	return v.parse(RepoSlugSchema, input);
+}
+
+export function parseNonEmpty(input: unknown): string {
+	return v.parse(NonEmpty, input);
+}
+
+export const PositiveIntSchema = v.pipe(v.number(), v.integer(), v.minValue(1));
+export function parsePositiveInt(input: unknown): number {
+	return v.parse(PositiveIntSchema, input);
+}
+
+// A schema.org JSON-LD graph — a context plus one or more typed nodes. Node shapes vary, so
+// each is a loose object that only has to carry a non-empty @type; parsing guards the graph is
+// well-formed before it is serialised into the page head.
+export const StructuredDataSchema = v.object({
+	"@context": v.literal("https://schema.org"),
+	"@graph": v.pipe(
+		v.array(v.looseObject({ "@type": v.pipe(v.string(), v.minLength(1)) })),
+		v.minLength(1, "the graph needs at least one node"),
+	),
+});
+
 // An Astro base path: either "" (site at root) or a rooted path like "/harvest-autofill-releases".
 // Never a full URL — the whole site prefixes this onto asset and canonical URLs, so a stray
 // "https://…" here would corrupt every link.
@@ -143,6 +179,13 @@ export const MockupDaySchema = v.object({
 	rows: v.array(MockupRowSchema),
 });
 export const MockupDaysSchema = v.pipe(v.array(MockupDaySchema), v.minLength(1));
+
+// The mockup's project → dot-colour map: every key must be a known project and every value a
+// non-empty class, so a project can never render without a colour.
+export const DotMapSchema = v.record(
+	v.picklist(MOCKUP_PROJECTS),
+	v.pipe(v.string(), v.minLength(1)),
+);
 
 // Props for the DownloadButton island. Astro serialises island props across the server→client
 // hydration boundary, so the size is validated on mount (falling back to "lg") rather than

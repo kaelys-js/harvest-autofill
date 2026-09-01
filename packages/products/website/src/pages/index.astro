@@ -10,7 +10,7 @@ import DownloadButton from "@/components/DownloadButton.tsx";
 import Faq from "@/components/Faq.tsx";
 import { faqItems } from "@/data/faq";
 import * as v from "valibot";
-import { FeaturesSchema, HowItWorksStepsSchema, parseBasePath } from "@/lib/schemas";
+import { FeaturesSchema, HowItWorksStepsSchema, parseBasePath, parseUrl } from "@/lib/schemas";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,9 +26,9 @@ import {
 	PlugZap,
 } from "lucide-react";
 
-const base = parseBasePath(import.meta.env.BASE_URL.replace(/\/$/, ""));
-const REPO = "https://github.com/kaelys-js/harvest-autofill-releases";
-const ZIP = `${REPO}/releases/latest/download/HarvestAutoFill.zip`;
+const base: string = parseBasePath(import.meta.env.BASE_URL.replace(/\/$/, ""));
+const REPO: string = parseUrl("https://github.com/kaelys-js/harvest-autofill-releases");
+const ZIP: string = parseUrl(`${REPO}/releases/latest/download/HarvestAutoFill.zip`);
 
 const features = [
 	{
@@ -192,7 +192,7 @@ v.parse(HowItWorksStepsSchema, steps);
 		</section>
 
 		<!-- trust bar -->
-		<section class="border-y border-border/60 bg-muted/30">
+		<section id="trust" class="border-y border-border/60 bg-muted/30">
 			<div
 				class="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-5 py-6 text-sm text-muted-foreground"
 			>
