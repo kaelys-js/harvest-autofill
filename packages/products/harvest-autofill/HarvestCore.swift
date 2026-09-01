@@ -176,9 +176,9 @@ func statusFor(_ s: String) -> Status {
 }
 
 // ============================================================ Auto-update (GitHub Releases + Ed25519)
-let UPDATE_REPO = "kaelys-js/harvest-autofill-releases"
-let UPDATE_REPO_URL = "https://github.com/kaelys-js/harvest-autofill-releases"
-let WEBSITE_URL = "https://kaelys-js.github.io/harvest-autofill-releases/"
+let UPDATE_REPO = "kaelys-js/harvest-autofill"
+let UPDATE_REPO_URL = "https://github.com/kaelys-js/harvest-autofill"
+let WEBSITE_URL = "https://kaelys-js.github.io/harvest-autofill/"
 // Raw 32-byte Ed25519 public key (base64). Private key lives only on the release machine.
 let UPDATE_PUBKEY_B64 = "QwrTC2P5Xh/A+Eq92spnRGHFESWTxfiX7Hqwk0waays="
 

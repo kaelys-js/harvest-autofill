@@ -25,12 +25,12 @@ function appVersion() {
 }
 const APP_VERSION = appVersion();
 
-// GitHub Pages project site: https://kaelys-js.github.io/harvest-autofill-releases/
+// GitHub Pages project site: https://kaelys-js.github.io/harvest-autofill/
 export default defineConfig({
 	site: "https://kaelys-js.github.io",
 	// Production deploys under the Pages project subpath; E2E builds set ASTRO_BASE=/ so the
 	// site can be served from a static server root without a self-referential symlink.
-	base: process.env.ASTRO_BASE ?? "/harvest-autofill-releases",
+	base: process.env.ASTRO_BASE ?? "/harvest-autofill",
 	// Emit one canonical URL per page (with trailing slash) so the sitemap has no
 	// duplicate entries, and stamp lastmod at build time.
 	trailingSlash: "always",

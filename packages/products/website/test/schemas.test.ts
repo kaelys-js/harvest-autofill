@@ -42,12 +42,12 @@ describe("parseVersion", () => {
 describe("parseBasePath", () => {
 	it("accepts the site root and a rooted deploy path", () => {
 		expect(parseBasePath("")).toBe("");
-		expect(parseBasePath("/harvest-autofill-releases")).toBe("/harvest-autofill-releases");
+		expect(parseBasePath("/harvest-autofill")).toBe("/harvest-autofill");
 	});
 
 	it("rejects a full URL or an unrooted path — the values that would corrupt every link", () => {
 		expect(ok(BasePathSchema, "https://example.com")).toBe(false);
-		expect(ok(BasePathSchema, "harvest-autofill-releases")).toBe(false);
+		expect(ok(BasePathSchema, "harvest-autofill")).toBe(false);
 		expect(ok(BasePathSchema, "/trailing/")).toBe(false);
 		expect(ok(BasePathSchema, 42)).toBe(false);
 	});
@@ -62,9 +62,7 @@ describe("data-const guards", () => {
 	});
 
 	it("parseRepoSlug accepts owner/repo and rejects a full URL or bare word", () => {
-		expect(parseRepoSlug("kaelys-js/harvest-autofill-releases")).toBe(
-			"kaelys-js/harvest-autofill-releases",
-		);
+		expect(parseRepoSlug("kaelys-js/harvest-autofill")).toBe("kaelys-js/harvest-autofill");
 		expect(() => parseRepoSlug("https://github.com/x/y")).toThrow();
 		expect(() => parseRepoSlug("justowner")).toThrow();
 	});

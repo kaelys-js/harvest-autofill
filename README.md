@@ -2,10 +2,10 @@
 
 A macOS menu-bar app that fills your Harvest timesheet from the work you already did. Your commits, pushes, and calendar meetings become hours, split across the right projects and filed for you every Friday.
 
-[![Build](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/build.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/build.yml)
-[![Checks](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/lint.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/lint.yml)
-[![Web E2E](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/web-e2e.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/web-e2e.yml)
-[![Pages](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/pages.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/pages.yml)
+[![Build](https://github.com/kaelys-js/harvest-autofill/actions/workflows/build.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill/actions/workflows/build.yml)
+[![Checks](https://github.com/kaelys-js/harvest-autofill/actions/workflows/lint.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill/actions/workflows/lint.yml)
+[![Web E2E](https://github.com/kaelys-js/harvest-autofill/actions/workflows/web-e2e.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill/actions/workflows/web-e2e.yml)
+[![Pages](https://github.com/kaelys-js/harvest-autofill/actions/workflows/pages.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill/actions/workflows/pages.yml)
 ![macOS](https://img.shields.io/badge/macOS-26-000000?logo=apple)
 ![Swift](https://img.shields.io/badge/swift-6.0-F05138?logo=swift)
 ![Python](https://img.shields.io/badge/python-3.12.14-3776AB?logo=python&logoColor=white)
@@ -115,8 +115,8 @@ A small monorepo: the macOS app and its Python engine under `packages/products/h
 ## Local development
 
 ```shell
-git clone https://github.com/kaelys-js/harvest-autofill-releases
-cd harvest-autofill-releases
+git clone https://github.com/kaelys-js/harvest-autofill
+cd harvest-autofill
 ./bin/mise install
 ./bin/mise exec -- lefthook install
 ```

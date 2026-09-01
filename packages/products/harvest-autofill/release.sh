@@ -19,7 +19,7 @@ VERSION="${1:?usage: release.sh <version> <build> [notes] [app_path]}"
 BUILD="${2:?need a build number (integer, must increase each release)}"
 NOTES="${3:-}"
 APP="${4:-/Applications/Harvest Auto-Fill.app}"
-REPO="kaelys-js/harvest-autofill-releases"
+REPO="kaelys-js/harvest-autofill"
 PRIV="${HAF_PRIV_KEY:-$HOME/.config/harvest-autofill/release_ed25519_priv.pem}"
 [ -f "$PRIV" ] || {
   echo "Private key not found at $PRIV"
@@ -41,7 +41,7 @@ if [ -n "${SIGN_ID:-}" ] && [ -n "${NOTARY_PROFILE:-}" ]; then
     "$(dirname "$0")/notarize.sh" "$STAGE"
 else
   echo "==> Ad-hoc signing (set SIGN_ID+NOTARY_PROFILE to notarize)..."
-  codesign --force --deep -s - "$STAGE"
+  codesign --force -s - "$STAGE"
 fi
 codesign --verify --deep --strict "$STAGE"
 
@@ -57,7 +57,7 @@ cat >"$MAN" <<JSON
   "version": "$VERSION",
   "build": $BUILD,
   "sha256": "$SHA",
-  "minMacOS": "13.0",
+  "minMacOS": "14.0",
   "notes": $(python3 -c "import json,sys;print(json.dumps(sys.argv[1]))" "$NOTES")
 }
 JSON

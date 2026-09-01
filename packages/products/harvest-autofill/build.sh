@@ -13,7 +13,9 @@ APP="$DIST/Harvest Auto-Fill.app"
 PY_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20260825/cpython-3.12.14%2B20260825-aarch64-apple-darwin-install_only_stripped.tar.gz"
 
 echo "==> Compiling..."
-swiftc -parse-as-library -O HarvestCore.swift HarvestSideEffects.swift HarvestApp.swift -o /tmp/haf-bin.$$
+# -target pins the binary's minimum-OS load command to LSMinimumSystemVersion (14.0), so the
+# linker enforces the same floor the Info.plist advertises instead of the toolchain default.
+swiftc -parse-as-library -O -target arm64-apple-macos14.0 HarvestCore.swift HarvestSideEffects.swift HarvestApp.swift -o /tmp/haf-bin.$$
 echo "==> Fetching bundled Python (cached in vendor/)..."
 if [ ! -x "vendor/python/bin/python3" ]; then
   mkdir -p vendor && curl -sL -m 300 -o vendor/py.tar.gz "$PY_URL"
@@ -40,8 +42,11 @@ if [ -n "$BUILD" ]; then
 fi
 
 echo "==> Signing (sign LAST so nothing mutates the bundle after)..."
+# No --deep on signing: Apple deprecated it (macOS 13+) and there are no nested bundles here (the
+# bundled Python lives under Resources, which --deep never recursed into anyway; notarize.sh signs
+# those explicitly). --verify --deep still recursively checks whatever signatures exist.
 if [ -n "${SIGN_ID:-}" ]; then
-  codesign --force --deep --timestamp --options runtime -s "$SIGN_ID" "$APP"
-else codesign --force --deep -s - "$APP"; fi
+  codesign --force --timestamp --options runtime -s "$SIGN_ID" "$APP"
+else codesign --force -s - "$APP"; fi
 codesign --verify --deep --strict "$APP"
 echo "Built: $APP  ($(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist") / $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist"))"

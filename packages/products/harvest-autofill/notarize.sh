@@ -29,14 +29,14 @@ APP="${1:-/Applications/Harvest Auto-Fill.app}"
 : "${NOTARY_PROFILE:?set NOTARY_PROFILE to your stored notarytool profile name}"
 ENTITLEMENTS="$(mktemp -t hafent).plist"
 
-# Hardened-runtime entitlements. The app shells out to the bundled python + /bin/bash,
-# so it needs the allow-jit / disable-library-validation pair for the interpreter.
+# Hardened-runtime entitlements, kept minimal. The app runs the bundled CPython, whose dylibs
+# would otherwise fail library validation, so it needs disable-library-validation. It does NOT
+# need allow-jit / allow-unsigned-executable-memory — CPython 3.12 has no JIT and executes no
+# unsigned memory — so those are omitted to keep the runtime as hardened as possible.
 cat >"$ENTITLEMENTS" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>com.apple.security.cs.allow-jit</key><true/>
-  <key>com.apple.security.cs.allow-unsigned-executable-memory</key><true/>
   <key>com.apple.security.cs.disable-library-validation</key><true/>
 </dict></plist>
 PLIST
@@ -50,8 +50,11 @@ find "$APP/Contents/Resources/python" -type f \( -name "*.dylib" -o -name "*.so"
     fi
   done
 
-echo "==> Signing the app bundle..."
-codesign --force --deep --timestamp --options runtime \
+echo "==> Signing the app bundle (nested Mach-O already signed inside-out above)..."
+# No --deep: nested code was signed individually just above (the correct inside-out order), and
+# Apple deprecated --deep for signing. This signs the top-level bundle with the hardened runtime
+# and entitlements; --verify --deep still checks the whole tree.
+codesign --force --timestamp --options runtime \
   --entitlements "$ENTITLEMENTS" -s "$SIGN_ID" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 

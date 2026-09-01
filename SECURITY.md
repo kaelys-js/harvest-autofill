@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please report security issues **privately** through GitHub's
-[Report a vulnerability](https://github.com/kaelys-js/harvest-autofill-releases/security/advisories/new)
+[Report a vulnerability](https://github.com/kaelys-js/harvest-autofill/security/advisories/new)
 form (Security → Advisories). Private vulnerability reporting is enabled on this
 repository, so you can disclose the details without them being public.
 

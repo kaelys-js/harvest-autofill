@@ -79,7 +79,7 @@ export const StructuredDataSchema = v.object({
 	),
 });
 
-// An Astro base path: either "" (site at root) or a rooted path like "/harvest-autofill-releases".
+// An Astro base path: either "" (site at root) or a rooted path like "/harvest-autofill".
 // Never a full URL — the whole site prefixes this onto asset and canonical URLs, so a stray
 // "https://…" here would corrupt every link.
 export const BasePathSchema = v.pipe(

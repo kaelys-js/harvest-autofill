@@ -40,9 +40,7 @@ test("the download button points at the latest release zip", async ({ page }) =>
 });
 
 test("external GitHub links open in a new tab safely", async ({ page }) => {
-	const gh = page
-		.locator('a[href="https://github.com/kaelys-js/harvest-autofill-releases"]')
-		.first();
+	const gh = page.locator('a[href="https://github.com/kaelys-js/harvest-autofill"]').first();
 	await expect(gh).toHaveAttribute("target", "_blank");
 	await expect(gh).toHaveAttribute("rel", /noopener/);
 });
