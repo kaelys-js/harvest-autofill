@@ -6,7 +6,7 @@ A macOS menu-bar app that fills your Harvest timesheet from the work you already
 [![Checks](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/lint.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/lint.yml)
 [![Web E2E](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/web-e2e.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/web-e2e.yml)
 [![Pages](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/pages.yml/badge.svg)](https://github.com/kaelys-js/harvest-autofill-releases/actions/workflows/pages.yml)
-![macOS](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple)
+![macOS](https://img.shields.io/badge/macOS-26-000000?logo=apple)
 ![Swift](https://img.shields.io/badge/swift-6.0-F05138?logo=swift)
 ![Python](https://img.shields.io/badge/python-3.12.14-3776AB?logo=python&logoColor=white)
 ![Node](https://img.shields.io/badge/node-26.8.1-339933?logo=node.js)
@@ -68,7 +68,8 @@ A small monorepo: the macOS app and its Python engine under `packages/products/h
 ├── SECURITY.md                     # signing model + how to report a vulnerability
 ├── LICENSE                         # MIT
 ├── mise.toml + mise.lock           # exact tool version pins (node, python, pnpm, linters, …)
-├── lefthook.yml                    # git hooks: pre-commit format, pre-push gate, commit-msg lint
+├── package.json + turbo.json       # turbo qa:* tasks that cache every gate stage (+ .turbo/config.json)
+├── lefthook.yml                    # git hooks: pre-commit format, pre-push gate (via turbo), commit-msg lint
 ├── bin/
 │   ├── mise                        # self-bootstrapping, workspace-scoped mise wrapper
 │   ├── git                         # refuses --no-verify / LEFTHOOK bypasses (gates are unskippable)
@@ -108,7 +109,7 @@ A small monorepo: the macOS app and its Python engine under `packages/products/h
 
 - **[mise](https://mise.jdx.dev/)** — bootstrapped by `./bin/mise`, which self-installs the pinned version if it is absent. Every other tool (node, python, pnpm, uv, ruff, swiftlint, swiftformat, lefthook, gh, and the format/lint tools) comes from `./bin/mise install`. Installs are scoped to `.mise/installs` inside the repo, so nothing touches your global setup.
 - **Xcode or the Command Line Tools** — the Swift compiler comes from Apple's toolchain, not mise. `xcode-select --install` is enough to build; SwiftLint's strict rules need a full Xcode for SourceKit, and the pre-push hook falls back to any installed `Xcode.app` when only the Command Line Tools are selected.
-- **macOS 14 (Sonoma) or newer** — the app's deployment target.
+- **macOS 26 or newer, Apple Silicon** — the app uses macOS 26 (Liquid Glass) APIs at runtime.
 - **Docker** — only for the website's containerized visual regression. If Docker is absent locally, that one check defers to the `web-e2e.yml` CI job; everything else runs without it.
 
 ## Local development
@@ -153,6 +154,8 @@ Visual regression guards the rendered surfaces:
 
 Every `git push` runs the same battery CI runs, configured in [`lefthook.yml`](lefthook.yml). The [`lint.yml`](.github/workflows/lint.yml) "Checks" job is literally `lefthook run pre-push --all-files`, so local and CI stay in parity by construction; [`build.yml`](.github/workflows/build.yml) additionally compiles, bundles, signs, and verifies the app, and [`web-e2e.yml`](.github/workflows/web-e2e.yml) runs the website E2E container.
 
+Each tool stage runs through [turbo](https://turborepo.com/) (`turbo run qa:<name>`, defined in [`turbo.json`](turbo.json) + the root [`package.json`](package.json) `qa:*` scripts). Inputs are scoped per language, so an unchanged surface — swift, python, or web — is a cache hit rather than a re-run: a warm gate is `>>> FULL TURBO`. CI restores a `.turbo` cache via `actions/cache` and reads the shared Vercel remote cache.
+
 The gate is unskippable by design. [`bin/git`](bin/git) refuses `git push --no-verify` / `-n`, and the `no-bypass` stage refuses the `LEFTHOOK=0` and `LEFTHOOK_EXCLUDE` environment bypasses. Fix the failing check; do not skip it.
 
 | Stage | Purpose |
@@ -186,11 +189,11 @@ git tag -a v2.19 -m "## Changes
 git push origin v2.19
 ```
 
-The app verifies each update's **Ed25519** signature against the public key baked into the binary, so it only accepts releases signed with the matching private key. `notarize.sh` produces a notarized, Gatekeeper-clean build for distribution outside the auto-updater. The signing model and vulnerability-reporting process are documented in [`SECURITY.md`](SECURITY.md).
+The app verifies each update's **Ed25519** signature against the public key baked into the binary, so it only accepts releases signed with the matching private key. `notarize.sh` produces a notarized, Gatekeeper-clean build for distribution outside the auto-updater. The signing model and vulnerability-reporting process are documented in [`SECURITY.md`](SECURITY.md). The same tag also redeploys the website (see below), so the site ships in lockstep with the app.
 
 ## Marketing website
 
-The site under `packages/products/website/` is an [Astro](https://astro.build/) project (React islands, Tailwind v4) that presents the app and links to the latest signed release. It deploys to GitHub Pages from `main` via [`pages.yml`](.github/workflows/pages.yml) whenever website files change.
+The site under `packages/products/website/` is an [Astro](https://astro.build/) project (React islands, Tailwind v4) that presents the app and links to the latest signed release. It deploys to GitHub Pages via [`pages.yml`](.github/workflows/pages.yml) on every push to `main` **and on every `v*` release tag** — a tag rebuilds the site with that version baked in (injected from the tag in [`astro.config.mjs`](packages/products/website/astro.config.mjs)), so the version it shows never drifts from the app. The download button validates the GitHub release response with [valibot](https://valibot.dev/) before trusting it, structured data (schema.org JSON-LD) describes the app, and the "Made to feel native" section is an interactive recreation of the six-step onboarding wizard and all four Preferences tabs.
 
 ```shell
 cd packages/products/website

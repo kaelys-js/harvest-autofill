@@ -3,10 +3,10 @@ name: Pages
 # Requires Pages to be set to "GitHub Actions" as its source (repo Settings -> Pages).
 on:
   push:
+    # Deploy on main (site content) and on every app release tag, so the live site stays in
+    # lockstep with the app — a vX.Y tag rebuilds the site with that version baked in.
     branches: [main]
-    paths:
-      - "packages/products/website/**"
-      - ".github/workflows/pages.yml"
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -30,6 +30,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0          # tags needed for the `git describe` version fallback on main pushes
       - uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10
         with:
           version: 11.24.0

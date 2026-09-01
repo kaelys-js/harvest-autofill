@@ -6,8 +6,43 @@ const site = Astro.site?.href.replace(/\/$/, "") ?? "https://kaelys-js.github.io
 const canonical = `${site}${base}/`;
 const title = "Harvest Auto-Fill — your timesheet fills itself";
 const description =
-	"A macOS menu-bar app that fills your Harvest timesheet from the work you already did — commits, pushes, and meetings turned into hours, filed for you every Friday. Private, open source, nothing to install.";
+	"A macOS menu-bar app that fills your Harvest timesheet from your commits, pushes, and meetings — hours filed for you every Friday. Private and open source.";
 const ogImage = `${site}${base}/og.png`;
+const repo = "https://github.com/kaelys-js/harvest-autofill-releases";
+
+// schema.org structured data (JSON-LD). No aggregateRating/review is included: the app has
+// no real reviews, and fabricating ratings for a rich-result star is against Google policy.
+// This is honest markup that helps search engines understand the app, source, and site.
+const structuredData = {
+	"@context": "https://schema.org",
+	"@graph": [
+		{
+			"@type": "SoftwareApplication",
+			name: "Harvest Auto-Fill",
+			description,
+			applicationCategory: "BusinessApplication",
+			operatingSystem: "macOS 26",
+			softwareVersion: import.meta.env.PUBLIC_APP_VERSION || undefined,
+			url: canonical,
+			downloadUrl: `${repo}/releases/latest`,
+			softwareHelp: repo,
+			screenshot: ogImage,
+			isAccessibleForFree: true,
+			offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+			license: `${repo}/blob/main/LICENSE`,
+			author: { "@type": "Organization", name: "Harvest Auto-Fill" },
+		},
+		{
+			"@type": "SoftwareSourceCode",
+			name: "Harvest Auto-Fill",
+			codeRepository: repo,
+			programmingLanguage: ["Swift", "Python"],
+			runtimePlatform: "macOS",
+			license: `${repo}/blob/main/LICENSE`,
+		},
+		{ "@type": "WebSite", name: "Harvest Auto-Fill", url: canonical },
+	],
+};
 
 // GitHub Pages can't set real HTTP response headers, so we set what's possible via <meta>.
 const csp = [
@@ -67,6 +102,9 @@ const csp = [
 		<meta name="twitter:description" content={description} />
 		<meta name="twitter:image" content={ogImage} />
 		<meta name="twitter:image:alt" content="Harvest Auto-Fill — your timesheet fills itself" />
+
+		<!-- Structured data (schema.org JSON-LD) -->
+		<script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
 
 		<!-- Set theme + mark JS on before paint to avoid a flash -->
 		<script is:inline>

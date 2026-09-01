@@ -7,12 +7,17 @@ const notes = [
 	"Faster account discovery on first run.",
 	"Reset back to onboarding anytime from Preferences.",
 ];
+
+// Kept in lockstep with the app: the version is injected from the release tag at build time
+// (see astro.config.mjs). Falls back to a neutral label when no tag is available.
+const version = import.meta.env.PUBLIC_APP_VERSION ?? "";
+const versionLabel = version ? `Version ${version}` : "Latest release";
 ---
 
 <div
 	class="w-full max-w-md overflow-hidden rounded-2xl border border-border/60 bg-card shadow-2xl shadow-black/10 ring-1 ring-black/5 dark:shadow-black/40"
 	role="img"
-	aria-label="App What's New window for version 2.14, listing the latest changes."
+	aria-label={`App What's New window, listing the latest changes.`}
 >
 	<div class="flex items-center gap-2 border-b border-border/60 px-4 py-3">
 		<span class="size-3 rounded-full bg-[#ff5f57]"></span>
@@ -36,8 +41,8 @@ const notes = [
 			>
 		</div>
 		<div class="leading-tight">
-			<div class="text-lg font-bold tracking-tight">Version 2.14</div>
-			<div class="text-xs text-muted-foreground">Released Aug 31, 2026</div>
+			<div class="text-lg font-bold tracking-tight">{versionLabel}</div>
+			<div class="text-xs text-muted-foreground">The latest signed release</div>
 		</div>
 	</div>
 

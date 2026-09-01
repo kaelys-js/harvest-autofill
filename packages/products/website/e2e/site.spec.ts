@@ -11,10 +11,15 @@ test("loads with the right title and a skip link", async ({ page }) => {
 
 test("the theme toggle flips light and dark", async ({ page }) => {
 	const html = page.locator("html");
-	const before = await html.evaluate((el) => el.classList.contains("dark"));
-	await page.getByRole("button", { name: /toggle dark mode/i }).click();
-	const after = await html.evaluate((el) => el.classList.contains("dark"));
-	expect(after).toBe(!before);
+	const toggle = page.getByRole("button", { name: /toggle dark mode/i });
+	// Retry until the island has hydrated (a click before hydration is a no-op). Reading the
+	// before-state fresh each attempt keeps a pre-hydration click from being double-counted.
+	await expect(async () => {
+		const before = await html.evaluate((el) => el.classList.contains("dark"));
+		await toggle.click();
+		const after = await html.evaluate((el) => el.classList.contains("dark"));
+		expect(after).toBe(!before);
+	}).toPass({ timeout: 10000 });
 });
 
 test("an FAQ answer expands when its question is clicked", async ({ page }) => {

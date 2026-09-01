@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { parseRelease } from "@/lib/schemas";
 
 const REPO = "kaelys-js/harvest-autofill-releases";
 const ZIP = `https://github.com/${REPO}/releases/latest/download/HarvestAutoFill.zip`;
@@ -10,7 +11,12 @@ export default function DownloadButton({ size = "lg" }: { size?: "lg" | "default
 	useEffect(() => {
 		fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
 			.then((r) => (r.ok ? r.json() : null))
-			.then((d) => d?.tag_name && setVer(d.tag_name))
+			// Validate the payload with valibot before trusting it; a malformed response
+			// yields null and the button simply renders without a version tag.
+			.then((d) => {
+				const release = parseRelease(d);
+				if (release) setVer(release.tag_name);
+			})
 			.catch(() => {});
 	}, []);
 	return (

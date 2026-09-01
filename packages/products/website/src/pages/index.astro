@@ -1,7 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import WindowMockup from "@/components/WindowMockup.astro";
-import OnboardingMockup from "@/components/OnboardingMockup.astro";
+import OnboardingCarousel from "@/components/OnboardingCarousel.tsx";
+import PreferencesMockup from "@/components/PreferencesMockup.tsx";
 import WhatsNewMockup from "@/components/WhatsNewMockup.astro";
 import GithubMark from "@/components/GithubMark.astro";
 import ThemeToggle from "@/components/ThemeToggle.tsx";
@@ -258,14 +259,20 @@ const steps = [
 					Made to feel native
 				</h2>
 				<p class="mt-3 text-muted-foreground">
-					A guided setup, a live week, and a changelog after every update.
+					A setup you can step through, every preference tab, and a changelog after each update.
 				</p>
 			</div>
-			<div class="mt-12 grid items-start justify-items-center gap-8 md:grid-cols-2">
+			<div class="mt-12 grid items-start justify-items-center gap-8 md:grid-cols-2 lg:grid-cols-3">
 				<figure class="w-full" data-reveal>
-					<OnboardingMockup />
+					<OnboardingCarousel client:visible />
 					<figcaption class="mt-3 text-center text-sm text-muted-foreground">
-						A six-step first run that connects everything.
+						Step through all six setup screens.
+					</figcaption>
+				</figure>
+				<figure class="w-full" data-reveal>
+					<PreferencesMockup client:visible />
+					<figcaption class="mt-3 text-center text-sm text-muted-foreground">
+						Every preference tab, one click away.
 					</figcaption>
 				</figure>
 				<figure class="w-full" data-reveal>
