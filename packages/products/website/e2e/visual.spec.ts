@@ -122,6 +122,8 @@ test.describe("visual — page sections", () => {
 		);
 
 	const SECTIONS: { name: string; selector: string; ready?: string }[] = [
+		{ name: "nav", selector: "header" },
+		{ name: "trust", selector: "#trust", ready: "Tokens stay on your Mac" },
 		{ name: "features", selector: "#features", ready: "Files itself every Friday" },
 		{ name: "how", selector: "#how", ready: "Friday, it files" },
 		{ name: "download", selector: "#download", ready: "Get Harvest Auto-Fill" },
