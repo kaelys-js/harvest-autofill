@@ -181,12 +181,12 @@ The toolchain is pinned to exact versions in [`mise.toml`](mise.toml) and locked
 
 ## Release process
 
-Releases are cut by pushing an annotated version tag. [`release.yml`](.github/workflows/release.yml) builds, signs, and publishes it.
+To cut a release: bump [`VERSION`](VERSION), move what accumulated under `## [Unreleased]` in [`CHANGELOG.md`](CHANGELOG.md) into a new `## [x.y] - date` heading, commit, then push the matching annotated tag. The pre-push and CI gate (`qa:version-changelog`) fails on any mismatch between `VERSION` and the changelog's top released heading, and [`release.yml`](.github/workflows/release.yml) re-checks the tag against both (via `scripts/version.mjs`) before it builds, signs, and publishes — using that CHANGELOG section as the release notes.
 
 ```shell
-git tag -a v2.19 -m "## Changes
-- …"
-git push origin v2.19
+git commit -am "…"      # after bumping VERSION + adding the CHANGELOG section
+git tag -a v2.32 -m "v2.32"   # the message is not the notes — the CHANGELOG section is
+git push origin main --tags
 ```
 
 The app verifies each update's **Ed25519** signature against the public key baked into the binary, so it only accepts releases signed with the matching private key. `notarize.sh` produces a notarized, Gatekeeper-clean build for distribution outside the auto-updater. The signing model and vulnerability-reporting process are documented in [`SECURITY.md`](SECURITY.md). The same tag also redeploys the website (see below), so the site ships in lockstep with the app.

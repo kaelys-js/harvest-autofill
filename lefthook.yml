@@ -79,6 +79,10 @@ pre-push:
       run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:workflow-lint
     markdown-lint:
       run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:markdown-lint
+    # VERSION must match CHANGELOG.md's top released heading, so they never drift ahead of the
+    # release tag (release.yml re-checks the tag against both before publishing).
+    version-changelog:
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:version-changelog
     web-format:
       run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:web-format
     web-lint:

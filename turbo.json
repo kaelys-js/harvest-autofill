@@ -133,6 +133,11 @@
 			"outputs": [],
 			"outputLogs": "new-only"
 		},
+		"qa:version-changelog": {
+			"inputs": ["VERSION", "CHANGELOG.md", "scripts/version.mjs"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
 		"qa:web-format": {
 			"inputs": ["packages/products/website/src/**"],
 			"outputs": [],
