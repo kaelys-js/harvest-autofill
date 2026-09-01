@@ -8,6 +8,14 @@ set -euo pipefail
 cd "$(dirname "$0")"
 VERSION="${1:-}"
 BUILD="${2:-}"
+# When not passed explicitly (CI passes both from the release tag), derive them from the latest
+# git tag so the version is never hand-maintained. Build number uses the same formula as CI
+# (MAJOR*10000 + MINOR*100 + PATCH). Falls back to whatever Info.plist holds if there is no tag.
+if [ -z "$VERSION" ]; then VERSION="$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')" || true; fi
+if [ -z "$BUILD" ] && [ -n "$VERSION" ]; then
+  IFS=. read -r _MA _MI _PA <<<"$VERSION"
+  BUILD=$((${_MA:-0} * 10000 + ${_MI:-0} * 100 + ${_PA:-0}))
+fi
 DIST="dist"
 APP="$DIST/Harvest Auto-Fill.app"
 PY_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20260825/cpython-3.12.14%2B20260825-aarch64-apple-darwin-install_only_stripped.tar.gz"

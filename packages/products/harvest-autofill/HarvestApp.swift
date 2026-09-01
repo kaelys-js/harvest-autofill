@@ -863,8 +863,11 @@ struct UpdateCard: View {
 struct AboutContent: View {
     @ObservedObject var prefs: Prefs
     @ObservedObject var updater = Updater.shared
+    // The running app shows its real bundle version; the render baseline passes a fixed value so
+    // the About snapshot doesn't churn every release.
+    var versionOverride: String?
     var version: String {
-        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "—"
+        versionOverride ?? (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "—"
     }
 
     var pyVersion: String {
@@ -1711,7 +1714,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             } else if which == "reset" {
                 view = ResetConfirmSheet(typed: .constant("RESET")).background(Web.card)
             } else if which == "about" {
-                view = AboutContent(prefs: Prefs()).padding(22).frame(width: 480).background(Web.card)
+                view = AboutContent(prefs: Prefs(), versionOverride: "0.0.0").padding(22).frame(width: 480).background(Web.card)
             } else if which == "main-empty" {
                 let m = WeekModel(); m.summary = nil; m.refreshing = false
                 view = MainWindow(model: m, render: true)
