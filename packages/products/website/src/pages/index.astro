@@ -1,30 +1,21 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import WindowMockup from "@/components/WindowMockup.astro";
-import OnboardingCarousel from "@/components/OnboardingCarousel.tsx";
-import PreferencesMockup from "@/components/PreferencesMockup.tsx";
+import OnboardingCarousel from "@/components/OnboardingCarousel.astro";
+import PreferencesMockup from "@/components/PreferencesMockup.astro";
 import WhatsNewMockup from "@/components/WhatsNewMockup.astro";
 import GithubMark from "@/components/GithubMark.astro";
 import ThemeToggle from "@/components/ThemeToggle.astro";
 import DownloadButton from "@/components/DownloadButton.astro";
-import Faq from "@/components/Faq.tsx";
+import Faq from "@/components/Faq.astro";
 import { faqItems } from "@/data/faq";
 import * as v from "valibot";
 import { FeaturesSchema, HowItWorksStepsSchema, parseBasePath, parseUrl } from "@/lib/schemas";
-import { Card, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-	CalendarCheck,
-	GitCommitHorizontal,
-	ShieldCheck,
-	PackageCheck,
-	RefreshCw,
-	ChartPie,
-	Sparkles,
-	Lock,
-	Cloud,
-	PlugZap,
-} from "lucide-react";
+import Card from "@/components/ui/Card.astro";
+import CardTitle from "@/components/ui/CardTitle.astro";
+import CardDescription from "@/components/ui/CardDescription.astro";
+import Badge from "@/components/ui/Badge.astro";
+import Icon from "@/components/ui/Icon.astro";
 
 const base: string = parseBasePath(import.meta.env.BASE_URL.replace(/\/$/, ""));
 const REPO: string = parseUrl("https://github.com/kaelys-js/harvest-autofill-releases");
@@ -32,32 +23,32 @@ const ZIP: string = parseUrl(`${REPO}/releases/latest/download/HarvestAutoFill.z
 
 const features = [
 	{
-		icon: CalendarCheck,
+		icon: "calendar-check",
 		title: "Files itself every Friday",
 		body: "Your finished week lands in Harvest automatically at 6pm, even if the app is closed. It never double-books, so you can forget it's there.",
 	},
 	{
-		icon: GitCommitHorizontal,
+		icon: "git-commit-horizontal",
 		title: "Built from real work",
 		body: "Your commits, pushes, and meetings become hours on a timeline, credited to the project you were actually on.",
 	},
 	{
-		icon: ChartPie,
+		icon: "chart-pie",
 		title: "Split across projects",
 		body: "The time between things is credited to the right project, so each one shows real hours instead of a commit count.",
 	},
 	{
-		icon: PackageCheck,
+		icon: "package-check",
 		title: "Nothing to install",
 		body: "Everything it needs is already inside. Connect your accounts in a quick guided setup and you're done.",
 	},
 	{
-		icon: RefreshCw,
+		icon: "refresh-cw",
 		title: "Keeps itself current",
 		body: "It checks for a new version, installs it for you, and shows a plain-language note about what changed.",
 	},
 	{
-		icon: ShieldCheck,
+		icon: "shield-check",
 		title: "Private by design",
 		body: "Everything stays on your Mac in a spot only the app can read. No account, no cloud, no tracking — and the source is open.",
 	},
@@ -150,8 +141,8 @@ v.parse(HowItWorksStepsSchema, steps);
 			     never opacity:0) so LCP stays fast; the rest fade+rise with a light stagger. -->
 			<div>
 				<span data-hero class="inline-block">
-					<Badge className="border-primary/20 bg-primary/10 text-primary"
-						><Sparkles className="size-3.5" /> Open source · macOS 26</Badge
+					<Badge class="border-primary/20 bg-primary/10 text-primary"
+						><Icon name="sparkles" class="size-3.5" /> Open source · macOS 26</Badge
 					>
 				</span>
 				<h1
@@ -197,16 +188,16 @@ v.parse(HowItWorksStepsSchema, steps);
 				class="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-5 py-6 text-sm text-muted-foreground"
 			>
 				<span class="inline-flex items-center gap-2"
-					><Lock className="size-4 text-primary" /> Your data stays on your Mac</span
+					><Icon name="lock" class="size-4 text-primary" /> Your data stays on your Mac</span
 				>
 				<span class="inline-flex items-center gap-2"
-					><Cloud className="size-4 text-primary" /> No account, no cloud</span
+					><Icon name="cloud" class="size-4 text-primary" /> No account, no cloud</span
 				>
 				<span class="inline-flex items-center gap-2"
 					><GithubMark class="size-4 text-primary" /> Fully open source</span
 				>
 				<span class="inline-flex items-center gap-2"
-					><PlugZap className="size-4 text-primary" /> Nothing to install</span
+					><Icon name="plug-zap" class="size-4 text-primary" /> Nothing to install</span
 				>
 			</div>
 		</section>
@@ -224,12 +215,12 @@ v.parse(HowItWorksStepsSchema, steps);
 			<div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" data-stagger>
 				{
 					features.map((f) => (
-						<Card className="gap-3 transition-shadow hover:shadow-md">
+						<Card class="gap-3 transition-shadow hover:shadow-md">
 							<div class="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
-								<f.icon className="size-5" />
+								<Icon name={f.icon} class="size-5" />
 							</div>
 							<CardTitle>{f.title}</CardTitle>
-							<CardDescription className="leading-relaxed">{f.body}</CardDescription>
+							<CardDescription class="leading-relaxed">{f.body}</CardDescription>
 						</Card>
 					))
 				}
@@ -271,13 +262,13 @@ v.parse(HowItWorksStepsSchema, steps);
 			</div>
 			<div class="mt-12 grid items-start justify-items-center gap-8 md:grid-cols-2 lg:grid-cols-3">
 				<figure class="w-full" data-reveal>
-					<OnboardingCarousel client:visible />
+					<OnboardingCarousel />
 					<figcaption class="mt-3 text-center text-sm text-muted-foreground">
 						Step through all six setup screens.
 					</figcaption>
 				</figure>
 				<figure class="w-full" data-reveal>
-					<PreferencesMockup client:visible />
+					<PreferencesMockup />
 					<figcaption class="mt-3 text-center text-sm text-muted-foreground">
 						Every preference tab, one click away.
 					</figcaption>
@@ -341,7 +332,7 @@ v.parse(HowItWorksStepsSchema, steps);
 			<div class="text-center">
 				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>Questions</h2>
 			</div>
-			<div class="mt-10"><Faq client:visible /></div>
+			<div class="mt-10"><Faq /></div>
 			<div
 				class="mt-12 flex flex-col items-center gap-4 rounded-2xl border border-border/60 bg-card p-8 text-center"
 			>

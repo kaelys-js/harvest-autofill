@@ -7,23 +7,24 @@ test.beforeEach(async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });
 });
 
-// The mockups are client:visible islands; a click can land before hydration completes, so the
-// first interaction is retried until the handler is attached.
+// Both mockups keep every slide/panel in the DOM and show one at a time, so a marker string can
+// exist (hidden) in more than one section — assertions are scoped to the section under test, where
+// each marker is unique. Clicks are retried until the tab is present and the panel has switched.
 async function clickUntil(
-	page: import("@playwright/test").Page,
-	role: "tab",
+	scope: import("@playwright/test").Locator,
 	name: string | RegExp,
 	marker: RegExp | string,
 ) {
 	await expect(async () => {
-		await page.getByRole(role, { name }).click();
-		await expect(page.getByText(marker)).toBeVisible({ timeout: 1000 });
+		await scope.getByRole("tab", { name }).click();
+		await expect(scope.getByText(marker)).toBeVisible({ timeout: 1000 });
 	}).toPass({ timeout: 10000 });
 }
 
 test.describe("made to feel native", () => {
 	test("onboarding carousel steps through all six screens", async ({ page }) => {
 		await page.goto("./");
+		const carousel = page.locator("[data-onb-carousel]");
 		const titles = [
 			"Connect your Harvest account",
 			"Find your projects automatically",
@@ -32,16 +33,19 @@ test.describe("made to feel native", () => {
 			"Here's your week",
 		];
 		for (const [i, title] of titles.entries()) {
-			await clickUntil(page, "tab", new RegExp(`^Step ${i + 2}:`), title);
+			await clickUntil(carousel, new RegExp(`^Step ${i + 2}:`), title);
 		}
 		// Next from the last step wraps back to Welcome.
-		await page.getByRole("button", { name: "Next step" }).click();
-		await expect(page.getByRole("heading", { name: "Welcome to Harvest Auto-Fill" })).toBeVisible();
+		await carousel.getByRole("button", { name: "Next step" }).click();
+		await expect(
+			carousel.getByRole("heading", { name: "Welcome to Harvest Auto-Fill" }),
+		).toBeVisible();
 	});
 
 	test("preferences mockup switches between all four tabs", async ({ page }) => {
 		await page.goto("./");
-		await expect(page.getByText("Automatic recording")).toBeVisible();
+		const prefs = page.locator("[data-prefs-mockup]");
+		await expect(prefs.getByText("Automatic recording")).toBeVisible();
 		const tabs: [string, string][] = [
 			["Accounts", "Where your hours are written — the one account the app truly needs."],
 			["Allocation", "How commits, pushes, and meetings weight across your projects."],
@@ -49,7 +53,7 @@ test.describe("made to feel native", () => {
 			["General", "Files your week to Harvest every Friday at 6pm, even if the app is closed."],
 		];
 		for (const [tab, marker] of tabs) {
-			await clickUntil(page, "tab", tab, marker);
+			await clickUntil(prefs, tab, marker);
 		}
 	});
 });

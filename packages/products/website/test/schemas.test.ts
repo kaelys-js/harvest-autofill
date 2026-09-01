@@ -176,17 +176,18 @@ describe("content constants", () => {
 	});
 
 	it("features and how-it-works steps reject blank copy", () => {
-		const icon = () => null;
-		expect(ok(FeaturesSchema, [{ icon, title: "t", body: "b" }])).toBe(true);
-		expect(ok(FeaturesSchema, [{ icon, title: "", body: "b" }])).toBe(false);
+		// icon is now a lucide name rendered by Icon.astro (a non-empty string), not a component.
+		expect(ok(FeaturesSchema, [{ icon: "calendar-check", title: "t", body: "b" }])).toBe(true);
+		expect(ok(FeaturesSchema, [{ icon: "calendar-check", title: "", body: "b" }])).toBe(false);
+		expect(ok(FeaturesSchema, [{ icon: "", title: "t", body: "b" }])).toBe(false); // blank icon
 		expect(ok(FeaturesSchema, [{ title: "t", body: "b" }])).toBe(false); // missing icon
 		expect(ok(HowItWorksStepsSchema, [{ n: "1", title: "t", body: "b" }])).toBe(true);
 		expect(ok(HowItWorksStepsSchema, [{ n: "1", title: "t", body: " " }])).toBe(false);
 	});
 
 	it("onboarding and preferences reject a missing icon and empty rows", () => {
-		const icon = () => null;
-		expect(ok(OnboardingStepsSchema, [{ title: "t", body: "b", Icon: icon }])).toBe(true);
+		// onboarding icon is now an inline SVG string, not a component.
+		expect(ok(OnboardingStepsSchema, [{ title: "t", body: "b", icon: "<path/>" }])).toBe(true);
 		expect(ok(OnboardingStepsSchema, [{ title: "t", body: "b" }])).toBe(false); // missing icon
 		expect(
 			ok(PrefsTabsSchema, [{ name: "General", path: "M1 2", rows: [{ title: "t", body: "b" }] }]),

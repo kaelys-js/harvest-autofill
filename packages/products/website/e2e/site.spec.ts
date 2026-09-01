@@ -24,11 +24,14 @@ test("the theme toggle flips light and dark", async ({ page }) => {
 });
 
 test("an FAQ answer expands when its question is clicked", async ({ page }) => {
-	const q = page.getByRole("button", { name: /Where does my data go/i });
+	// The FAQ is a native <details>/<summary> disclosure — the question is the summary.
+	const q = page.locator("#faq summary").filter({ hasText: /Where does my data go/i });
 	await q.scrollIntoViewIfNeeded();
-	await q.click();
 	// The phrase also appears in the FAQPage JSON-LD (in <head>); scope to the visible accordion.
-	await expect(page.locator("#faq").getByText(/only the app can read/i)).toBeVisible();
+	const answer = page.locator("#faq").getByText(/only the app can read/i);
+	await expect(answer).toBeHidden(); // collapsed until opened
+	await q.click();
+	await expect(answer).toBeVisible();
 });
 
 test("the download button points at the latest release zip", async ({ page }) => {

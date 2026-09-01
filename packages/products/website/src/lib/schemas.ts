@@ -130,7 +130,7 @@ const SvgPathSchema = v.pipe(
 
 // Feature cards (index.astro): a Lucide icon component plus copy.
 export const FeatureSchema = v.object({
-	icon: v.custom<unknown>((x) => x != null, "feature icon is required"),
+	icon: NonEmpty, // lucide icon name rendered by Icon.astro
 	title: NonEmpty,
 	body: NonEmpty,
 });
@@ -145,7 +145,7 @@ export const HowItWorksStepsSchema = v.pipe(v.array(HowItWorksStepSchema), v.min
 export const OnboardingStepSchema = v.object({
 	title: NonEmpty,
 	body: NonEmpty,
-	Icon: v.custom<unknown>((x) => x != null, "onboarding icon is required"),
+	icon: NonEmpty, // inline lucide SVG paths for the step, rendered in OnboardingCarousel.astro
 });
 export const OnboardingStepsSchema = v.pipe(v.array(OnboardingStepSchema), v.minLength(1));
 
