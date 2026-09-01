@@ -17,6 +17,11 @@ jobs:
   lint:
     runs-on: macos-26       # SwiftLint needs a full Xcode (present on this runner)
     timeout-minutes: 20
+    env:
+      # Turbo remote cache (Vercel). If the TURBO_TOKEN secret is unset the run still
+      # works — turbo falls back to the local .turbo cache restored below.
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -26,6 +31,17 @@ jobs:
         with:
           install: true
           cache: true
+      # Cross-run turbo cache. Every gate stage runs `turbo run qa:<name>`, so an
+      # unchanged surface (swift/python/web) restores from here instead of re-running.
+      - name: Cache turbo
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+      - name: Install root deps (turbo)
+        run: mise exec -- pnpm install --frozen-lockfile
       - name: Install website deps (for the astro/css checks)
         run: mise exec -- pnpm install --frozen-lockfile
         working-directory: packages/products/website

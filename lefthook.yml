@@ -2,6 +2,9 @@
 # `mise exec -- lefthook install`; CI runs the pre-push gate + commitlint too.
 # Gates are meant to hold — don't push with --no-verify. Override locally, if you
 # must, via an un-committed lefthook-local.yml.
+#
+# Every tool stage runs through turbo (`turbo run qa:<name>`) so unchanged
+# inputs are a cache hit locally and in CI (see turbo.json + package.json qa:* scripts).
 
 # ─── Commit message: conventional-commit lint ────────────────────────────────
 commit-msg:
@@ -35,7 +38,10 @@ pre-commit:
       run: mise exec -- oxfmt {staged_files}
       stage_fixed: true
 
-# ─── Pre-push: the full format-check + lint gate (also run in CI) ────────────
+# ─── Pre-push: the full format-check + lint + test gate (also run in CI) ──────
+#     Each stage is `turbo run qa:<name>`: turbo caches on the task's inputs
+#     (see turbo.json), so an unchanged surface is a cache hit. The Checks CI job
+#     runs this whole gate; web-e2e also runs in web-e2e.yml (container).
 pre-push:
   parallel: true
   commands:
@@ -52,60 +58,54 @@ pre-push:
     preflight:
       run: ./bin/preflight.sh
     swift-format:
-      run: cd packages/products/harvest-autofill && mise exec -- swiftformat --lint HarvestCore.swift HarvestSideEffects.swift HarvestApp.swift SwiftTests
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:swift-format
     swift-lint:
-      # SwiftLint needs sourcekit from a full Xcode. Use the selected Xcode (CI), or fall
-      # back to any installed Xcode.app when only Command Line Tools are selected (local).
-      run: cd packages/products/harvest-autofill && DEV="$(xcode-select -p)"; case "$DEV" in *CommandLineTools*) DEV="$(ls -d /Applications/Xcode*.app/Contents/Developer 2>/dev/null | head -1)";; esac; DEVELOPER_DIR="$DEV" mise exec -- swiftlint lint --strict --quiet
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:swift-lint
     python-format:
-      run: cd packages/products/harvest-autofill && mise exec -- ruff format --check *.py
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:python-format
     python-lint:
-      run: cd packages/products/harvest-autofill && mise exec -- ruff check *.py
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:python-lint
     shell-format:
-      run: mise exec -- shfmt -i 2 -d $(git ls-files '*.sh' bin/git)
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:shell-format
     shell-lint:
-      run: mise exec -- shellcheck $(git ls-files '*.sh' bin/git)
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:shell-lint
     toml:
-      # taplo's formatter panics on mise's `_.path` dotted key (upstream bug), so lint only.
-      run: mise exec -- taplo lint mise.toml
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:toml
     json-format:
-      run: cd packages/products/harvest-autofill && mise exec -- oxfmt --check config.default.json
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:json-format
     yaml-lint:
-      run: mise exec -- yamllint .github/workflows/
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:yaml-lint
     workflow-lint:
-      run: mise exec -- actionlint
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:workflow-lint
     markdown-lint:
-      run: mise exec -- markdownlint-cli2 "*.md"
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:markdown-lint
     web-format:
-      run: cd packages/products/website && mise exec -- oxfmt --check src
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:web-format
     web-lint:
-      run: cd packages/products/website && mise exec -- oxlint src
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:web-lint
     astro-format:
-      run: cd packages/products/website && mise exec -- pnpm exec prettier --check "src/**/*.astro"
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:astro-format
     css-lint:
-      run: cd packages/products/website && mise exec -- pnpm exec stylelint "src/**/*.css"
-    # ── Test suites: unit + behaviour + coverage, plus app + website visual regression.
-    #    The Checks CI job runs this whole gate; web-e2e also runs in web-e2e.yml (container).
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:css-lint
     python-test:
-      run: cd packages/products/harvest-autofill && mise exec -- uv run --python 3.12 --group dev pytest --cov
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:python-test
     swift-test:
-      run: cd packages/products/harvest-autofill && ./swift-coverage-gate.sh
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:swift-test
     web-test:
-      run: cd packages/products/website && mise exec -- pnpm exec vitest run --coverage
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:web-test
     # App render visual regression (macOS only — builds the signed app, then pixel-diffs every
-    # screen vs its baseline). Scoped to app sources so unrelated commits don't rebuild.
+    # screen vs its baseline). turbo caches on app sources + baselines so unchanged commits skip it.
     app-visual:
       glob: "packages/products/harvest-autofill/*.{swift,py}"
-      run: cd packages/products/harvest-autofill && ./build.sh >/dev/null && mise exec -- uv run --python 3.12 --with pillow visual-check.py
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:app-visual
     # Website E2E + visual regression in the pinned Playwright container. Runs wherever Docker
     # is available (dev machines, the ubuntu CI job); on a Docker-less runner it defers to the
     # web-e2e.yml CI job. Scoped to website sources.
     web-e2e:
       glob: "packages/products/website/**"
       run: |
-        cd packages/products/website
         if docker info >/dev/null 2>&1; then
-          ./run-web-e2e.sh
+          ./bin/mise exec -- ./node_modules/.bin/turbo run qa:web-e2e
         else
           echo "web-e2e: Docker unavailable here — this check runs in the web-e2e.yml CI job."
         fi

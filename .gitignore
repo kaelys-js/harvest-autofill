@@ -23,7 +23,8 @@ out/
 .cache/
 .parcel-cache/
 .vite/
-.turbo/
+.turbo/*
+!.turbo/config.json
 .nx/
 .docusaurus/
 .astro/
@@ -386,3 +387,6 @@ packages/products/website/dist/harvest-autofill-releases
 !packages/products/website/e2e/**/*.png
 !packages/products/harvest-autofill/tests/fixtures/config.json
 packages/products/website/.pnpm-store/
+
+# Track the turbo remote-cache team config (a bare `config.json` rule above re-ignores it)
+!.turbo/config.json

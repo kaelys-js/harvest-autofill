@@ -1,0 +1,170 @@
+{
+	"$schema": "./node_modules/turbo/schema.json",
+	"globalDependencies": [
+		"mise.toml",
+		"mise.lock",
+		"lefthook.yml",
+		"package.json",
+		"pnpm-lock.yaml"
+	],
+	"globalPassThroughEnv": [
+		"NODE_ENV",
+		"CI",
+		"TMPDIR",
+		"HOME",
+		"TURBO_*",
+		"DEVELOPER_DIR",
+		"ASTRO_BASE",
+		"AZURE_CONFIG_DIR"
+	],
+	"ui": "tui",
+	"tasks": {
+		"qa:swift-format": {
+			"inputs": [
+				"packages/products/harvest-autofill/*.swift",
+				"packages/products/harvest-autofill/SwiftTests/**",
+				"packages/products/harvest-autofill/.swiftformat"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:swift-lint": {
+			"inputs": [
+				"packages/products/harvest-autofill/*.swift",
+				"packages/products/harvest-autofill/SwiftTests/**",
+				"packages/products/harvest-autofill/.swiftlint.yml"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:swift-test": {
+			"inputs": [
+				"packages/products/harvest-autofill/*.swift",
+				"packages/products/harvest-autofill/SwiftTests/**",
+				"packages/products/harvest-autofill/Package.swift",
+				"packages/products/harvest-autofill/swift-coverage-gate.sh"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:python-format": {
+			"inputs": [
+				"packages/products/harvest-autofill/*.py",
+				"packages/products/harvest-autofill/ruff.toml"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:python-lint": {
+			"inputs": [
+				"packages/products/harvest-autofill/*.py",
+				"packages/products/harvest-autofill/ruff.toml"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:python-test": {
+			"inputs": [
+				"packages/products/harvest-autofill/*.py",
+				"packages/products/harvest-autofill/tests/**",
+				"packages/products/harvest-autofill/pyproject.toml",
+				"packages/products/harvest-autofill/uv.lock"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:shell-format": {
+			"inputs": ["**/*.sh", "bin/git"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:shell-lint": {
+			"inputs": ["**/*.sh", "bin/git"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:toml": {
+			"inputs": ["mise.toml"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:json-format": {
+			"inputs": ["packages/products/harvest-autofill/config.default.json"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:yaml-lint": {
+			"inputs": [".github/workflows/**"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:workflow-lint": {
+			"inputs": [".github/workflows/**", ".github/actions/**"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:markdown-lint": {
+			"inputs": ["*.md", ".markdownlint-cli2.jsonc"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:web-format": {
+			"inputs": ["packages/products/website/src/**"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:web-lint": {
+			"inputs": ["packages/products/website/src/**", "packages/products/website/.oxlintrc.json"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:astro-format": {
+			"inputs": [
+				"packages/products/website/src/**/*.astro",
+				"packages/products/website/.prettierrc*"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:css-lint": {
+			"inputs": [
+				"packages/products/website/src/**/*.css",
+				"packages/products/website/.stylelintrc*"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:web-test": {
+			"inputs": [
+				"packages/products/website/src/**",
+				"packages/products/website/test/**",
+				"packages/products/website/vitest.config.ts",
+				"packages/products/website/package.json"
+			],
+			"outputs": ["packages/products/website/coverage/**"],
+			"outputLogs": "new-only"
+		},
+		"qa:app-visual": {
+			"inputs": [
+				"packages/products/harvest-autofill/*.swift",
+				"packages/products/harvest-autofill/*.py",
+				"packages/products/harvest-autofill/visual-baseline/**",
+				"packages/products/harvest-autofill/build.sh",
+				"packages/products/harvest-autofill/Info.plist"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:web-e2e": {
+			"inputs": [
+				"packages/products/website/src/**",
+				"packages/products/website/e2e/**",
+				"packages/products/website/playwright.config.ts",
+				"packages/products/website/run-web-e2e.sh",
+				"packages/products/website/serve.mjs"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		}
+	}
+}

@@ -1,0 +1,38 @@
+{
+	"name": "harvest-autofill",
+	"private": true,
+	"description": "macOS menu-bar app that fills your Harvest timesheet from the work you already did.",
+	"license": "MIT",
+	"type": "module",
+	"scripts": {
+		"prepare": "./bin/mise exec -- lefthook install",
+		"qa:swift-format": "cd packages/products/harvest-autofill && swiftformat --lint HarvestCore.swift HarvestSideEffects.swift HarvestApp.swift SwiftTests",
+		"qa:swift-lint": "cd packages/products/harvest-autofill && DEV=\"$(xcode-select -p)\"; case \"$DEV\" in *CommandLineTools*) DEV=\"$(ls -d /Applications/Xcode*.app/Contents/Developer 2>/dev/null | head -1)\";; esac; DEVELOPER_DIR=\"$DEV\" swiftlint lint --strict --quiet",
+		"qa:swift-test": "cd packages/products/harvest-autofill && ./swift-coverage-gate.sh",
+		"qa:python-format": "cd packages/products/harvest-autofill && ruff format --check *.py",
+		"qa:python-lint": "cd packages/products/harvest-autofill && ruff check *.py",
+		"qa:python-test": "cd packages/products/harvest-autofill && uv run --python 3.12 --group dev pytest --cov",
+		"qa:shell-format": "shfmt -i 2 -d $(git ls-files '*.sh' bin/git)",
+		"qa:shell-lint": "shellcheck $(git ls-files '*.sh' bin/git)",
+		"qa:toml": "taplo lint mise.toml",
+		"qa:json-format": "cd packages/products/harvest-autofill && oxfmt --check config.default.json",
+		"qa:yaml-lint": "yamllint .github/workflows/",
+		"qa:workflow-lint": "actionlint",
+		"qa:markdown-lint": "markdownlint-cli2 \"*.md\"",
+		"qa:web-format": "cd packages/products/website && oxfmt --check src",
+		"qa:web-lint": "cd packages/products/website && oxlint src",
+		"qa:astro-format": "cd packages/products/website && pnpm exec prettier --check \"src/**/*.astro\"",
+		"qa:css-lint": "cd packages/products/website && pnpm exec stylelint \"src/**/*.css\"",
+		"qa:web-test": "cd packages/products/website && pnpm exec vitest run --coverage",
+		"qa:app-visual": "cd packages/products/harvest-autofill && ./build.sh >/dev/null && uv run --python 3.12 --with pillow visual-check.py",
+		"qa:web-e2e": "cd packages/products/website && ./run-web-e2e.sh"
+	},
+	"devDependencies": {
+		"turbo": "2.10.12"
+	},
+	"engines": {
+		"node": "26.8.1",
+		"pnpm": "11.24.0"
+	},
+	"packageManager": "pnpm@11.24.0"
+}
