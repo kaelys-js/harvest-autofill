@@ -78,7 +78,8 @@ v.parse(PrefsTabsSchema, TABS);
 
 export default function PreferencesMockup() {
 	const [t, setT] = useState(0);
-	const tab: Tab = TABS[t];
+	// t is always in range (set from a fixed tab list) and TABS is schema-validated non-empty.
+	const tab: Tab = TABS[t]!;
 
 	return (
 		<div className="w-full max-w-md overflow-hidden rounded-2xl border border-border/60 bg-card shadow-2xl shadow-black/10 ring-1 ring-black/5 dark:shadow-black/40">
@@ -86,7 +87,7 @@ export default function PreferencesMockup() {
 				<span className="size-3 rounded-full bg-[#ff5f57]" />
 				<span className="size-3 rounded-full bg-[#febc2e]" />
 				<span className="size-3 rounded-full bg-[#28c840]" />
-				<span className="ml-2 text-xs font-medium text-muted-foreground">Preferences</span>
+				<span className="ml-2 text-xs font-medium text-muted-foreground">Settings</span>
 			</div>
 
 			<div

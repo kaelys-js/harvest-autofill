@@ -69,7 +69,8 @@ export default function OnboardingCarousel() {
 	}, [i, paused, reduced]);
 
 	const go: (n: number) => void = (n) => setI((n + STEPS.length) % STEPS.length);
-	const step: Step = STEPS[i];
+	// i is always in range (setI wraps with modulo) and STEPS is schema-validated non-empty.
+	const step: Step = STEPS[i]!;
 
 	return (
 		<div
@@ -91,14 +92,14 @@ export default function OnboardingCarousel() {
 				</span>
 			</div>
 
-			<div className="px-7 py-8 text-center" aria-live="polite">
-				<div className="mx-auto grid size-16 place-items-center rounded-2xl bg-gradient-to-br from-[#f6903a] to-[#e2541f] shadow-md">
-					<step.Icon className="size-9 text-white" strokeWidth={1.8} aria-hidden="true" />
+			<div className="flex items-start gap-4 px-7 py-8" aria-live="polite">
+				<div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#f6903a] to-[#e2541f] shadow-md">
+					<step.Icon className="size-8 text-white" strokeWidth={1.8} aria-hidden="true" />
 				</div>
-				<h3 className="mt-5 text-xl font-bold tracking-tight">{step.title}</h3>
-				<p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
-					{step.body}
-				</p>
+				<div>
+					<h3 className="text-xl font-bold tracking-tight">{step.title}</h3>
+					<p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+				</div>
 			</div>
 
 			<div className="flex items-center justify-between border-t border-border/60 px-5 py-4">

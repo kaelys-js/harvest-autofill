@@ -31,8 +31,8 @@ test.describe("made to feel native", () => {
 			"Your workday",
 			"Here's your week",
 		];
-		for (let i = 0; i < titles.length; i++) {
-			await clickUntil(page, "tab", new RegExp(`^Step ${i + 2}:`), titles[i]);
+		for (const [i, title] of titles.entries()) {
+			await clickUntil(page, "tab", new RegExp(`^Step ${i + 2}:`), title);
 		}
 		// Next from the last step wraps back to Welcome.
 		await page.getByRole("button", { name: "Next step" }).click();
