@@ -23,10 +23,11 @@ test("the theme toggle flips light and dark", async ({ page }) => {
 });
 
 test("an FAQ answer expands when its question is clicked", async ({ page }) => {
-	const q = page.getByRole("button", { name: /Where do my tokens and data go/i });
+	const q = page.getByRole("button", { name: /Where does my data go/i });
 	await q.scrollIntoViewIfNeeded();
 	await q.click();
-	await expect(page.getByText(/Every token lives only on your Mac/i)).toBeVisible();
+	// The phrase also appears in the FAQPage JSON-LD (in <head>); scope to the visible accordion.
+	await expect(page.locator("#faq").getByText(/only the app can read/i)).toBeVisible();
 });
 
 test("the download button points at the latest release zip", async ({ page }) => {

@@ -59,9 +59,10 @@ test.describe("visual", () => {
 // section renders deterministically; each mockup's landmark text is awaited so the shot is taken
 // only after all three islands have hydrated.
 test.describe("visual — native section", () => {
-	test.use({ reducedMotion: "reduce" });
-
 	test.beforeEach(async ({ page }) => {
+		// reduced-motion pins the carousel to its first slide (page method is precisely typed,
+		// unlike `test.use({ reducedMotion })` which TS7 can't resolve through Playwright's Fixtures).
+		await page.emulateMedia({ reducedMotion: "reduce" });
 		// The hero's download button lives on the same page; stub its release fetch so no real
 		// network call runs while this section renders.
 		await page.route("**/api.github.com/**", (route) =>
@@ -123,7 +124,7 @@ test.describe("visual — page sections", () => {
 
 	const SECTIONS: { name: string; selector: string; ready?: string }[] = [
 		{ name: "nav", selector: "header" },
-		{ name: "trust", selector: "#trust", ready: "Tokens stay on your Mac" },
+		{ name: "trust", selector: "#trust", ready: "Your data stays on your Mac" },
 		{ name: "features", selector: "#features", ready: "Files itself every Friday" },
 		{ name: "how", selector: "#how", ready: "Friday, it files" },
 		{ name: "download", selector: "#download", ready: "Get Harvest Auto-Fill" },

@@ -184,9 +184,10 @@ describe("content constants", () => {
 		expect(ok(HowItWorksStepsSchema, [{ n: "1", title: "t", body: " " }])).toBe(false);
 	});
 
-	it("onboarding and preferences reject a missing or non-path icon and empty rows", () => {
-		expect(ok(OnboardingStepsSchema, [{ title: "t", body: "b", path: "M1 2l3 4" }])).toBe(true);
-		expect(ok(OnboardingStepsSchema, [{ title: "t", body: "b", path: "<svg>" }])).toBe(false);
+	it("onboarding and preferences reject a missing icon and empty rows", () => {
+		const icon = () => null;
+		expect(ok(OnboardingStepsSchema, [{ title: "t", body: "b", Icon: icon }])).toBe(true);
+		expect(ok(OnboardingStepsSchema, [{ title: "t", body: "b" }])).toBe(false); // missing icon
 		expect(
 			ok(PrefsTabsSchema, [{ name: "General", path: "M1 2", rows: [{ title: "t", body: "b" }] }]),
 		).toBe(true);

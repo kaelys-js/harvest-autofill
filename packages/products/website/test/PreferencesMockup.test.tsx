@@ -14,7 +14,7 @@ describe("PreferencesMockup", () => {
 		const cases: [string, string][] = [
 			["Accounts", "Where your hours are written — the one account the app truly needs."],
 			["Allocation", "How commits, pushes, and meetings weight across your projects."],
-			["About", "Every token stays on this Mac and is never sent anywhere."],
+			["About", "Everything stays on this Mac and is never sent anywhere."],
 			["General", "Files your week to Harvest every Friday at 6pm, even if the app is closed."],
 		];
 		for (const [tab, marker] of cases) {

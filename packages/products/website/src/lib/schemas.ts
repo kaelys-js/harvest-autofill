@@ -140,11 +140,12 @@ export const FeaturesSchema = v.pipe(v.array(FeatureSchema), v.minLength(1));
 export const HowItWorksStepSchema = v.object({ n: NonEmpty, title: NonEmpty, body: NonEmpty });
 export const HowItWorksStepsSchema = v.pipe(v.array(HowItWorksStepSchema), v.minLength(1));
 
-// Onboarding wizard slides (OnboardingCarousel.tsx).
+// Onboarding wizard slides (OnboardingCarousel.tsx): copy plus a Lucide icon component that
+// mirrors the matching step's SF Symbol in the app.
 export const OnboardingStepSchema = v.object({
 	title: NonEmpty,
 	body: NonEmpty,
-	path: SvgPathSchema,
+	Icon: v.custom<unknown>((x) => x != null, "onboarding icon is required"),
 });
 export const OnboardingStepsSchema = v.pipe(v.array(OnboardingStepSchema), v.minLength(1));
 

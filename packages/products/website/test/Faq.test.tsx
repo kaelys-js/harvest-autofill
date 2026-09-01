@@ -11,7 +11,7 @@ describe("Faq", () => {
 
 	it("expands an answer when its question is clicked", () => {
 		render(<Faq />);
-		fireEvent.click(screen.getByRole("button", { name: /Where do my tokens and data go/i }));
-		expect(screen.getByText(/Every token lives only on your Mac/i)).toBeVisible();
+		fireEvent.click(screen.getByRole("button", { name: /Where does my data go/i }));
+		expect(screen.getByText(/only the app can read/i)).toBeVisible();
 	});
 });

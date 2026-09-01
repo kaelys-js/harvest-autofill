@@ -1,42 +1,44 @@
 import { useEffect, useState } from "react";
+import { Clock, KeyRound, Sparkles, Workflow, CalendarClock, BadgeCheck } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import * as v from "valibot";
 import { OnboardingStepsSchema, parsePositiveInt } from "@/lib/schemas";
 
-// A neutral recreation of the app's 6-step first-run wizard. Semantic tokens only, so it
-// renders true light/dark with the page. Clickable dots + arrows, auto-advance that pauses
-// on hover/focus and is disabled under prefers-reduced-motion.
-type Step = { title: string; body: string; path: string };
+// A neutral recreation of the app's 6-step first-run wizard. Each icon mirrors the matching
+// step's SF Symbol in the app (welcome/clock, key, sparkles, sources, workday, finish), so the
+// site and the app show the same steps. Semantic tokens only, so it renders true light/dark.
+type Step = { title: string; body: string; Icon: LucideIcon };
 
 const STEPS: Step[] = [
 	{
+		Icon: Clock,
 		title: "Welcome to Harvest Auto-Fill",
 		body: "Your timesheet, filled from the work you already did.",
-		path: "M12 3v3m0 12v3m9-9h-3M6 12H3m14.5-6.5-2 2m-9 9-2 2m0-13 2 2m9 9 2 2",
 	},
 	{
+		Icon: KeyRound,
 		title: "Connect your Harvest account",
-		body: "The one account we truly need — it's where your hours get written.",
-		path: "M15 7a4 4 0 1 0-3.9 5H14l2 2 2-2 2 2 2-2-2-2M8 11l-5 5v3h3l5-5",
+		body: "The one account it truly needs — where your hours get written.",
 	},
 	{
+		Icon: Sparkles,
 		title: "Find your projects automatically",
-		body: "We read your accounts and fill in the IDs — no typing them by hand.",
-		path: "M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4z M18 15l.8 2 .2.8m-14-2 .8 2",
+		body: "It reads your accounts and fills in the details, so you never type them by hand.",
 	},
 	{
+		Icon: Workflow,
 		title: "Where your work lives",
-		body: "Pick the sources to turn into hours. GitHub is the main one; the rest are optional.",
-		path: "M6 3v12a3 3 0 0 0 3 3h6m0 0a3 3 0 1 0 0 .01M6 6a3 3 0 1 0 0-.01",
+		body: "Pick what turns into hours. GitHub is the main one; the rest are optional.",
 	},
 	{
+		Icon: CalendarClock,
 		title: "Your workday",
-		body: "Sensible defaults are already set — adjust only if yours differ, then continue.",
-		path: "M12 7v5l3 2M12 3a9 9 0 1 0 .01 0",
+		body: "Sensible defaults are already set — tweak them only if yours differ.",
 	},
 	{
+		Icon: BadgeCheck,
 		title: "Here's your week",
-		body: "A live preview from everything you connected — nothing is written yet.",
-		path: "M9 12l2 2 4-4M12 3a9 9 0 1 0 .01 0",
+		body: "A live preview from everything you connected — nothing's written yet.",
 	},
 ];
 
@@ -91,17 +93,7 @@ export default function OnboardingCarousel() {
 
 			<div className="px-7 py-8 text-center" aria-live="polite">
 				<div className="mx-auto grid size-16 place-items-center rounded-2xl bg-gradient-to-br from-[#f6903a] to-[#e2541f] shadow-md">
-					<svg
-						viewBox="0 0 24 24"
-						className="size-9 text-white"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth={1.8}
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<path d={step.path} />
-					</svg>
+					<step.Icon className="size-9 text-white" strokeWidth={1.8} aria-hidden="true" />
 				</div>
 				<h3 className="mt-5 text-xl font-bold tracking-tight">{step.title}</h3>
 				<p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">

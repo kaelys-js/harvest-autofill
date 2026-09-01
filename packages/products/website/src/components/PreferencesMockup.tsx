@@ -45,7 +45,7 @@ const TABS: Tab[] = [
 			},
 			{
 				title: "Azure DevOps — optional",
-				body: "Add a token to include repository activity alongside GitHub.",
+				body: "Connect it to count your Azure DevOps commits and pushes too.",
 			},
 		],
 	},
@@ -68,7 +68,7 @@ const TABS: Tab[] = [
 		rows: [
 			{ title: "Version & updates", body: "See what's new and check for a signed update." },
 			{ title: "Website & source", body: "Open this site or the app's open-source repository." },
-			{ title: "Your privacy", body: "Every token stays on this Mac and is never sent anywhere." },
+			{ title: "Your privacy", body: "Everything stays on this Mac and is never sent anywhere." },
 		],
 	},
 ];

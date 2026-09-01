@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 // reduced-motion disables the carousel's auto-advance, so step assertions are deterministic.
-test.use({ reducedMotion: "reduce" });
+// Set on the page before each test's own navigation (the page method is precisely typed,
+// unlike `test.use({ reducedMotion })` which TS7 can't resolve through Playwright's Fixtures).
+test.beforeEach(async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+});
 
 // The mockups are client:visible islands; a click can land before hydration completes, so the
 // first interaction is retried until the handler is attached.
@@ -41,7 +45,7 @@ test.describe("made to feel native", () => {
 		const tabs: [string, string][] = [
 			["Accounts", "Where your hours are written — the one account the app truly needs."],
 			["Allocation", "How commits, pushes, and meetings weight across your projects."],
-			["About", "Every token stays on this Mac and is never sent anywhere."],
+			["About", "Everything stays on this Mac and is never sent anywhere."],
 			["General", "Files your week to Harvest every Friday at 6pm, even if the app is closed."],
 		];
 		for (const [tab, marker] of tabs) {
