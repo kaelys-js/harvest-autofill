@@ -29,7 +29,8 @@
 		"qa:css-lint": "cd packages/products/website && pnpm exec stylelint \"src/**/*.css\"",
 		"qa:web-test": "cd packages/products/website && pnpm exec vitest run --coverage",
 		"qa:app-visual": "cd packages/products/harvest-autofill && ./build.sh >/dev/null && uv run --python 3.12 --with pillow visual-check.py",
-		"qa:web-e2e": "cd packages/products/website && ./run-web-e2e.sh"
+		"qa:web-e2e": "cd packages/products/website && ./run-web-e2e.sh",
+		"release:notes": "./bin/mise exec -- node scripts/release-draft.mjs --polish"
 	},
 	"devDependencies": {
 		"turbo": "2.10.12"

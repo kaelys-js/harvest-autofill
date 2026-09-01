@@ -40,3 +40,4 @@ lefthook = "2.1.12" # pre-push hooks (also run in CI)
 gh = "latest"       # used by release.sh to publish
 pnpm = "11.24.0"    # website package manager
 uv = "0.12.7"       # runs the Python engine test suite (pytest + coverage)
+git-cliff = "2.13.0"
