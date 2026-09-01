@@ -83,6 +83,8 @@ pre-push:
       run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:web-format
     web-lint:
       run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:web-lint
+    web-typecheck:
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:web-typecheck
     astro-format:
       run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:astro-format
     css-lint:
