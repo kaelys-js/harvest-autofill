@@ -123,6 +123,8 @@ enum Web {
     static let primary = tok((0.925, 0.337, 0.0), (0.98, 0.431, 0.114)) // --primary  #ec5600 / #fa6e1d
     static let primaryForeground = tok((1.0, 0.965, 0.922), (0.157, 0.051, 0.008)) // --primary-foreground
     static let card = tok((1, 1, 1), (0.09, 0.09, 0.09)) // --card  #ffffff / #171717
+    // A subtly raised section surface with clear contrast against the solid card window.
+    static let section = tok((0.957, 0.957, 0.968), (0.141, 0.141, 0.141)) // #f4f4f7 / #242424
 }
 
 struct Status { let text: String; let color: Color; let symbol: String }

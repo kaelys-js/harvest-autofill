@@ -92,7 +92,7 @@ struct MainWindow: View {
                     ProgressView().controlSize(.small)
                 }
             }
-            .padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 14)
+            .padding(.horizontal, 18).padding(.top, render ? 18 : 30).padding(.bottom, 14)
             Divider()
 
             if let s, !s.days.isEmpty {
@@ -378,7 +378,10 @@ struct PrefCard<C: View>: View {
             content()
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading)
-        .glassBG(12)
+        // Solid raised surface + hairline border, so sections read clearly against the card window
+        // (the old .thinMaterial went nearly invisible over the now-solid background).
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Web.section))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.primary.opacity(0.07)))
     }
 }
 
@@ -445,9 +448,14 @@ struct AllocationContent: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         VStack(spacing: 14) {
+            Text("These settings shape how your week gets turned into hours — how much each day should add up to, and how that time is divided between projects.")
+                .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
             PrefCard(title: "Your workday") {
+                Text("How full each worked day should be, and the hours your work counts from.")
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 NumRow(label: "Daily target", value: $prefs.dailyTarget, width: 60, valid: prefs.targetValid, trailing: "hours",
-                       help: "Hours logged per worked weekday — meetings plus development. Usually 8–9.")
+                       help: "The total logged for each weekday you worked — meetings plus development. Usually 8–9.")
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 8) {
                         Text("Work hours").frame(width: LBL, alignment: .leading).font(.system(size: 12))
@@ -464,14 +472,16 @@ struct AllocationContent: View {
                 }
             }
             PrefCard(title: "Timeline split") {
+                Text("How a day's hours get shared between projects. The app sorts your commits by time and credits the stretch before each one to that commit's project — so a busy afternoon on one project earns more hours than a quick fix elsewhere.")
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 NumRow(label: "Gap cap", value: $prefs.gapCap, width: 56, valid: prefs.gapValid, trailing: "min",
-                       help: "The most time credited to a single stretch between two commits — caps long gaps like lunch or a meeting.")
+                       help: "The most a single gap between two commits can be worth — keeps a long lunch or meeting from inflating one project.")
                 NumRow(label: "Lead-in", value: $prefs.leadIn, width: 56, valid: prefs.gapValid, trailing: "min",
-                       help: "Time credited before your first commit of a working block, for setup you did before committing.")
-                Text("How dev hours are split: your commit timestamps are sorted, and the (capped) time between each is credited to whichever project that commit belongs to — estimating real hours per project instead of counting commits.")
-                    .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
+                       help: "Time credited before your very first commit of a block, for the thinking and setup you did before committing.")
             }
             PrefCard(title: "Holidays") {
+                Text("Public holidays for your region are skipped automatically and left blank.")
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
                     Text("Region").frame(width: LBL, alignment: .leading).font(.system(size: 12))
                     Picker("", selection: $prefs.holidayRegion) {
@@ -479,7 +489,6 @@ struct AllocationContent: View {
                     }.labelsHidden().frame(width: 220)
                     Spacer()
                 }
-                Help(text: "Statutory holidays for this region are computed automatically and left blank on your timesheet.")
             }
         }
     }
@@ -813,14 +822,6 @@ struct AboutContent: View {
                     Button { openLog() } label: { Label("Open latest log", systemImage: "doc.text") }
                 }
             }
-            PrefCard(title: "Included software") {
-                Text("Python \(pyVersion) is bundled inside the app (python-build-standalone, PSF-licensed) so nothing needs installing. GitHub uses your token or the gh CLI; everything else is built in.")
-                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            }
-            PrefCard(title: "Sharing it") {
-                Text("Copy the app to another Mac and it starts fresh with its own setup — none of your accounts come along. Made for the TTT team.")
-                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            }
         }
     }
 }
@@ -833,6 +834,8 @@ let PREFS_TABS: [(name: String, icon: String)] = [
 struct PreferencesView: View {
     @StateObject var prefs = Prefs()
     @State private var tab = 0 // 0 General, 1 Accounts, 2 Allocation, 3 About
+    @State private var slideTrailing = true // slide direction for the tab transition
+    @ObservedObject private var nav = PrefsNav.shared
     var render = false
     var footer: some View {
         HStack(spacing: 10) {
@@ -853,8 +856,9 @@ struct PreferencesView: View {
         HStack(spacing: 4) {
             ForEach(Array(PREFS_TABS.enumerated()), id: \.offset) { i, t in
                 Button {
-                    if tappable {
-                        tab = i
+                    if tappable, i != tab {
+                        slideTrailing = i > tab
+                        withAnimation(.easeInOut(duration: 0.22)) { tab = i }
                     }
                 } label: {
                     VStack(spacing: 3) {
@@ -884,6 +888,7 @@ struct PreferencesView: View {
             }.frame(width: 560).background(Web.card)
         } else {
             VStack(spacing: 0) {
+                Color.clear.frame(height: 22) // clear the floating traffic-light controls
                 tabBar(active: tab, tappable: true)
                 Divider()
                 ScrollView {
@@ -895,15 +900,26 @@ struct PreferencesView: View {
                         default: AboutContent(prefs: prefs)
                         }
                     }.padding(20)
-                }
+                        .id(tab)
+                        .transition(.push(from: slideTrailing ? .trailing : .leading))
+                }.clipped()
                 // Save appears only when there's something to save, and never on the About tab.
                 if tab != 3, prefs.hasChanges {
                     Divider(); footer
                 }
             }.frame(width: 560, height: 600).background(Web.card)
                 .onAppear {
+                    if let t = nav.requestedTab {
+                        tab = t; nav.requestedTab = nil
+                    }
                     if prefs.ghOrgsAvailable.isEmpty, prefs.adoReposAvailable.isEmpty {
                         prefs.discover()
+                    }
+                }
+                .onChange(of: nav.requestedTab) { _, new in
+                    // Switch tabs when the window is already open (e.g. app-menu About).
+                    if let t = new {
+                        tab = t; nav.requestedTab = nil
                     }
                 }
         }
@@ -925,13 +941,28 @@ struct OnbDots: View {
     }
 }
 
+// A single "we scan this" line in the Discover step.
+struct ScanBullet: View {
+    let text: String
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "magnifyingglass").font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Web.primary).frame(width: 14)
+            Text(text).font(.system(size: 12)).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
 struct OnbHeader: View {
     let icon: String; let title: String; let subtitle: String
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Image(systemName: icon).font(.system(size: 26)).foregroundStyle(Web.primary)
-            Text(title).font(.system(size: 21, weight: .bold))
-            Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: icon).font(.system(size: 26)).foregroundStyle(Web.primary).frame(width: 32)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title).font(.system(size: 21, weight: .bold))
+                Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -983,7 +1014,7 @@ struct OnbWelcome: View {
                 ValueBullet(icon: "lock.shield", title: "Private by design",
                             detail: "Every token stays on this Mac in a locked file and is never sent anywhere but the services you connect.")
             }
-            Text("Setup takes about two minutes. You can change anything later in Preferences.")
+            Text("Setup takes about two minutes. You can change anything later in Settings.")
                 .font(.system(size: 12)).foregroundStyle(.tertiary)
         }
     }
@@ -1025,7 +1056,7 @@ struct OnbDiscover: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             OnbHeader(icon: "sparkles", title: "Let's find your projects automatically",
-                      subtitle: "Rather than typing IDs by hand, we'll read your accounts and fill them in.")
+                      subtitle: "It scans your connected accounts so you never type a project number by hand.")
             if prefs.discovering {
                 HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Scanning your Harvest, GitHub, and Azure DevOps…").font(.system(size: 12.5)).foregroundStyle(.secondary) }
             } else if prefs.discovered {
@@ -1040,8 +1071,16 @@ struct OnbDiscover: View {
                 Text("You'll pick which of these to include on the next screen.").font(.system(size: 12)).foregroundStyle(.tertiary)
                 Button { prefs.discover() } label: { Label("Scan again", systemImage: "arrow.clockwise") }.controlSize(.small)
             } else {
-                Text("This reads your Harvest projects and IDs, your GitHub login and organizations, and — if you add an Azure DevOps token later — your repositories. Nothing is written; it only reads.")
-                    .font(.system(size: 12.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("It reads four things, so you never type an ID by hand:")
+                        .font(.system(size: 12.5)).foregroundStyle(.secondary)
+                    ScanBullet(text: "Your Harvest user — who the hours are logged as.")
+                    ScanBullet(text: "Your Harvest projects — the list your time is split across.")
+                    ScanBullet(text: "Your GitHub login and organizations — where your commits come from.")
+                    ScanBullet(text: "Your Azure DevOps repositories — once you add a token, on the next step.")
+                    Text("Everything here is read-only. Nothing is ever written.")
+                        .font(.system(size: 11.5)).foregroundStyle(.tertiary).padding(.top, 2)
+                }.fixedSize(horizontal: false, vertical: true)
                 Button { prefs.discover() } label: { Label("Scan my accounts", systemImage: "sparkles") }.controlSize(.large).primaryProminent()
             }
         }
@@ -1164,12 +1203,6 @@ struct OnbFinish: View {
                 Text("On — records your week automatically every Friday evening (safe to run twice, it never double-books) and keeps the app running so it can. Off — you stay in control: nothing is logged until you click “Log this week” yourself.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
             }
-            PrefCard(title: "Ready to run") {
-                CheckRow(ok: prefs.pythonReady, text: prefs.pythonReady ? "Python engine — built into the app, nothing to install" : "Bundled Python missing — reinstall the app")
-                CheckRow(ok: prefs.curlReady, text: "Network access (curl) — part of macOS")
-                Text(prefs.ghToken.isEmpty ? "GitHub uses the gh CLI on this Mac. On a Mac without gh, add a GitHub token on the previous step." : "GitHub uses the token you added — no gh CLI needed.")
-                    .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
-            }
         }
     }
 }
@@ -1216,7 +1249,7 @@ struct OnboardingView: View {
                 OnbDots(step: step)
                 Spacer()
                 Text("Step \(step + 1) of \(ONB_STEPS.count)").font(.system(size: 11)).foregroundStyle(.tertiary)
-            }.padding(.horizontal, 26).padding(.top, 20).padding(.bottom, 16)
+            }.padding(.horizontal, 26).padding(.top, render ? 20 : 30).padding(.bottom, 16)
 
             Group {
                 if render {
@@ -1264,8 +1297,8 @@ struct MenuContent: View {
             Button("Install update — version \(info.version) & relaunch") { updater.installAndRelaunch() }
             Divider()
         }
-        Button("Open") { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) }
-        Button("Preferences…") { openWindow(id: "prefs"); NSApp.activate(ignoringOtherApps: true) }
+        Button("This Week") { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) }
+        Button("Settings…") { openWindow(id: "prefs"); NSApp.activate(ignoringOtherApps: true) }
         Button(model.refreshing ? "Recalculating…" : "Recalculate this week now") { model.refresh() }.disabled(model.refreshing)
         Divider()
         Button(updater.state == .checking ? "Checking for updates…" : "Check for Updates") { updater.check(manual: true) }
@@ -1306,6 +1339,9 @@ struct MenuLabel: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .openMainWindow)) { _ in
                 openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
+                openWindow(id: "prefs"); NSApp.activate(ignoringOtherApps: true)
             }
             .onAppear {
                 if model.firstRun { // new user: run the onboarding wizard once
@@ -1351,6 +1387,13 @@ struct VerifyView: View {
 // ============================================================ App
 extension Notification.Name {
     static let openMainWindow = Notification.Name("HarvestOpenMainWindow")
+    static let openSettings = Notification.Name("HarvestOpenSettings")
+}
+
+// Lets the app menu ask Settings to open on a specific tab (e.g. About).
+@MainActor final class PrefsNav: ObservableObject {
+    static let shared = PrefsNav()
+    @Published var requestedTab: Int?
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -1444,7 +1487,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                                          days: s.days, flags: s.flags,
                                          issues: [
                                              "Tuesday's meetings exceed the 9h daily target — nothing was logged for that day.",
-                                             "Azure DevOps org isn't set — pushes won't be counted until you add it in Preferences.",
+                                             "Azure DevOps org isn't set — pushes won't be counted until you add it in Settings.",
                                          ], message: s.message)
                 let m = WeekModel(); m.summary = withIssues; m.refreshing = false
                 view = MainWindow(model: m, render: true)
@@ -1470,7 +1513,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             NSApp.terminate(nil); return
         }
-        // Menu-bar utility: no Dock icon by default, unless the user opted in (Preferences → General).
+        // Menu-bar utility: no Dock icon by default, unless the user opted in (Settings → General).
         NSApp.setActivationPolicy(Prefs.dockIconEnabled() ? .regular : .accessory)
         Updater.shared.startAuto() // check GitHub for signed updates on launch + daily
         // seed a default config on first launch so the engine has something to read
@@ -1543,16 +1586,37 @@ struct HarvestMenuApp: App {
         }
         Window("Harvest — This Week", id: "main") {
             MainWindow(model: model).onAppear { delegate.model = model }.tint(Web.primary)
-        }.windowResizability(.contentSize)
-        Window("Preferences", id: "prefs") {
+        }.windowResizability(.contentSize).windowStyle(.hiddenTitleBar)
+            .commands {
+                // About opens Settings → About; add a real Settings item (⌘,), a This Week
+                // entry, and route Quit through the same confirm dialog the menu-bar uses.
+                CommandGroup(replacing: .appInfo) {
+                    Button("About Harvest Auto-Fill") {
+                        PrefsNav.shared.requestedTab = 3
+                        NotificationCenter.default.post(name: .openSettings, object: nil)
+                    }
+                }
+                CommandGroup(replacing: .appSettings) {
+                    Button("Settings…") { NotificationCenter.default.post(name: .openSettings, object: nil) }
+                        .keyboardShortcut(",", modifiers: .command)
+                }
+                CommandGroup(after: .appSettings) {
+                    Button("This Week") { NotificationCenter.default.post(name: .openMainWindow, object: nil) }
+                }
+                CommandGroup(replacing: .appTermination) {
+                    Button("Quit Harvest Auto-Fill") { confirmQuit() }
+                        .keyboardShortcut("q", modifiers: .command)
+                }
+            }
+        Window("Settings", id: "prefs") {
             PreferencesView().onAppear { NSApp.activate(ignoringOtherApps: true) }.tint(Web.primary)
-        }.windowResizability(.contentSize)
+        }.windowResizability(.contentSize).windowStyle(.hiddenTitleBar)
         Window("Welcome to Harvest Auto-Fill", id: "welcome") {
             OnboardingWindowHost().tint(Web.primary)
-        }.windowResizability(.contentSize)
+        }.windowResizability(.contentSize).windowStyle(.hiddenTitleBar)
         Window("What's New", id: "whatsnew") {
             WhatsNewView().onAppear { NSApp.activate(ignoringOtherApps: true) }.tint(Web.primary)
-        }.windowResizability(.contentSize)
+        }.windowResizability(.contentSize).windowStyle(.hiddenTitleBar)
     }
 }
 
