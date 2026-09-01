@@ -12,6 +12,10 @@ Release notes. Every version is also a downloadable build on the
 
 ## [Unreleased]
 
+## [2.34] - 2026-09-01
+
+- A housekeeping release with no changes to the app itself: the project's documentation and release process were refreshed behind the scenes. The app behaves exactly as 2.33.
+
 ## [2.33] - 2026-09-01
 
 - Added a curated CHANGELOG.md and a VERSION file, kept in lockstep with the release tag (a gate rejects any tag whose version does not match both), and pointed the site's Changelog link here.
@@ -126,7 +130,8 @@ Release notes. Every version is also a downloadable build on the
 
 - Bootstrapped the public releases repository.
 
-[Unreleased]: https://github.com/kaelys-js/harvest-autofill/compare/v2.33...HEAD
+[Unreleased]: https://github.com/kaelys-js/harvest-autofill/compare/v2.34...HEAD
+[2.34]: https://github.com/kaelys-js/harvest-autofill/compare/v2.33...v2.34
 [2.33]: https://github.com/kaelys-js/harvest-autofill/compare/v2.32...v2.33
 [2.8]: https://github.com/kaelys-js/harvest-autofill/releases/tag/v2.8
 [2.9]: https://github.com/kaelys-js/harvest-autofill/compare/v2.8...v2.9
