@@ -101,6 +101,35 @@ struct Summary: Codable {
     let days: [Day]; let flags: [String]; let issues: [String]?; let message: String
 }
 
+extension Summary {
+    // Today's projected hours (the live-view day whose hours are the full target, not what's done
+    // yet). Kept out of the headline number so "so far" means genuinely completed time.
+    var projectedTotal: Double {
+        days.filter { $0.projected == true }.compactMap(\.total).reduce(0, +)
+    }
+
+    // Hours actually completed so far — the whole total minus the projected day.
+    var actualTotal: Double {
+        total - projectedTotal
+    }
+
+    // Days genuinely done (a projected day isn't counted as complete).
+    var actualDaysWorked: Int {
+        days.filter { $0.total != nil && $0.projected != true }.count
+    }
+
+    // The one-line summary shown in the menu-bar dropdown and the This Week header: completed
+    // hours + days, the projected part called out separately, then the week range.
+    var detailLine: String {
+        let proj = projectedTotal > 0 ? "\(hrs(projectedTotal)) projected" : ""
+        if actualDaysWorked == 0 {
+            return proj.isEmpty ? week : "\(proj)  ·  \(week)"
+        }
+        let base = "\(hrs(actualTotal)) across \(actualDaysWorked) day\(actualDaysWorked == 1 ? "" : "s")"
+        return proj.isEmpty ? "\(base)  ·  \(week)" : "\(base)  ·  \(proj)  ·  \(week)"
+    }
+}
+
 func hrs(_ v: Double) -> String {
     (v == v.rounded() ? String(Int(v)) : String(format: "%g", v)) + "h"
 }
@@ -298,8 +327,10 @@ enum TestState: Equatable {
 @MainActor
 final class Prefs: ObservableObject {
     @Published var dailyTarget = 9.0
-    @Published var workStart = 9
-    @Published var workEnd = 17
+    // Work-window start/end in hours, half-hour resolution (e.g. 9.0, 17.5). Only commits inside
+    // this window count toward the day's split.
+    @Published var workStart = 9.0
+    @Published var workEnd = 17.0
     @Published var gapCap = 90.0
     @Published var leadIn = 45.0
     @Published var ghLogin = ""
@@ -315,6 +346,7 @@ final class Prefs: ObservableObject {
     @Published var holidayRegion = "CA-BC"
     @Published var harvestAccount = ""
     @Published var harvestUser = ""
+    @Published var harvestName = "" // the account holder's name, shown in the discover step
     @Published var projectsInfo = ""
     // secrets (written to .env)
     @Published var harvestToken = ""
@@ -323,10 +355,14 @@ final class Prefs: ObservableObject {
     @Published var adoPAT = ""
     @Published var ghToken = ""
     @Published var showGHToken = false
+    // Whether the GitHub CLI (gh) is signed in — checked on Settings/onboarding appear. When it
+    // is, the app reads commits through gh and the token field is hidden as redundant.
+    @Published var ghSignedIn = false
     @Published var status = ""
     // discovered option lists (for dropdowns) + reveal toggles
     @Published var ghOrgsAvailable: [String] = []
     @Published var adoReposAvailable: [String] = []
+    @Published var adoProjectsAvailable: [String] = [] // discovered projects, for the Project dropdown
     @Published var projectsList: [(String, String)] = []
     @Published var showToken = false
     @Published var showSecret = false
@@ -366,7 +402,13 @@ final class Prefs: ObservableObject {
     }
 
     var workHoursValid: Bool {
-        workStart >= 0 && workEnd > workStart && workEnd <= 24
+        // Valid range, end after start, and both on a half-hour boundary (the picker enforces the
+        // boundary; a hand-edited config is still checked).
+        func onHalfHour(_ x: Double) -> Bool {
+            (x * 2).rounded() == x * 2
+        }
+        return workStart >= 0 && workEnd <= 24 && workEnd > workStart
+            && onHalfHour(workStart) && onHalfHour(workEnd)
     }
 
     var gapValid: Bool {
@@ -442,7 +484,9 @@ final class Prefs: ObservableObject {
         showDockIcon = c["show_dock_icon"] as? Bool ?? false
         dailyTarget = c["daily_target_hours"] as? Double ?? 9.0
         if let w = c["work_hours"] as? [String: Any] {
-            workStart = w["start"] as? Int ?? 9; workEnd = w["end"] as? Int ?? 17
+            // Accept a number (new half-hour Double or an older whole-hour Int).
+            workStart = (w["start"] as? NSNumber)?.doubleValue ?? 9
+            workEnd = (w["end"] as? NSNumber)?.doubleValue ?? 17
         }
         if let t = c["timeline"] as? [String: Any] {
             gapCap = (t["gap_cap_min"] as? NSNumber)?.doubleValue ?? 90; leadIn = (t["lead_in_min"] as? NSNumber)?.doubleValue ?? 45

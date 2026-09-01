@@ -162,8 +162,16 @@ def classify_calendar(events, days, *, tz, social_kw, long_event_h, ooo_kw, meet
 def attribute(events, day, *, work_start, work_end, tz, lead_in, gap_cap):
     """Minutes of work per project on `day`, from commit timestamps inside work hours,
     crediting each capped inter-commit gap (+ a lead-in) to that commit's project."""
-    w0 = datetime.datetime.combine(day, datetime.time(work_start, 0), tz)
-    w1 = datetime.datetime.combine(day, datetime.time(work_end, 59), tz)
+
+    # work_start/work_end are hours at half-hour resolution (e.g. 9.0, 17.5). The window runs from
+    # the start time to the end time inclusive (the :59 seconds keeps a commit on the end minute in).
+    def at(x, sec):
+        h = int(x)
+        m = int(round((x - h) * 60))
+        return datetime.datetime.combine(day, datetime.time(h, m, sec), tz)
+
+    w0 = at(work_start, 0)
+    w1 = at(work_end, 59)
     evs = sorted([(dt, p) for dt, p in events if w0 <= dt <= w1])
     t = defaultdict(float)
     prev = None
@@ -264,7 +272,12 @@ def build_plan(days, meet, off, social_h, day_events, week_mins, *, cfg):
 
 
 def week_label(mon, fri):
-    return mon.strftime("%b %-d") if mon == fri else f"{mon.strftime('%b')} {mon.day}–{fri.day}"
+    if mon == fri:
+        return mon.strftime("%b %-d")
+    # Same month: "Aug 31–4". Crossing a month: name both ends so "Aug 31 – Sep 1" keeps the month.
+    if mon.month == fri.month:
+        return f"{mon.strftime('%b')} {mon.day}–{fri.day}"
+    return f"{mon.strftime('%b %-d')} – {fri.strftime('%b %-d')}"
 
 
 def summary_json(plan, mon, fri, flags, issues, state, message="", today=None):
@@ -366,8 +379,8 @@ def derive(cfg, tz, holidays, gh_n=0, ado_n=0):
     ado_bucket = cfg.get("azure_devops", {}).get("project_bucket", "Work")
     return {
         "target": float(cfg.get("daily_target_hours", 9.0)),
-        "work_start": int(cfg.get("work_hours", {}).get("start", 9)),
-        "work_end": int(cfg.get("work_hours", {}).get("end", 17)),
+        "work_start": float(cfg.get("work_hours", {}).get("start", 9)),
+        "work_end": float(cfg.get("work_hours", {}).get("end", 17)),
         "gap_cap": float(cfg.get("timeline", {}).get("gap_cap_min", 90)),
         "lead_in": float(cfg.get("timeline", {}).get("lead_in_min", 45)),
         "anchor": parse_ampm(cfg.get("anchor_start", "9:00am")),
@@ -620,7 +633,7 @@ def main():
     ado_n = sum(1 for d in day_events for (dt, p) in day_events[d] if p == ado.get("project_bucket", "Work"))
     flags.append(
         f"per-day timeline split — GitHub {gh_n} commits, Azure DevOps {ado_n} commits/pushes "
-        f"(work-hours {cfg['work_start']}:00–{cfg['work_end']}:00)"
+        f"(work-hours {fmt(int(round(cfg['work_start'] * 60)))}–{fmt(int(round(cfg['work_end'] * 60)))})"
     )
     cfg["gh_n"] = gh_n
     cfg["ado_n"] = ado_n

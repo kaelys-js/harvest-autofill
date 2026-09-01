@@ -137,8 +137,10 @@ def discover():
             "User-Agent": "harvest-discover",
         }
         me = get("https://api.harvestapp.com/v2/users/me", H)
+        _name = f"{me.get('first_name', '')} {me.get('last_name', '')}".strip()
         out["harvest"] = {
             "user_id": me["id"],
+            "name": _name or me.get("email", ""),
             "user_agent": f"harvest-fill ({me.get('email', '')})",
         }
         pa = get("https://api.harvestapp.com/v2/users/me/project_assignments?per_page=100", H)
@@ -167,24 +169,34 @@ def discover():
             }
         except Exception as e:
             out["github"] = {"error": str(e)}
-    # Azure DevOps repositories (only if PAT + org + project are set)
+    # Azure DevOps: with a PAT + org we can list the org's projects (for the Project dropdown);
+    # with a project too, the repos in it. A Code:Read PAT can't reach profile/accounts, so the
+    # org and author aren't discoverable — those stay manual.
     pat, org, proj = (
         os.environ.get("ADO_PAT"),
         os.environ.get("ADO_ORG"),
         os.environ.get("ADO_PROJECT"),
     )
-    if pat and org and proj:
+    if pat and org:
         import base64
 
-        auth = "Basic " + base64.b64encode((":" + pat).encode()).decode()
+        ah = {
+            "Authorization": "Basic " + base64.b64encode((":" + pat).encode()).decode(),
+            "User-Agent": "harvest-discover",
+        }
+        ado = {}
         try:
-            d = get(
-                f"https://dev.azure.com/{org}/{proj}/_apis/git/repositories?api-version=7.1",
-                {"Authorization": auth, "User-Agent": "harvest-discover"},
-            )
-            out["azure_devops"] = {"repos": sorted(r["name"] for r in d.get("value", []))}
+            pr = get(f"https://dev.azure.com/{org}/_apis/projects?api-version=7.1", ah)
+            ado["projects"] = sorted(p["name"] for p in pr.get("value", []))
         except Exception as e:
-            out["azure_devops"] = {"error": str(e)}
+            ado["error"] = str(e)
+        if proj:
+            try:
+                d = get(f"https://dev.azure.com/{org}/{proj}/_apis/git/repositories?api-version=7.1", ah)
+                ado["repos"] = sorted(r["name"] for r in d.get("value", []))
+            except Exception:
+                pass
+        out["azure_devops"] = ado
     return out
 
 

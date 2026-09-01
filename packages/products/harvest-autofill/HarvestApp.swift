@@ -93,7 +93,7 @@ struct MainWindow: View {
                         }
                         Text(st.text).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(st.color)
                     }
-                    Text(s.map { "\(hrs($0.total)) across \($0.daysWorked) day\($0.daysWorked == 1 ? "" : "s")  ·  \($0.week)" } ?? "No data yet — refreshing…")
+                    Text(s.map(\.detailLine) ?? "No data yet — refreshing…")
                         .font(.system(size: 12)).foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -136,6 +136,7 @@ struct MainWindow: View {
                 // Auto-refreshes every 15 minutes; the mockup's footer line replaces the manual Refresh.
                 Text("Files to Harvest every Friday").font(.system(size: 12)).foregroundStyle(.secondary)
                 Spacer()
+                HelpIcon(text: "Writes this week's hours to Harvest right now, instead of waiting for the automatic Friday run. Safe to click more than once — the app checks what's already on your timesheet and never double-books a day, so re-running only fills in whatever is still missing.")
                 Button { model.logNow() } label: { Text("Log this week") }
                     .primaryProminent().controlSize(.large).disabled(model.refreshing)
             }.padding(.horizontal, 18).padding(.vertical, 14)
@@ -279,20 +280,37 @@ struct ValidMark: View {
     }
 }
 
-struct Help: View { let text: String; var body: some View {
-    Text(text).font(.system(size: 10.5)).foregroundStyle(.tertiary).padding(.leading, LBL + 8).fixedSize(horizontal: false, vertical: true)
-}}
+// A small "?" that reveals its explanation in a popover on click (SwiftUI's `.help()` hover
+// tooltip is unreliable on macOS, so click is the primary affordance; `.help()` stays as a
+// hover bonus where it works). Keeps the form uncluttered instead of a line of grey text per row.
+struct HelpIcon: View {
+    let text: String
+    @State private var show = false
+    var body: some View {
+        Button { show.toggle() } label: {
+            Image(systemName: "questionmark.circle").font(.system(size: 12)).foregroundStyle(.tertiary)
+        }
+        .buttonStyle(.borderless)
+        .help(text)
+        .popover(isPresented: $show, arrowEdge: .bottom) {
+            Text(text)
+                .font(.system(size: 12))
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(width: 260)
+                .padding(12)
+        }
+    }
+}
+
 struct Field: View {
     let label: String; @Binding var text: String; var hint = ""; var valid = true; var help = ""
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 8) {
-                Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
-                TextField(hint, text: $text).textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
-                ValidMark(valid: valid, filled: !text.isEmpty)
-            }
+        HStack(spacing: 8) {
+            Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
+            TextField(hint, text: $text).textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
+            ValidMark(valid: valid, filled: !text.isEmpty)
             if !help.isEmpty {
-                Help(text: help)
+                HelpIcon(text: help)
             }
         }
     }
@@ -301,23 +319,21 @@ struct Field: View {
 struct Secret: View {
     let label: String; @Binding var text: String; @Binding var reveal: Bool; var valid = true; var help = ""
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 8) {
-                Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
-                Group {
-                    if reveal {
-                        TextField("", text: $text)
-                    } else {
-                        SecureField("", text: $text)
-                    }
+        HStack(spacing: 8) {
+            Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
+            Group {
+                if reveal {
+                    TextField("", text: $text)
+                } else {
+                    SecureField("", text: $text)
                 }
-                .textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
-                Button { reveal.toggle() } label: { Image(systemName: reveal ? "eye.slash" : "eye") }
-                    .buttonStyle(.borderless).help(reveal ? "Hide" : "Reveal")
-                ValidMark(valid: valid, filled: !text.isEmpty)
             }
+            .textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
+            Button { reveal.toggle() } label: { Image(systemName: reveal ? "eye.slash" : "eye") }
+                .buttonStyle(.borderless).help(reveal ? "Hide" : "Reveal")
+            ValidMark(valid: valid, filled: !text.isEmpty)
             if !help.isEmpty {
-                Help(text: help)
+                HelpIcon(text: help)
             }
         }
     }
@@ -338,22 +354,39 @@ struct MultiSelect: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 8) {
-                Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
-                Menu {
-                    if options.isEmpty {
-                        Text("Loading from your accounts…").disabled(true)
-                    }
-                    ForEach(options, id: \.self) { o in
-                        Toggle(o, isOn: Binding(get: { selected.contains(o) }, set: { _ in toggle(o) }))
-                    }
-                } label: { Text(csv.isEmpty ? "None selected" : csv).lineLimit(1) }
-                    .frame(maxWidth: .infinity, alignment: .leading).overlay(invalidBorder(valid))
-                ValidMark(valid: valid, filled: !csv.isEmpty)
-            }
+        HStack(spacing: 8) {
+            Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
+            Menu {
+                if options.isEmpty {
+                    Text("Loading from your accounts…").disabled(true)
+                }
+                ForEach(options, id: \.self) { o in
+                    Toggle(o, isOn: Binding(get: { selected.contains(o) }, set: { _ in toggle(o) }))
+                }
+            } label: { Text(csv.isEmpty ? "None selected" : csv).lineLimit(1) }
+                .frame(maxWidth: .infinity, alignment: .leading).overlay(invalidBorder(valid))
+            ValidMark(valid: valid, filled: !csv.isEmpty)
             if !help.isEmpty {
-                Help(text: help)
+                HelpIcon(text: help)
+            }
+        }
+    }
+}
+
+// A single-choice dropdown (e.g. the Azure DevOps project), populated from a discovered list.
+struct SingleSelect: View {
+    let label: String; let options: [String]; @Binding var value: String
+    var placeholder = "Select"; var valid = true; var help = ""
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
+            Menu {
+                ForEach(options, id: \.self) { o in Button(o) { value = o } }
+            } label: { Text(value.isEmpty ? placeholder : value).lineLimit(1) }
+                .frame(maxWidth: .infinity, alignment: .leading).overlay(invalidBorder(valid))
+            ValidMark(valid: valid, filled: !value.isEmpty)
+            if !help.isEmpty {
+                HelpIcon(text: help)
             }
         }
     }
@@ -362,19 +395,45 @@ struct MultiSelect: View {
 struct NumRow: View {
     let label: String; @Binding var value: Double; var width: CGFloat = 60; var valid = true; var trailing = ""; var help = ""
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 8) {
-                Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
-                TextField("", value: $value, format: .number).frame(width: width).textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
-                if !trailing.isEmpty {
-                    Text(trailing).font(.system(size: 11)).foregroundStyle(.secondary)
-                }
-                ValidMark(valid: valid, filled: true)
-                Spacer()
+        HStack(spacing: 8) {
+            Text(label).frame(width: LBL, alignment: .leading).font(.system(size: 12))
+            TextField("", value: $value, format: .number).frame(width: width).textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
+            if !trailing.isEmpty {
+                Text(trailing).font(.system(size: 11)).foregroundStyle(.secondary)
             }
+            ValidMark(valid: valid, filled: true)
             if !help.isEmpty {
-                Help(text: help)
+                HelpIcon(text: help)
             }
+            Spacer()
+        }
+    }
+}
+
+// One end of a work-hours range: an hour field plus a :00 / :30 minute picker, bound to a single
+// Double (e.g. 9.5). The picker constrains minutes to half-hour boundaries; the hour field takes
+// the whole-hour part and keeps the current minute.
+struct HourMinutePicker: View {
+    @Binding var value: Double
+    var valid = true
+    private var hour: Binding<Int> {
+        Binding(get: { Int(value.rounded(.down)) },
+                set: { value = Double($0) + (value - value.rounded(.down)) })
+    }
+
+    private var minutes: Binding<Int> {
+        Binding(get: { value - value.rounded(.down) >= 0.5 ? 30 : 0 },
+                set: { value = value.rounded(.down) + ($0 == 30 ? 0.5 : 0) })
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            TextField("", value: hour, format: .number)
+                .frame(width: 38).textFieldStyle(.roundedBorder).overlay(invalidBorder(valid))
+            Picker("", selection: minutes) {
+                Text(":00").tag(0)
+                Text(":30").tag(30)
+            }.labelsHidden().frame(width: 58)
         }
     }
 }
@@ -438,22 +497,39 @@ struct AccountsContent: View {
             PrefCard(title: "GitHub") {
                 Text("Optional but recommended. Turns your commits into development hours.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                Field(label: "Login", text: $prefs.ghLogin, hint: "your-username", valid: prefs.ghLoginValid,
-                      help: "The GitHub account whose commits count toward your time.")
-                Secret(label: "Access token", text: $prefs.ghToken, reveal: $prefs.showGHToken, valid: true,
-                       help: "Optional. A read-only token (github.com → Settings → Developer settings → Fine-grained tokens → Repository: read). Leave blank if the GitHub CLI (gh) is installed and signed in.")
-                MultiSelect(label: "Orgs", options: prefs.ghOrgsAvailable, csv: $prefs.ghOrgs, valid: prefs.ghOrgsValid,
-                            help: "Tick the orgs whose commits count toward your time — loaded automatically from your GitHub.")
+                if prefs.ghSignedIn {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.green).font(.system(size: 12))
+                        Text("Signed in\(prefs.ghLogin.isEmpty ? "" : " as @\(prefs.ghLogin)") through the GitHub CLI (gh) — no username or token needed.")
+                            .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                } else {
+                    Field(label: "Username", text: $prefs.ghLogin, hint: "your-username", valid: prefs.ghLoginValid,
+                          help: "The GitHub account whose commits count toward your time.")
+                    Secret(label: "Access token", text: $prefs.ghToken, reveal: $prefs.showGHToken, valid: true,
+                           help: "The GitHub CLI (gh) isn't signed in, so paste a read-only token to read your commits — github.com → Settings → Developer settings → Fine-grained tokens → Repository: read.")
+                }
+                MultiSelect(label: "Organizations", options: prefs.ghOrgsAvailable, csv: $prefs.ghOrgs, valid: prefs.ghOrgsValid,
+                            help: "Tick the organizations whose commits count toward your time — loaded automatically from your GitHub.")
             }
             PrefCard(title: "Azure DevOps — optional") {
                 Text("Turn on to count your Azure DevOps commits and pushes alongside GitHub.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Toggle("Enabled", isOn: $prefs.adoEnabled).font(.system(size: 12)).toggleStyle(.switch)
                 if prefs.adoEnabled {
-                    Field(label: "Org", text: $prefs.adoOrg, valid: !prefs.adoOrg.isEmpty)
-                    Field(label: "Project", text: $prefs.adoProject, valid: !prefs.adoProject.isEmpty)
+                    Field(label: "Organization", text: $prefs.adoOrg, valid: !prefs.adoOrg.isEmpty,
+                          help: "Your Azure DevOps organization — the name in dev.azure.com/<organization>.")
+                    if prefs.adoProjectsAvailable.isEmpty {
+                        Field(label: "Project", text: $prefs.adoProject, valid: !prefs.adoProject.isEmpty,
+                              help: "The project holding your repos. Fill in Organization and the token, then Scan on the discover step to load projects here as a dropdown.")
+                    } else {
+                        SingleSelect(label: "Project", options: prefs.adoProjectsAvailable, value: $prefs.adoProject,
+                                     placeholder: "Select a project", valid: !prefs.adoProject.isEmpty,
+                                     help: "The project holding the repos to scan — loaded from your Organization.")
+                    }
                     MultiSelect(label: "Repos", options: prefs.adoReposAvailable, csv: $prefs.adoRepos, valid: !prefs.adoRepos.trimmingCharacters(in: .whitespaces).isEmpty,
-                                help: "Tick the repos to scan for your commits and pushes — loaded automatically once Org, Project, and the token are set.")
+                                help: "Tick the repos to scan for your commits and pushes — loaded automatically once Organization, Project, and the token are set.")
                     Field(label: "Author (email)", text: $prefs.adoAuthor, hint: "you@org.com", valid: !prefs.adoAuthor.isEmpty,
                           help: "Your commit-author email in Azure DevOps.")
                     Secret(label: "Access token", text: $prefs.adoPAT, reveal: $prefs.showPAT, valid: !prefs.adoPAT.isEmpty,
@@ -476,19 +552,16 @@ struct AllocationContent: View {
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 NumRow(label: "Daily target", value: $prefs.dailyTarget, width: 60, valid: prefs.targetValid, trailing: "hours",
                        help: "The total logged for each weekday you worked — meetings plus development. Usually 8–9.")
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 8) {
-                        Text("Work hours").frame(width: LBL, alignment: .leading).font(.system(size: 12))
-                        TextField("", value: $prefs.workStart, format: .number).frame(width: 44).textFieldStyle(.roundedBorder).overlay(invalidBorder(prefs.workHoursValid))
-                        Text("to").foregroundStyle(.secondary)
-                        TextField("", value: $prefs.workEnd, format: .number).frame(width: 44).textFieldStyle(.roundedBorder).overlay(invalidBorder(prefs.workHoursValid))
-                        Text(":00").foregroundStyle(.secondary)
-                        if !prefs.workHoursValid {
-                            Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red).font(.system(size: 11))
-                        }
-                        Spacer()
+                HStack(spacing: 8) {
+                    Text("Work hours").frame(width: LBL, alignment: .leading).font(.system(size: 12))
+                    HourMinutePicker(value: $prefs.workStart, valid: prefs.workHoursValid)
+                    Text("to").foregroundStyle(.secondary)
+                    HourMinutePicker(value: $prefs.workEnd, valid: prefs.workHoursValid)
+                    if !prefs.workHoursValid {
+                        Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red).font(.system(size: 11))
                     }
-                    Help(text: "Only commits made inside these hours count — work before or after (like overnight automation) is left out.")
+                    HelpIcon(text: "Only commits made inside these hours count — work before or after (like overnight automation) is left out.")
+                    Spacer()
                 }
             }
             PrefCard(title: "Timeline split") {
@@ -507,6 +580,9 @@ struct AllocationContent: View {
                     Picker("", selection: $prefs.holidayRegion) {
                         ForEach(SUPPORTED_REGIONS, id: \.self) { Text(regionName($0)).tag($0) }
                     }.labelsHidden().frame(width: 220)
+                        // The pop-up button's bezel is inset from its frame origin, so it starts a
+                        // little right of the text-field column above; pull it back to line up.
+                        .padding(.leading, -11)
                     Spacer()
                 }
             }
@@ -536,7 +612,7 @@ struct ResetConfirmSheet: View {
                 Spacer()
                 Button("Cancel", role: .cancel) { onCancel() }.controlSize(.large).keyboardShortcut(.cancelAction)
                 Button(role: .destructive) { onConfirm() } label: { Text("Delete everything").frame(minWidth: 120) }
-                    .controlSize(.large).disabled(!match)
+                    .controlSize(.large).tint(.red).disabled(!match)
             }
         }.padding(22).frame(width: 400)
     }
@@ -554,7 +630,7 @@ struct ResetCard: View {
             Label("Danger zone", systemImage: "exclamationmark.triangle.fill").font(.system(size: 11, weight: .semibold)).foregroundStyle(.red).textCase(.uppercase)
             Text("Reset deletes your account, access tokens, and settings from this Mac and takes you back to setup — useful for handing the app to someone else or starting clean.")
                 .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Button(role: .destructive) { confirm1 = true } label: { Label("Reset", systemImage: "trash") }.controlSize(.large)
+            Button(role: .destructive) { confirm1 = true } label: { Label("Reset", systemImage: "trash") }.controlSize(.large).tint(.red)
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.red.opacity(0.06)))
@@ -586,21 +662,23 @@ struct GeneralContent: View {
             PrefCard(title: "Automatic recording") {
                 Text("Choose whether the app files your finished week for you, or waits until you say so.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                Toggle("Log the finished week to Harvest every Friday at 6pm", isOn: $prefs.autoRecord).font(.system(size: 12.5)).toggleStyle(.switch)
-                Text("On — files your week automatically every Friday evening, and never double-books if it already ran. Off — nothing reaches Harvest until you click \u{201C}Log this week\u{201D} yourself.")
-                    .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 8) {
+                    Toggle("Log the finished week to Harvest every Friday at 6pm", isOn: $prefs.autoRecord).font(.system(size: 12.5)).toggleStyle(.switch)
+                    HelpIcon(text: "On — files your week automatically every Friday evening, and never double-books if it already ran. Off — nothing reaches Harvest until you click \u{201C}Log this week\u{201D} yourself.")
+                }
             }
             PrefCard(title: "Dock icon") {
-                Toggle("Show the app icon in the Dock", isOn: $prefs.showDockIcon).font(.system(size: 12.5)).toggleStyle(.switch)
-                    .onChange(of: prefs.showDockIcon) { _, on in
-                        prefs.writeAll()
-                        NSApp.setActivationPolicy(on ? .regular : .accessory)
-                        if on {
-                            NSApp.activate(ignoringOtherApps: true)
+                HStack(spacing: 8) {
+                    Toggle("Show the app icon in the Dock", isOn: $prefs.showDockIcon).font(.system(size: 12.5)).toggleStyle(.switch)
+                        .onChange(of: prefs.showDockIcon) { _, on in
+                            prefs.writeAll()
+                            NSApp.setActivationPolicy(on ? .regular : .accessory)
+                            if on {
+                                NSApp.activate(ignoringOtherApps: true)
+                            }
                         }
-                    }
-                Text("Off — the app lives only in the menu bar. On — it also appears in the Dock and the \u{2318}-Tab app switcher.")
-                    .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
+                    HelpIcon(text: "Off — the app lives only in the menu bar. On — it also appears in the Dock and the \u{2318}-Tab app switcher.")
+                }
             }
             PrefCard(title: "How it works") {
                 Label("Always current — your hours update in the background every 15 minutes, so the menu-bar total is always live.", systemImage: "clock.arrow.circlepath")
@@ -940,6 +1018,7 @@ struct PreferencesView: View {
                     if let t = nav.requestedTab {
                         tab = t; nav.requestedTab = nil
                     }
+                    prefs.checkGhAuth() // hides the token field when gh is signed in
                     if prefs.ghOrgsAvailable.isEmpty, prefs.adoReposAvailable.isEmpty {
                         prefs.discover()
                     }
@@ -1051,12 +1130,18 @@ struct ValueBullet: View {
 }
 
 struct CheckRow: View {
-    let ok: Bool; let text: String
+    let ok: Bool; let text: String; var detail: String = ""
     var body: some View {
-        HStack(spacing: 9) {
-            Image(systemName: ok ? "checkmark.circle.fill" : "circle.dashed").foregroundStyle(ok ? .green : .secondary).font(.system(size: 13))
-            Text(text).font(.system(size: 12.5)).foregroundStyle(ok ? .primary : .secondary)
-            Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 9) {
+                Image(systemName: ok ? "checkmark.circle.fill" : "circle.dashed").foregroundStyle(ok ? .green : .secondary).font(.system(size: 13))
+                Text(text).font(.system(size: 12.5)).foregroundStyle(ok ? .primary : .secondary)
+                Spacer(minLength: 0)
+            }
+            if !detail.isEmpty {
+                Text(detail).font(.system(size: 11)).foregroundStyle(.tertiary)
+                    .padding(.leading, 22).fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }
@@ -1118,10 +1203,6 @@ struct OnbHarvest: View {
 
 struct OnbDiscover: View {
     @ObservedObject var prefs: Prefs
-    var orgCount: Int {
-        prefs.ghOrgs.split(separator: ",").count
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             OnbHeader(lucide: LUCIDE_SPARKLES, title: "Let's find your projects automatically",
@@ -1130,11 +1211,21 @@ struct OnbDiscover: View {
                 HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Scanning your Harvest, GitHub, and Azure DevOps…").font(.system(size: 12.5)).foregroundStyle(.secondary) }
             } else if prefs.discovered {
                 VStack(alignment: .leading, spacing: 9) {
-                    CheckRow(ok: !prefs.harvestUser.isEmpty, text: "Harvest user \(prefs.harvestUser.isEmpty ? "" : "#\(prefs.harvestUser)") found")
-                    CheckRow(ok: !prefs.projectsList.isEmpty, text: "\(prefs.projectsList.count) Harvest projects mapped")
-                    CheckRow(ok: !prefs.ghLogin.isEmpty, text: prefs.ghLogin.isEmpty ? "No GitHub account found" : "GitHub @\(prefs.ghLogin) · \(orgCount) org\(orgCount == 1 ? "" : "s")")
+                    CheckRow(ok: !prefs.harvestUser.isEmpty,
+                             text: prefs.harvestName.isEmpty
+                                 ? "Harvest user #\(prefs.harvestUser) found"
+                                 : "Harvest user \(prefs.harvestName) (#\(prefs.harvestUser)) found")
+                    CheckRow(ok: !prefs.projectsList.isEmpty,
+                             text: "\(prefs.projectsList.count) Harvest project\(prefs.projectsList.count == 1 ? "" : "s") mapped",
+                             detail: prefs.projectsList.map(\.0).joined(separator: ", "))
+                    CheckRow(ok: !prefs.ghLogin.isEmpty,
+                             text: prefs.ghLogin.isEmpty
+                                 ? "No GitHub account found"
+                                 : "GitHub @\(prefs.ghLogin)\(prefs.ghOrgsAvailable.isEmpty ? "" : " · \(prefs.ghOrgsAvailable.joined(separator: ", "))")")
                     if !prefs.adoReposAvailable.isEmpty {
-                        CheckRow(ok: true, text: "\(prefs.adoReposAvailable.count) Azure DevOps repos found")
+                        CheckRow(ok: true,
+                                 text: "\(prefs.adoReposAvailable.count) Azure DevOps repo\(prefs.adoReposAvailable.count == 1 ? "" : "s") found",
+                                 detail: prefs.adoReposAvailable.joined(separator: ", "))
                     }
                 }
                 Text("You'll pick which of these to include on the next screen.").font(.system(size: 12)).foregroundStyle(.tertiary)
@@ -1168,18 +1259,32 @@ struct OnbSources: View {
             OnbHeader(lucide: LUCIDE_WORKFLOW, title: "Where your work lives",
                       subtitle: "Choose what the app turns into hours. GitHub is the main one; the rest are optional.")
             PrefCard(title: "GitHub") {
-                Field(label: "Login", text: $prefs.ghLogin, hint: "your-username", valid: prefs.ghLogin.isEmpty || prefs.ghLoginValid,
-                      help: "The GitHub account whose commits count toward your time.")
-                Secret(label: "Access token", text: $prefs.ghToken, reveal: $prefs.showGHToken, valid: true,
-                       help: "Optional. A read-only token (github.com → Settings → Developer settings → Fine-grained tokens → Repository: read). Leave it blank if the GitHub CLI (gh) is already signed in, then Scan again to load your orgs.")
-                MultiSelect(label: "Orgs", options: prefs.ghOrgsAvailable, csv: $prefs.ghOrgs, valid: true,
-                            help: "Tick the orgs whose commits count — loaded from your GitHub above.")
+                if prefs.ghSignedIn {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.green).font(.system(size: 12))
+                        Text("Signed in\(prefs.ghLogin.isEmpty ? "" : " as @\(prefs.ghLogin)") through the GitHub CLI (gh) — no username or token needed.")
+                            .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                } else {
+                    Field(label: "Username", text: $prefs.ghLogin, hint: "your-username", valid: prefs.ghLogin.isEmpty || prefs.ghLoginValid,
+                          help: "The GitHub account whose commits count toward your time.")
+                    Secret(label: "Access token", text: $prefs.ghToken, reveal: $prefs.showGHToken, valid: true,
+                           help: "The GitHub CLI (gh) isn't signed in, so paste a read-only token to read your commits — github.com → Settings → Developer settings → Fine-grained tokens → Repository: read. Then Scan again to load your organizations.")
+                }
+                MultiSelect(label: "Organizations", options: prefs.ghOrgsAvailable, csv: $prefs.ghOrgs, valid: true,
+                            help: "Tick the organizations whose commits count — loaded from your GitHub above.")
             }
             PrefCard(title: "Azure DevOps — optional") {
                 Toggle("I also commit in Azure DevOps", isOn: $prefs.adoEnabled).font(.system(size: 12.5)).toggleStyle(.switch)
                 if prefs.adoEnabled {
-                    Field(label: "Org", text: $prefs.adoOrg, valid: true)
-                    Field(label: "Project", text: $prefs.adoProject, valid: true)
+                    Field(label: "Organization", text: $prefs.adoOrg, valid: true)
+                    if prefs.adoProjectsAvailable.isEmpty {
+                        Field(label: "Project", text: $prefs.adoProject, valid: true)
+                    } else {
+                        SingleSelect(label: "Project", options: prefs.adoProjectsAvailable, value: $prefs.adoProject,
+                                     placeholder: "Select a project", valid: !prefs.adoProject.isEmpty)
+                    }
                     Field(label: "Author (email)", text: $prefs.adoAuthor, hint: "you@org.com", valid: true,
                           help: "Your commit-author email in Azure DevOps.")
                     Secret(label: "Access token", text: $prefs.adoPAT, reveal: $prefs.showPAT, valid: true,
@@ -1198,6 +1303,7 @@ struct OnbSources: View {
                 CalendarHelp()
             }
         }
+        .onAppear { prefs.checkGhAuth() } // hides the token field when gh is signed in
     }
 }
 
@@ -1210,15 +1316,16 @@ struct OnbWorkday: View {
             PrefCard(title: "Hours") {
                 NumRow(label: "Daily target", value: $prefs.dailyTarget, width: 60, valid: prefs.targetValid, trailing: "hours",
                        help: "Hours logged per worked weekday — meetings plus development. Usually 8–9.")
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 8) {
-                        Text("Work hours").frame(width: LBL, alignment: .leading).font(.system(size: 12))
-                        TextField("", value: $prefs.workStart, format: .number).frame(width: 44).textFieldStyle(.roundedBorder).overlay(invalidBorder(prefs.workHoursValid))
-                        Text("to").foregroundStyle(.secondary)
-                        TextField("", value: $prefs.workEnd, format: .number).frame(width: 44).textFieldStyle(.roundedBorder).overlay(invalidBorder(prefs.workHoursValid))
-                        Text(":00").foregroundStyle(.secondary); Spacer()
+                HStack(spacing: 8) {
+                    Text("Work hours").frame(width: LBL, alignment: .leading).font(.system(size: 12))
+                    HourMinutePicker(value: $prefs.workStart, valid: prefs.workHoursValid)
+                    Text("to").foregroundStyle(.secondary)
+                    HourMinutePicker(value: $prefs.workEnd, valid: prefs.workHoursValid)
+                    if !prefs.workHoursValid {
+                        Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red).font(.system(size: 11))
                     }
-                    Help(text: "Only commits made inside these hours count — work before or after (like overnight automation) is left out.")
+                    HelpIcon(text: "Only commits made inside these hours count — work before or after (like overnight automation) is left out.")
+                    Spacer()
                 }
             }
             PrefCard(title: "Holidays") {
@@ -1226,9 +1333,11 @@ struct OnbWorkday: View {
                     Text("Region").frame(width: LBL, alignment: .leading).font(.system(size: 12))
                     Picker("", selection: $prefs.holidayRegion) {
                         ForEach(SUPPORTED_REGIONS, id: \.self) { Text(regionName($0)).tag($0) }
-                    }.labelsHidden().frame(width: 220); Spacer()
+                    }.labelsHidden().frame(width: 220)
+                        .padding(.leading, -11) // match the input column (pop-up bezel inset)
+                    HelpIcon(text: "Statutory holidays for this region are computed automatically and left blank on your timesheet.")
+                    Spacer()
                 }
-                Help(text: "Statutory holidays for this region are computed automatically and left blank on your timesheet.")
             }
             PrefCard(title: "Timeline split") {
                 NumRow(label: "Gap cap", value: $prefs.gapCap, width: 56, valid: prefs.gapValid, trailing: "min",
@@ -1253,7 +1362,7 @@ struct OnbFinish: View {
                 let st = statusFor(s.state)
                 HStack(spacing: 6) {
                     Image(systemName: st.symbol).foregroundStyle(st.color).font(.system(size: 12))
-                    Text("\(s.week) · \(hrs(s.total)) · \(s.daysWorked) day\(s.daysWorked == 1 ? "" : "s")").font(.system(size: 12.5, weight: .semibold))
+                    Text("\(s.week) · \(hrs(s.actualTotal)) · \(s.actualDaysWorked) day\(s.actualDaysWorked == 1 ? "" : "s")\(s.projectedTotal > 0 ? " · \(hrs(s.projectedTotal)) projected" : "")").font(.system(size: 12.5, weight: .semibold))
                 }
                 VStack(spacing: 0) {
                     ForEach(Array(s.days.enumerated()), id: \.offset) { i, day in
@@ -1357,26 +1466,45 @@ struct MenuContent: View {
     @ObservedObject var updater = Updater.shared
     @Environment(\.openWindow) var openWindow
     var body: some View {
+        // Order follows the macOS status-menu convention: status → primary actions → checks →
+        // links → settings → quit. Ellipsis only where the command gathers more input first.
         if model.summary != nil {
             Text(model.menuHeadline).font(.system(size: 12, weight: .semibold))
             Text(model.menuDetail).font(.system(size: 11))
             Divider()
         }
         if case let .ready(info) = updater.state {
-            Button("Install update — version \(info.version) & relaunch") { updater.installAndRelaunch() }
+            Button { updater.installAndRelaunch() } label: {
+                Label("Install update — version \(info.version) & relaunch", systemImage: "arrow.down.circle.fill")
+            }
             Divider()
         }
-        Button("This Week") { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) }
-        Button("Settings…") { openWindow(id: "prefs"); NSApp.activate(ignoringOtherApps: true) }
-        Button(model.refreshing ? "Recalculating…" : "Recalculate this week now") { model.refresh() }.disabled(model.refreshing)
+        Button { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) } label: {
+            Label("This Week", systemImage: "calendar")
+        }
+        Button { model.refresh() } label: {
+            Label(model.refreshing ? "Recalculating…" : "Recalculate this week now", systemImage: "arrow.clockwise")
+        }.disabled(model.refreshing)
         Divider()
-        Button(updater.state == .checking ? "Checking for updates…" : "Check for Updates") { updater.check(manual: true) }
-            .disabled(updater.state == .checking)
-        Button("What's New") { NotificationCenter.default.post(name: .openWhatsNew, object: nil) }
-        Button("Website") { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) }
-        Button("View on GitHub") { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) }
+        Button { updater.check(manual: true) } label: {
+            Label(updater.state == .checking ? "Checking for updates…" : "Check for Updates…", systemImage: "arrow.down.circle")
+        }.disabled(updater.state == .checking)
+        Button { NotificationCenter.default.post(name: .openWhatsNew, object: nil) } label: {
+            Label("What's New", systemImage: "sparkles")
+        }
         Divider()
-        Button("Quit") { confirmQuit() }
+        Button { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) } label: {
+            Label("Website", systemImage: "safari")
+        }
+        Button { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) } label: {
+            Label("View on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+        }
+        Divider()
+        Button { openWindow(id: "prefs"); NSApp.activate(ignoringOtherApps: true) } label: {
+            Label("Settings…", systemImage: "gearshape")
+        }
+        Divider()
+        Button { confirmQuit() } label: { Label("Quit", systemImage: "power") }
     }
 }
 
@@ -1411,6 +1539,9 @@ struct MenuLabel: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
                 openWindow(id: "prefs"); NSApp.activate(ignoringOtherApps: true)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openOnboarding)) { _ in
+                openWindow(id: "welcome"); NSApp.activate(ignoringOtherApps: true)
             }
             .onReceive(NotificationCenter.default.publisher(for: .openWhatsNew)) { _ in
                 // Load the current notes and open the window directly, so it opens even when
@@ -1464,6 +1595,7 @@ extension Notification.Name {
     static let openMainWindow = Notification.Name("HarvestOpenMainWindow")
     static let openSettings = Notification.Name("HarvestOpenSettings")
     static let openWhatsNew = Notification.Name("HarvestOpenWhatsNew")
+    static let openOnboarding = Notification.Name("HarvestOpenOnboarding")
 }
 
 // Lets the app menu ask Settings to open on a specific tab (e.g. About).
@@ -1704,7 +1836,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let p = Prefs()
         p.harvestAccount = "123456"; p.harvestToken = "pat-xxxxxxxx"
         p.harvestTest = .ok("Alex Rivera · you@example.com")
-        p.harvestUser = "654321"; p.discovered = true
+        p.harvestUser = "654321"; p.harvestName = "Alex Carter"; p.discovered = true
         p.projectsList = [("Website", "100001"), ("Design", "100002"), ("Mobile App", "100003"), ("Internal", "100004")]
         p.ghLogin = "octocat"; p.ghOrgsAvailable = ["acme-inc", "acme-labs"]; p.ghOrgs = "acme-inc, acme-labs"
         p.adoEnabled = true; p.adoOrg = "acme"; p.adoProject = "Platform"
@@ -1745,38 +1877,50 @@ struct HarvestMenuApp: App {
         }
         Window("Harvest — This Week", id: "main") {
             MainWindow(model: model).onAppear { delegate.model = model; model.refreshIfStale() }.tint(Web.primary)
+                .textSelection(.enabled)
         }.windowResizability(.contentSize).windowStyle(.hiddenTitleBar)
             .commands {
                 // About opens Settings → About; add a real Settings item (⌘,), a This Week
                 // entry, and route Quit through the same confirm dialog the menu-bar uses.
                 CommandGroup(replacing: .appInfo) {
-                    Button("About Harvest Auto-Fill") {
+                    Button {
                         PrefsNav.shared.requestedTab = 3
                         NotificationCenter.default.post(name: .openSettings, object: nil)
-                    }
+                    } label: { Label("About Harvest Auto-Fill", systemImage: "info.circle") }
                 }
                 CommandGroup(replacing: .appSettings) {
-                    Button("Settings…") { NotificationCenter.default.post(name: .openSettings, object: nil) }
-                        .keyboardShortcut(",", modifiers: .command)
+                    Button { NotificationCenter.default.post(name: .openSettings, object: nil) } label: {
+                        Label("Settings…", systemImage: "gearshape")
+                    }
+                    .keyboardShortcut(",", modifiers: .command)
                 }
                 CommandGroup(after: .appSettings) {
-                    Button("Check for Updates…") {
+                    Button {
                         // Run the check and open Settings → About, where the result shows.
                         PrefsNav.shared.requestedTab = 3
                         Updater.shared.check(manual: true)
                         NotificationCenter.default.post(name: .openSettings, object: nil)
+                    } label: { Label("Check for Updates…", systemImage: "arrow.down.circle") }
+                    Button { NotificationCenter.default.post(name: .openMainWindow, object: nil) } label: {
+                        Label("This Week", systemImage: "calendar")
                     }
-                    Button("This Week") { NotificationCenter.default.post(name: .openMainWindow, object: nil) }
+                    Button { NotificationCenter.default.post(name: .openOnboarding, object: nil) } label: {
+                        Label("Onboarding", systemImage: "figure.walk")
+                    }
                 }
                 CommandGroup(replacing: .appTermination) {
-                    Button("Quit Harvest Auto-Fill") { confirmQuit() }
+                    Button { confirmQuit() } label: { Label("Quit Harvest Auto-Fill", systemImage: "power") }
                         .keyboardShortcut("q", modifiers: .command)
                 }
                 // Replace the dead "Harvest Auto-Fill Help" (there's no Apple Help book) with
                 // links that work.
                 CommandGroup(replacing: .help) {
-                    Button("Harvest Auto-Fill Website") { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) }
-                    Button("View on GitHub") { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) }
+                    Button { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) } label: {
+                        Label("Harvest Auto-Fill Website", systemImage: "safari")
+                    }
+                    Button { NSWorkspace.shared.open(URL(string: UPDATE_REPO_URL)!) } label: {
+                        Label("View on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+                    }
                 }
                 // Drop SwiftUI's per-scene "open this window" entries from the Window menu; the
                 // standard AppKit list below them already shows the open windows with the active
@@ -1785,12 +1929,14 @@ struct HarvestMenuApp: App {
             }
         Window("Settings", id: "prefs") {
             PreferencesView().onAppear { NSApp.activate(ignoringOtherApps: true) }.tint(Web.primary)
+                .textSelection(.enabled)
         }.windowResizability(.contentSize).windowStyle(.hiddenTitleBar)
         Window("Welcome to Harvest Auto-Fill", id: "welcome") {
             OnboardingWindowHost().tint(Web.primary)
         }.windowResizability(.contentSize).windowStyle(.hiddenTitleBar)
         Window("What's New", id: "whatsnew") {
             WhatsNewView().onAppear { NSApp.activate(ignoringOtherApps: true) }.tint(Web.primary)
+                .textSelection(.enabled)
         }.windowResizability(.contentSize).windowStyle(.hiddenTitleBar)
     }
 }

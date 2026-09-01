@@ -48,4 +48,18 @@ struct ModelsTests {
         #expect(d.entries.first?.id != nil)
         #expect(d.id != d.id ? false : true) // stable within the instance
     }
+
+    @Test func `headline totals exclude the projected day`() throws {
+        let json = """
+        {"state":"dryrun","week":"Aug 31 – Sep 1","total":18.0,"daysWorked":2,"days":[
+          {"name":"Mon Aug 31","total":9.0,"note":null,"entries":[]},
+          {"name":"Tue Sep 1","total":9.0,"note":null,"projected":true,"entries":[]}
+        ],"flags":[],"issues":null,"message":""}
+        """
+        let s = try JSONDecoder().decode(Summary.self, from: Data(json.utf8))
+        #expect(s.projectedTotal == 9.0)
+        #expect(s.actualTotal == 9.0) // 18 total minus the 9h projected day
+        #expect(s.actualDaysWorked == 1) // Tue is projected, not counted as done
+        #expect(s.detailLine == "9h across 1 day  ·  9h projected  ·  Aug 31 – Sep 1")
+    }
 }

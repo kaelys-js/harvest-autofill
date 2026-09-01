@@ -169,6 +169,17 @@ def test_attribute_ignores_commits_outside_work_hours(hw, tz):
     assert dict(out) == {}
 
 
+def test_attribute_respects_half_hour_work_window(hw, tz):
+    # Half-hour work window (9:30–17:30): a commit before the start or after the end is left out.
+    events = [
+        (dt.datetime(2026, 8, 24, 9, 15, tzinfo=tz), "Website"),  # before 9:30 — out
+        (dt.datetime(2026, 8, 24, 9, 45, tzinfo=tz), "Website"),  # inside — the only one counted
+        (dt.datetime(2026, 8, 24, 17, 45, tzinfo=tz), "Website"),  # after 17:30 — out
+    ]
+    out = hw.attribute(events, dt.date(2026, 8, 24), work_start=9.5, work_end=17.5, tz=tz, lead_in=45, gap_cap=90)
+    assert out == {"Website": 45}  # the 9:45 commit's lead-in only
+
+
 # ---------- calendar classification against the fixture ----------
 def test_classify_calendar_splits_meetings_ooo_and_social(hw, cfg, tz):
     import mockapi
@@ -193,6 +204,9 @@ def test_classify_calendar_splits_meetings_ooo_and_social(hw, cfg, tz):
 def test_week_label(hw):
     assert hw.week_label(dt.date(2026, 8, 24), dt.date(2026, 8, 24)) == "Aug 24"
     assert hw.week_label(dt.date(2026, 8, 24), dt.date(2026, 8, 28)) == "Aug 24–28"
+    # Crossing a month keeps both month names, so the end isn't a bare day ("Aug 31–1").
+    assert hw.week_label(dt.date(2026, 8, 31), dt.date(2026, 9, 1)) == "Aug 31 – Sep 1"
+    assert hw.week_label(dt.date(2026, 8, 31), dt.date(2026, 9, 4)) == "Aug 31 – Sep 4"
 
 
 def test_derive_maps_config(hw, cfg):

@@ -90,7 +90,7 @@ final class WeekModel: ObservableObject {
 
     var menuTitle: String {
         guard let s = summary else { return "—" }
-        return hrs(s.total)
+        return hrs(s.actualTotal) // completed hours only — today's projection isn't in the label
     }
 
     // Human menu header: a plain-language headline + a compact detail line.
@@ -106,7 +106,7 @@ final class WeekModel: ObservableObject {
 
     var menuDetail: String {
         guard let s = summary else { return "" }
-        return "\(hrs(s.total)) across \(s.daysWorked) day\(s.daysWorked == 1 ? "" : "s")  ·  \(s.week)"
+        return s.detailLine
     }
 }
 
@@ -293,6 +293,24 @@ extension Prefs {
         }
     }
 
+    // Ask the GitHub CLI whether it's signed in (a token comes back on success). Drives whether
+    // the GitHub token field is shown — when gh is signed in, the app reads commits through it and
+    // the field is hidden as redundant. Runs off the main thread; publishes back on it.
+    func checkGhAuth() {
+        Task.detached {
+            let p = Process(); p.executableURL = URL(fileURLWithPath: "/bin/bash")
+            var env = ProcessInfo.processInfo.environment
+            env["PATH"] = NSHomeDirectory() + "/.local/share/mise/shims:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+            p.environment = env
+            p.arguments = ["-c", "gh auth token"]
+            let pipe = Pipe(); p.standardOutput = pipe; p.standardError = FileHandle.nullDevice
+            try? p.run(); p.waitUntilExit()
+            let out = pipe.fileHandleForReading.readDataToEndOfFile()
+            let signedIn = p.terminationStatus == 0 && !out.isEmpty
+            await MainActor.run { self.ghSignedIn = signedIn }
+        }
+    }
+
     func discover() {
         status = "Discovering…"; discovering = true
         Task.detached { [account = harvestAccount, token = harvestToken, aorg = adoOrg, aproj = adoProject, apat = adoPAT, ght = ghToken, py = P.python, disc = P.discover] in
@@ -318,6 +336,7 @@ extension Prefs {
                 self.discovered = true
                 if let hv = o["harvest"] as? [String: Any] {
                     self.harvestUser = String(describing: hv["user_id"] ?? "")
+                    self.harvestName = (hv["name"] as? String) ?? ""
                 }
                 if let gh = o["github"] as? [String: Any] {
                     if let l = gh["login"] as? String, !l.isEmpty {
@@ -329,8 +348,13 @@ extension Prefs {
                         }
                     }
                 }
-                if let ado = o["azure_devops"] as? [String: Any], let repos = ado["repos"] as? [String] {
-                    self.adoReposAvailable = repos
+                if let ado = o["azure_devops"] as? [String: Any] {
+                    if let projects = ado["projects"] as? [String] {
+                        self.adoProjectsAvailable = projects
+                    }
+                    if let repos = ado["repos"] as? [String] {
+                        self.adoReposAvailable = repos
+                    }
                 }
                 if let pr = o["harvest_projects"] as? [String: Any] {
                     self.projectsList = pr.compactMap { k, v in (v as? [String: Any]).map { (k, String(describing: $0["project_id"] ?? "")) } }.sorted { $0.0 < $1.0 }
