@@ -1,5 +1,6 @@
 import AppKit
 import CryptoKit
+import IOKit.ps
 import SwiftUI
 
 // HarvestSideEffects — the subprocess / launchctl / filesystem-install methods, split
@@ -19,9 +20,45 @@ final class WeekModel: ObservableObject {
         firstRun = !FileManager.default.fileExists(atPath: P.setupMarker)
         load()
         refresh() // refresh on launch
+        // The timer ticks every 15 min, but tick() decides whether to actually refresh — 15 min
+        // on AC power, ~45 min on battery — so an idle menu-bar app isn't hitting three APIs
+        // three times as often on battery. Opening a window always pulls fresh data (refreshIfStale).
         timer = Timer.scheduledTimer(withTimeInterval: 900, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refresh() } // every 15 min -> current week stays live
+            Task { @MainActor in self?.tick() }
         }
+    }
+
+    // Power-aware background tick: refresh at most every ~15 min on AC, ~45 min on battery.
+    private func tick() {
+        let minGap: TimeInterval = onBattery() ? 2700 : 870 // 45 min vs ~15 min (< the 900s tick)
+        if let last = lastRefresh, Date().timeIntervalSince(last) < minGap {
+            return
+        }
+        refresh()
+    }
+
+    // Refresh only when the shown data is older than `maxAge` — called when a window appears, so
+    // the user always sees a current week without a tight always-on background timer.
+    func refreshIfStale(maxAge: TimeInterval = 300) {
+        if let last = lastRefresh, Date().timeIntervalSince(last) < maxAge {
+            return
+        }
+        refresh()
+    }
+
+    // Whether the Mac is running on battery (not plugged in). Used to back off background refreshes.
+    private func onBattery() -> Bool {
+        guard let blob = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
+              let list = IOPSCopyPowerSourcesList(blob)?.takeRetainedValue() as? [CFTypeRef]
+        else { return false }
+        for src in list {
+            if let info = IOPSGetPowerSourceDescription(blob, src)?.takeUnretainedValue() as? [String: Any],
+               let state = info[kIOPSPowerSourceStateKey] as? String
+            {
+                return state == kIOPSBatteryPowerValue
+            }
+        }
+        return false
     }
 
     func load() {
@@ -277,7 +314,7 @@ extension Prefs {
             let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
             await MainActor.run {
                 self.discovering = false
-                guard let o = obj else { self.status = "Discovery failed — check your Harvest account ID + token"; return }
+                guard let o = obj else { self.status = "Discovery failed — check your Harvest account ID and token"; return }
                 self.discovered = true
                 if let hv = o["harvest"] as? [String: Any] {
                     self.harvestUser = String(describing: hv["user_id"] ?? "")
@@ -298,7 +335,7 @@ extension Prefs {
                 if let pr = o["harvest_projects"] as? [String: Any] {
                     self.projectsList = pr.compactMap { k, v in (v as? [String: Any]).map { (k, String(describing: $0["project_id"] ?? "")) } }.sorted { $0.0 < $1.0 }
                 }
-                self.status = "Found your projects, orgs and repos ✓ — pick the ones to include below"
+                self.status = "Found your projects, orgs, and repos ✓ — pick the ones to include below"
             }
         }
     }

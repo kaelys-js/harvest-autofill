@@ -32,6 +32,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 
 GH_API_BASE = os.environ.get("GH_API_BASE", "https://api.github.com")
 HARVEST_API_BASE = os.environ.get("HARVEST_API_BASE", "https://api.harvestapp.com")
@@ -266,8 +267,12 @@ def week_label(mon, fri):
     return mon.strftime("%b %-d") if mon == fri else f"{mon.strftime('%b')} {mon.day}–{fri.day}"
 
 
-def summary_json(plan, mon, fri, flags, issues, state, message=""):
-    """The summary.json payload the native app reads. Pure."""
+def summary_json(plan, mon, fri, flags, issues, state, message="", today=None):
+    """The summary.json payload the native app reads. Pure.
+
+    `today` flags the current day as projected in the live (dry-run) view: its hours are the
+    full daily target laid out across the workday, not what's happened up to now. Only set in
+    the dry-run summary — a finalized (written/dedup/fail) week is not a projection."""
     ph = defaultdict(float)
     for _d, _k, _e in plan:
         if _k == "work":
@@ -292,6 +297,7 @@ def summary_json(plan, mon, fri, flags, issues, state, message=""):
                     "name": dn,
                     "total": round(sum(e[3] for e in entries), 2),
                     "note": None,
+                    "projected": today is not None and d == today,
                     "entries": [
                         {
                             "span": span(a, b),
@@ -329,9 +335,13 @@ def http(url, headers=None, data=None, method=None):
         method=method or ("POST" if data is not None else "GET"),
     )
     attempts = 1 if data is not None else 5  # NEVER retry writes (a lost response could double-post)
+    # Writes keep a generous timeout (a slow-but-successful POST must not be cut off — we never
+    # retry them). Reads get a tighter 15s so a single hung endpoint can't stall a background
+    # refresh for minutes and block the next one (refreshes are single-flight).
+    timeout = 45 if data is not None else 15
     for i in range(attempts):
         try:
-            with urllib.request.urlopen(req, timeout=45) as r:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.status, json.loads(r.read() or "null")
         except urllib.error.HTTPError as e:
             return e.code, (e.read().decode()[:400])
@@ -548,35 +558,64 @@ def main():
                 if mon <= dd <= fri:
                     day_events[dd].append((vdt(dt_iso, VAN), bucket))
 
-            for repo in repos:
+            frm, to = mon.isoformat(), (fri + datetime.timedelta(1)).isoformat()
+
+            # Each of these does one HTTP call and returns raw (date, commitId) tuples (or, for
+            # the push list, the pushes to expand). They touch no shared state, so they're safe
+            # to run concurrently; add() — which dedups and buckets by day — is applied serially
+            # afterwards. This replaces a fully sequential per-repo, per-push walk (up to ~80
+            # push-detail round-trips per repo) that dominated the engine's wall-time.
+            def fetch_commits(repo):
                 try:
                     st, r = http(
                         f"{base}/{repo}/commits?searchCriteria.author={urllib.parse.quote(author)}"
-                        f"&searchCriteria.fromDate={mon.isoformat()}&searchCriteria.toDate={(fri + datetime.timedelta(1)).isoformat()}&api-version=7.1",
+                        f"&searchCriteria.fromDate={frm}&searchCriteria.toDate={to}&api-version=7.1",
                         hdr,
                     )
                     if st == 200 and isinstance(r, dict):
-                        for c in r.get("value", []):
-                            add((c.get("author") or {}).get("date"), c.get("commitId"))
+                        return [((c.get("author") or {}).get("date"), c.get("commitId")) for c in r.get("value", [])]
                 except Exception:
                     pass
+                return []
+
+            def fetch_push_ids(repo):
                 try:
                     st, r = http(
-                        f"{base}/{repo}/pushes?searchCriteria.fromDate={mon.isoformat()}"
-                        f"&searchCriteria.toDate={(fri + datetime.timedelta(1)).isoformat()}&$top=200&api-version=7.1",
+                        f"{base}/{repo}/pushes?searchCriteria.fromDate={frm}"
+                        f"&searchCriteria.toDate={to}&$top=200&api-version=7.1",
                         hdr,
                     )
                     pushes = r.get("value", []) if (st == 200 and isinstance(r, dict)) else []
-                    mine_pushes = [
+                    mine = [
                         p for p in pushes if (p.get("pushedBy") or {}).get("uniqueName", "").lower() == author.lower()
                     ][:80]
-                    for p in mine_pushes:
-                        st2, pr = http(f"{base}/{repo}/pushes/{p['pushId']}?api-version=7.1", hdr)
-                        if st2 == 200 and isinstance(pr, dict):
-                            for c in pr.get("commits", []):
-                                add((c.get("author") or {}).get("date"), c.get("commitId"))
+                    return [(repo, p["pushId"]) for p in mine]
+                except Exception:
+                    return []
+
+            def fetch_push_detail(repo_push):
+                repo, push_id = repo_push
+                try:
+                    st, pr = http(f"{base}/{repo}/pushes/{push_id}?api-version=7.1", hdr)
+                    if st == 200 and isinstance(pr, dict):
+                        return [((c.get("author") or {}).get("date"), c.get("commitId")) for c in pr.get("commits", [])]
                 except Exception:
                     pass
+                return []
+
+            tuples = []
+            with ThreadPoolExecutor(max_workers=8) as ex:
+                commit_futs = [ex.submit(fetch_commits, repo) for repo in repos]
+                pushid_futs = [ex.submit(fetch_push_ids, repo) for repo in repos]
+                for f in commit_futs:
+                    tuples.extend(f.result())
+                push_ids = []
+                for f in pushid_futs:
+                    push_ids.extend(f.result())
+                for f in [ex.submit(fetch_push_detail, rp) for rp in push_ids]:
+                    tuples.extend(f.result())
+            for dt_iso, cid in tuples:
+                add(dt_iso, cid)
 
     ado_n = sum(1 for d in day_events for (dt, p) in day_events[d] if p == ado.get("project_bucket", "Work"))
     flags.append(
@@ -674,7 +713,7 @@ def main():
 
     if DRY:
         emit("dryrun", "Harvest · Dry run", f"{_wl} · would log {_totalh}h", _brk + _bl)
-        write_summary(summary_json(plan, mon, fri, flags, issues, "dryrun"))
+        write_summary(summary_json(plan, mon, fri, flags, issues, "dryrun", today=today))
         print("\nDRY-RUN — no writes performed.")
         return 0
 

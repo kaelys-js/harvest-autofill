@@ -73,6 +73,26 @@ def test_select_days_future_week_is_empty(hw):
     assert hw.select_days(mon, today=dt.date(2026, 8, 31)) == []
 
 
+# ---------- summary_json: the current day is flagged projected only in the live view ----------
+def test_summary_json_flags_today_projected_in_dryrun(hw):
+    mon, today, fri = dt.date(2026, 8, 31), dt.date(2026, 9, 1), dt.date(2026, 9, 4)
+    plan = [
+        (mon, "work", [("Website", "t", "dev", 9.0, 540, 1080)]),
+        (today, "work", [("Website", "t", "dev", 9.0, 540, 1080)]),
+    ]
+    by_name = {d["name"]: d for d in hw.summary_json(plan, mon, fri, [], [], "dryrun", today=today)["days"]}
+    assert by_name[today.strftime("%a %b %-d")]["projected"] is True
+    assert by_name[mon.strftime("%a %b %-d")]["projected"] is False
+
+
+def test_summary_json_no_projection_when_finalized(hw):
+    mon, fri = dt.date(2026, 8, 31), dt.date(2026, 9, 4)
+    plan = [(mon, "work", [("Website", "t", "dev", 9.0, 540, 1080)])]
+    # a finalized (written) week passes no `today`, so nothing is treated as a projection
+    out = hw.summary_json(plan, mon, fri, [], [], "written")
+    assert all(d.get("projected") is False for d in out["days"])
+
+
 # ---------- split_props ----------
 def test_split_props_is_proportional(hw):
     assert hw.split_props(8, {"Website": 60, "Mobile App": 20}) == {"Website": 6.0, "Mobile App": 2.0}

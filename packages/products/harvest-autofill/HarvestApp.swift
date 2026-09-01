@@ -27,6 +27,15 @@ struct DayBlock: View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
                 Text(day.name).font(.system(size: 12.5, weight: .semibold))
+                // Today, mid-week, is shown at its full daily target rather than the hours logged
+                // so far — this tag says so. It's recalculated on every refresh up to the Friday post.
+                if day.projected == true {
+                    Text("projected")
+                        .font(.system(size: 9.5, weight: .semibold))
+                        .foregroundStyle(Web.primary)
+                        .padding(.horizontal, 6).padding(.vertical, 1.5)
+                        .background(Capsule().fill(Web.primary.opacity(0.12)))
+                }
                 Spacer()
                 if let t = day.total {
                     Text(hrs(t)).font(.system(size: 12, weight: .semibold).monospacedDigit()).foregroundStyle(.secondary)
@@ -393,7 +402,7 @@ struct AccountsContent: View {
                 .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
             PrefCard(title: "Harvest") {
-                Text("Where your hours are written — the one account the app truly needs.")
+                Text("Where your hours are written — the only account the app needs.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Field(label: "Account ID", text: $prefs.harvestAccount, hint: "e.g. 123456", valid: prefs.accountValid,
                       help: "The number in your Harvest web address — id.getharvest.com shows it under Settings.")
@@ -459,7 +468,7 @@ struct AllocationContent: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         VStack(spacing: 14) {
-            Text("These settings shape how your week gets turned into hours — how much each day should add up to, and how that time is divided between projects.")
+            Text("These settings shape how your week becomes hours — how much each day should add up to, and how that time is divided between projects.")
                 .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
             PrefCard(title: "Your workday") {
@@ -517,7 +526,7 @@ struct ResetConfirmSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Label("Delete everything and restart setup", systemImage: "trash.fill").font(.system(size: 14.5, weight: .semibold)).foregroundStyle(.red)
-            Text("This permanently removes your saved account, access tokens, and all settings from this Mac, then takes you back to setup. It can't be undone.")
+            Text("This permanently deletes your saved account, access tokens, and all settings from this Mac, then takes you back to setup. It can’t be undone.")
                 .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             VStack(alignment: .leading, spacing: 5) {
                 Text("Type RESET to confirm").font(.system(size: 11.5, weight: .medium)).foregroundStyle(.secondary)
@@ -543,7 +552,7 @@ struct ResetCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("Danger zone", systemImage: "exclamationmark.triangle.fill").font(.system(size: 11, weight: .semibold)).foregroundStyle(.red).textCase(.uppercase)
-            Text("Reset removes your account, tokens, and settings from this Mac and returns you to setup — useful for handing the app to someone else or starting clean.")
+            Text("Reset deletes your account, access tokens, and settings from this Mac and takes you back to setup — useful for handing the app to someone else or starting clean.")
                 .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             Button(role: .destructive) { confirm1 = true } label: { Label("Reset", systemImage: "trash") }.controlSize(.large)
         }
@@ -554,7 +563,7 @@ struct ResetCard: View {
             Button("Cancel", role: .cancel) {}
             Button("Continue…", role: .destructive) { typed = ""; typeSheet = true }
         } message: {
-            Text("This permanently deletes your saved account, access tokens, and all settings from this Mac, then restarts setup. It can’t be undone.")
+            Text("This permanently deletes your saved account, access tokens, and all settings from this Mac, then takes you back to setup. It can’t be undone.")
         }
         .sheet(isPresented: $typeSheet) {
             ResetConfirmSheet(typed: $typed,
@@ -596,7 +605,7 @@ struct GeneralContent: View {
             PrefCard(title: "How it works") {
                 Label("Always current — your hours update in the background every 15 minutes, so the menu-bar total is always live.", systemImage: "clock.arrow.circlepath")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
-                Label("Hands-off Fridays — the finished week is filed to Harvest at 6pm on its own, even if the app is closed (turn this off above).", systemImage: "calendar.badge.checkmark")
+                Label("Hands-off Fridays — the finished week is filed to Harvest at 6pm on its own, even if the app is closed (turn off automatic recording above).", systemImage: "calendar.badge.checkmark")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
                 Label("Yours alone — everything you connect stays on this Mac and is never sent anywhere else.", systemImage: "lock.shield")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
@@ -831,7 +840,7 @@ struct AboutContent: View {
 
             UpdateCard(prefs: prefs)
             PrefCard(title: "Your privacy") {
-                Text("Everything you connect — Harvest, GitHub, Azure DevOps, your calendar — stays on this Mac, in a locked folder, and is sent nowhere but those services themselves. No account, no cloud, no tracking.")
+                Text("Everything you connect — Harvest, GitHub, Azure DevOps, your calendar — stays on this Mac, in a locked folder, and goes nowhere except those services themselves. No account, no cloud, no tracking.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 10) {
                     Button { reveal(P.dataDir) } label: { Label("Reveal data folder", systemImage: "folder") }
@@ -1735,7 +1744,7 @@ struct HarvestMenuApp: App {
             MenuLabel(model: model)
         }
         Window("Harvest — This Week", id: "main") {
-            MainWindow(model: model).onAppear { delegate.model = model }.tint(Web.primary)
+            MainWindow(model: model).onAppear { delegate.model = model; model.refreshIfStale() }.tint(Web.primary)
         }.windowResizability(.contentSize).windowStyle(.hiddenTitleBar)
             .commands {
                 // About opens Settings → About; add a real Settings item (⌘,), a This Week

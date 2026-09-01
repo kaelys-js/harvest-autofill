@@ -85,7 +85,15 @@ struct Entry: Codable, Identifiable {
 
 struct Day: Codable, Identifiable {
     let id = UUID(); let name: String; let total: Double?; let note: String?; let entries: [Entry]
-    enum CodingKeys: String, CodingKey { case name, total, note, entries }
+    // True only for the current day in the live (dry-run) view: its hours are the full daily
+    // target projected forward, not what's happened so far. Absent (nil) in finalized summaries.
+    let projected: Bool?
+    enum CodingKeys: String, CodingKey { case name, total, note, entries, projected }
+    // Explicit init so render/self-test fixtures can omit `projected` (defaults to nil); Codable
+    // synthesis is unaffected, so summary.json still decodes the field.
+    init(name: String, total: Double?, note: String?, entries: [Entry], projected: Bool? = nil) {
+        self.name = name; self.total = total; self.note = note; self.entries = entries; self.projected = projected
+    }
 }
 
 struct Summary: Codable {

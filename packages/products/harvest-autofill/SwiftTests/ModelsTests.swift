@@ -11,7 +11,7 @@ struct ModelsTests {
       "total": 18.0,
       "daysWorked": 2,
       "days": [
-        {"name": "Mon Aug 24", "total": 9.0, "note": null, "entries": [
+        {"name": "Mon Aug 24", "total": 9.0, "note": null, "projected": true, "entries": [
           {"span": "9:00 AM–9:30 AM", "project": "Website", "task": "Client Meetings", "hours": 0.5},
           {"span": "9:45 AM–6:00 PM", "project": "Website", "task": "Development", "hours": 8.5}
         ]},
@@ -34,10 +34,12 @@ struct ModelsTests {
         #expect(mon.entries.count == 2)
         #expect(mon.entries[0].project == "Website")
         #expect(mon.entries[0].hours == 0.5)
+        #expect(mon.projected == true) // today, in the live view, is flagged as a projection
         let holiday = s.days[1]
         #expect(holiday.total == nil)
         #expect(holiday.note == "holiday · skipped")
         #expect(holiday.entries.isEmpty)
+        #expect(holiday.projected == nil) // absent in the payload → nil (old summaries still decode)
     }
 
     @Test func `entry and day are identifiable`() {
