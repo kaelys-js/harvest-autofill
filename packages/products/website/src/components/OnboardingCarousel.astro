@@ -113,11 +113,17 @@ v.parse(OnboardingStepsSchema, STEPS);
 						aria-selected={n === 0}
 						aria-label={`Step ${n + 1}: ${s.title}`}
 						data-onb-dot={n}
-						class:list={[
-							"size-2 rounded-full transition-all",
-							n === 0 ? "w-5 bg-primary" : "bg-border hover:bg-muted-foreground/40",
-						]}
-					/>
+						class="group grid size-6 place-items-center rounded-full"
+					>
+						{/* 24px hit area (WCAG 2.2 target-size); the visible pip stays small. */}
+						<span
+							data-onb-pip
+							class:list={[
+								"size-2 rounded-full transition-all",
+								n === 0 ? "w-5 bg-primary" : "bg-border group-hover:bg-muted-foreground/40",
+							]}
+						/>
+					</button>
 				))
 			}
 		</div>
@@ -160,10 +166,12 @@ v.parse(OnboardingStepsSchema, STEPS);
 			dots.forEach((d, n) => {
 				const on = n === i;
 				d.setAttribute("aria-selected", String(on));
-				d.classList.toggle("w-5", on);
-				d.classList.toggle("bg-primary", on);
-				d.classList.toggle("bg-border", !on);
-				d.classList.toggle("hover:bg-muted-foreground/40", !on);
+				// The visible pip lives inside the 24px hit-area button; toggle its state, not the button's.
+				const pip = d.querySelector<HTMLElement>("[data-onb-pip]");
+				pip?.classList.toggle("w-5", on);
+				pip?.classList.toggle("bg-primary", on);
+				pip?.classList.toggle("bg-border", !on);
+				pip?.classList.toggle("group-hover:bg-muted-foreground/40", !on);
 			});
 			if (stepLabel) stepLabel.textContent = `Step ${i + 1} of ${N}`;
 			next.textContent = i === N - 1 ? "Done" : "Continue";
