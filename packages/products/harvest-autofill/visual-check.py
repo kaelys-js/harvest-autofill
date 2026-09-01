@@ -22,6 +22,8 @@ SCREENS = [
     "main-empty",
     "main-issues",
     "prefs",
+    "prefs-accounts",
+    "prefs-allocation",
     "about",
     "whatsnew",
     "whatsnewmanual",

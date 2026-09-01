@@ -2,19 +2,10 @@ import { expect, test } from "@playwright/test";
 
 // Visual regression on the hero, in both themes. Runs in CI, not skipped: the suite executes
 // inside the pinned Playwright Docker container (see the web-visual gate), so rendering is
-// byte-identical on every machine. The live GitHub version fetch is stubbed to a fixed tag so
-// the download button — and therefore the screenshot — is deterministic. Animations disabled.
+// byte-identical on every machine. The download button's version tag is baked in at build time
+// (the E2E build sets GITHUB_REF_NAME=v0.0.0), so the screenshot is deterministic with no runtime
+// fetch to stub. Animations disabled.
 test.describe("visual", () => {
-	test.beforeEach(async ({ page }) => {
-		await page.route("**/api.github.com/**", (route) =>
-			route.fulfill({
-				status: 200,
-				contentType: "application/json",
-				body: JSON.stringify({ tag_name: "v0.0.0" }),
-			}),
-		);
-	});
-
 	test("hero — light", async ({ page }) => {
 		await page.goto("./");
 		await page.emulateMedia({ colorScheme: "light" });
@@ -63,15 +54,6 @@ test.describe("visual — native section", () => {
 		// reduced-motion pins the carousel to its first slide (page method is precisely typed,
 		// unlike `test.use({ reducedMotion })` which TS7 can't resolve through Playwright's Fixtures).
 		await page.emulateMedia({ reducedMotion: "reduce" });
-		// The hero's download button lives on the same page; stub its release fetch so no real
-		// network call runs while this section renders.
-		await page.route("**/api.github.com/**", (route) =>
-			route.fulfill({
-				status: 200,
-				contentType: "application/json",
-				body: JSON.stringify({ tag_name: "v0.0.0" }),
-			}),
-		);
 	});
 
 	async function readyNative(page: import("@playwright/test").Page) {
@@ -103,16 +85,6 @@ test.describe("visual — native section", () => {
 // FAQ accordion, and the footer. Each is captured in both themes so a colour or layout
 // regression anywhere on the page is caught, not just in the hero and mockups.
 test.describe("visual — page sections", () => {
-	test.beforeEach(async ({ page }) => {
-		await page.route("**/api.github.com/**", (route) =>
-			route.fulfill({
-				status: 200,
-				contentType: "application/json",
-				body: JSON.stringify({ tag_name: "v0.0.0" }),
-			}),
-		);
-	});
-
 	// Reveal-on-scroll starts elements at opacity:0 and fades them in on intersection; force the
 	// end state so a section is never captured mid-reveal regardless of scroll timing.
 	const revealAll = (page: import("@playwright/test").Page) =>

@@ -1,9 +1,11 @@
 ---
 // A plain server-rendered download link — no framework, so the primary CTA adds no JS to the
-// initial load. The version tag beside "Download for macOS" is filled in after load by one
-// shared script (fillDownloadVersions), regardless of how many buttons the page renders.
+// initial load. The version tag beside "Download for macOS" is baked in at build time from the
+// release tag (PUBLIC_APP_VERSION); the site ships in lockstep with the app, so there's no need
+// to fetch the latest release from GitHub at runtime. Empty on an untagged build (dev/E2E),
+// with its width already reserved so nothing reflows.
 import { buttonVariants } from "@/components/ui/button-variants";
-import { parseDownloadSize, type DownloadSize } from "@/lib/schemas";
+import { parseDownloadSize, parseVersion, type DownloadSize } from "@/lib/schemas";
 import { DOWNLOAD_ZIP } from "@/lib/download";
 
 interface Props {
@@ -11,6 +13,7 @@ interface Props {
 }
 const { size = "lg" } = Astro.props;
 const btnSize = parseDownloadSize(size);
+const version = parseVersion(import.meta.env.PUBLIC_APP_VERSION) ?? "";
 ---
 
 <a href={DOWNLOAD_ZIP} rel="noopener noreferrer" class="inline-block">
@@ -33,13 +36,8 @@ const btnSize = parseDownloadSize(size);
 			<path d="m7 10 5 5 5-5"></path>
 		</svg>
 		<span>Download for macOS</span>
-		<span
-			class="inline-block min-w-[5.5ch] text-left font-normal tabular-nums opacity-80"
-			data-download-version></span>
+		<span class="inline-block min-w-[5.5ch] text-left font-normal tabular-nums opacity-80"
+			>{version ? `· v${version}` : ""}</span
+		>
 	</button>
 </a>
-
-<script>
-	import { fillDownloadVersions } from "@/lib/download";
-	fillDownloadVersions();
-</script>

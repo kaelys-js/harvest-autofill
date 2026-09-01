@@ -21,7 +21,9 @@ if [ -f /.dockerenv ] || [ -n "${PLAYWRIGHT_IN_CONTAINER:-}" ]; then
   # the mise-pinned engines.node. That is correct for a test runner, so relax pnpm's strict
   # engine check here only — dev + CI installs still run on the pinned Node and enforce it.
   pnpm --config.engine-strict=false install --frozen-lockfile
-  ASTRO_BASE=/ pnpm --config.engine-strict=false build
+  # The download button's version is baked in at build time from the release tag. The container
+  # has no .git, so pin a fixed tag here to keep the version-bearing snapshots deterministic.
+  ASTRO_BASE=/ GITHUB_REF_NAME=v0.0.0 pnpm --config.engine-strict=false build
   exec node_modules/.bin/playwright test $UPDATE
 fi
 

@@ -935,11 +935,21 @@ let PREFS_TABS: [(name: String, icon: String)] = [
 ]
 
 struct PreferencesView: View {
-    @StateObject var prefs = Prefs()
-    @State private var tab = 0 // 0 General, 1 Accounts, 2 Allocation, 3 About
+    @StateObject var prefs: Prefs
+    @State private var tab: Int // 0 General, 1 Accounts, 2 Allocation, 3 About
     @Namespace private var tabPill // slides the active-tab highlight between tabs
     @ObservedObject private var nav = PrefsNav.shared
-    var render = false
+    var render: Bool
+
+    // `demo` injects populated prefs for the render baselines (Accounts/Allocation tabs); the
+    // interactive app leaves it nil and gets a fresh empty Prefs. `startTab` picks which tab the
+    // render captures.
+    init(render: Bool = false, startTab: Int = 0, demo: Prefs? = nil) {
+        self.render = render
+        _prefs = StateObject(wrappedValue: demo ?? Prefs())
+        _tab = State(initialValue: startTab)
+    }
+
     var footer: some View {
         HStack(spacing: 10) {
             if !prefs.status.isEmpty {
@@ -985,13 +995,19 @@ struct PreferencesView: View {
 
     var body: some View {
         if render {
-            // The baseline shows the mockup's tab bar (General active) above every section
-            // stacked, so both the tab style and all masked fields stay covered.
+            // One baseline per tab: the tab bar (active tab tinted) above that tab's content, so
+            // each Preferences surface — including the populated Accounts/Allocation states — is
+            // covered on its own instead of stacked into a single shot.
             VStack(alignment: .leading, spacing: 0) {
-                tabBar(active: 0, tappable: false)
+                tabBar(active: tab, tappable: false)
                 Divider()
                 VStack(alignment: .leading, spacing: 16) {
-                    GeneralContent(prefs: prefs); AccountsContent(prefs: prefs); AllocationContent(prefs: prefs)
+                    switch tab {
+                    case 0: GeneralContent(prefs: prefs)
+                    case 1: AccountsContent(prefs: prefs)
+                    case 2: AllocationContent(prefs: prefs)
+                    default: AboutContent(prefs: prefs)
+                    }
                     footer
                 }.padding(20)
             }.frame(width: 560).background(Web.card)
@@ -1678,6 +1694,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             var view: any View = MainWindow(model: model, render: true)
             if which == "prefs" {
                 view = PreferencesView(render: true)
+            } else if which == "prefs-accounts" {
+                // Capture the discovered/signed-in Accounts states (gh-CLI note instead of
+                // username+token; ADO Project as a dropdown) — the branches onboarding's
+                // manual-field baselines don't reach.
+                let p = Self.demoPrefs()
+                p.ghSignedIn = true
+                p.adoProjectsAvailable = ["Platform", "Marketing Site", "Internal Tools"]
+                view = PreferencesView(render: true, startTab: 1, demo: p)
+            } else if which == "prefs-allocation" {
+                view = PreferencesView(render: true, startTab: 2, demo: Self.demoPrefs())
             } else if which == "verify" {
                 view = VerifyView()
             } else if which.hasPrefix("onb") {
