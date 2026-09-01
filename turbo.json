@@ -19,6 +19,30 @@
 	],
 	"ui": "tui",
 	"tasks": {
+		"build:app": {
+			"inputs": [
+				"packages/products/harvest-autofill/*.swift",
+				"packages/products/harvest-autofill/SwiftTests/**",
+				"packages/products/harvest-autofill/*.py",
+				"packages/products/harvest-autofill/build.sh",
+				"packages/products/harvest-autofill/Info.plist",
+				"packages/products/harvest-autofill/icon.icns"
+			],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"build:web": {
+			"inputs": [
+				"packages/products/website/src/**",
+				"packages/products/website/public/**",
+				"packages/products/website/astro.config.mjs",
+				"packages/products/website/package.json",
+				"packages/products/website/tsconfig.json"
+			],
+			"outputs": ["packages/products/website/dist/**"],
+			"env": ["GITHUB_REF_NAME", "ASTRO_BASE"],
+			"outputLogs": "new-only"
+		},
 		"qa:swift-format": {
 			"inputs": [
 				"packages/products/harvest-autofill/*.swift",

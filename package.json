@@ -6,6 +6,8 @@
 	"type": "module",
 	"scripts": {
 		"prepare": "./bin/mise exec -- lefthook install",
+		"build:app": "cd packages/products/harvest-autofill && ./build.sh && test -f 'dist/Harvest Auto-Fill.app/Contents/MacOS/Harvest'",
+		"build:web": "cd packages/products/website && pnpm build",
 		"qa:swift-format": "cd packages/products/harvest-autofill && swiftformat --lint HarvestCore.swift HarvestSideEffects.swift HarvestApp.swift SwiftTests",
 		"qa:swift-lint": "cd packages/products/harvest-autofill && DEV=\"$(xcode-select -p)\"; case \"$DEV\" in *CommandLineTools*) DEV=\"$(ls -d /Applications/Xcode*.app/Contents/Developer 2>/dev/null | head -1)\";; esac; DEVELOPER_DIR=\"$DEV\" swiftlint lint --strict --quiet",
 		"qa:swift-test": "cd packages/products/harvest-autofill && ./swift-coverage-gate.sh",

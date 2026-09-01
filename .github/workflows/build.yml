@@ -1,5 +1,7 @@
 name: Build
-# Compile + assemble on every push/PR so breakage is caught before a release tag.
+# Compile + assemble on every push/PR so breakage is caught before a release tag. The build
+# runs through turbo (build:app), so a push that doesn't touch the app's Swift/Python sources
+# is a cache hit instead of a full ~minutes-long Swift compile + CPython download.
 on:
   push:
     branches: [main]
@@ -12,20 +14,38 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true  # a newer push supersedes an in-flight build
 
-defaults:
-  run:
-    working-directory: packages/products/harvest-autofill
-
 jobs:
   build:
     runs-on: macos-26       # needs the macOS 26 SDK (Liquid Glass APIs)
     timeout-minutes: 20
+    env:
+      # Turbo remote cache (Vercel); falls back to the local .turbo cache when unset.
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       # Pinned to a full commit SHA (supply-chain hardening); the comment tracks the version.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Build (compile, bundle Python, sign, verify signature)
-        run: ./build.sh
-      - name: Confirm the app built
-        run: test -f "dist/Harvest Auto-Fill.app/Contents/MacOS/Harvest"
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          install: true
+          cache: true
+      - name: Cache turbo
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+      - name: Cache bundled CPython
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: packages/products/harvest-autofill/vendor/python
+          key: cpython-${{ runner.os }}-${{ hashFiles('packages/products/harvest-autofill/build.sh') }}
+          restore-keys: |
+            cpython-${{ runner.os }}-
+      - name: Install root deps (turbo)
+        run: mise exec -- pnpm install --frozen-lockfile
+      - name: Build (compile, bundle Python, sign, verify — turbo-cached on unchanged app sources)
+        run: mise exec -- ./node_modules/.bin/turbo run build:app
