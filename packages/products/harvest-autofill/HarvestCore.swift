@@ -558,7 +558,8 @@ final class Prefs: ObservableObject {
                     result = .fail(code == 0 ? "Couldn't reach Harvest — check your connection" : "Harvest returned HTTP \(code)")
                 }
             } catch { result = .fail(error.localizedDescription) }
-            await MainActor.run { self.harvestTest = result }
+            let finalResult = result
+            await MainActor.run { self.harvestTest = finalResult }
         }
     }
 
@@ -596,7 +597,8 @@ final class Prefs: ObservableObject {
                     }
                 } catch { result = .fail(error.localizedDescription) }
             }
-            await MainActor.run { self.calTest = result }
+            let finalResult = result
+            await MainActor.run { self.calTest = finalResult }
         }
     }
 

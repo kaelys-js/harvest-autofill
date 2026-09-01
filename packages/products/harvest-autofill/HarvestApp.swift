@@ -237,7 +237,7 @@ struct CalendarHelp: View {
         DisclosureGroup {
             VStack(alignment: .leading, spacing: 10) {
                 Step(n: 1, text: "Go to script.google.com (signed in as the Google account whose calendar you use) and create a New project.")
-                Step(n: 2, text: "Replace everything in Code.gs with this — it checks a secret and returns your events as JSON:")
+                Step(n: 2, text: "Replace everything in Code.gs with this — it checks your secret and sends back your events:")
                 CodeBox(code: doGetCode)
                 Step(n: 3, text: "Click the gear (Project Settings) → Script Properties → Add script property. Name it APPS_SCRIPT_SECRET and set the value to a strong secret you choose.")
                 Step(n: 4, text: "Deploy → New deployment → choose Web app. Set Execute as: Me and Who has access: Anyone. Click Deploy, then copy the Web-app URL (it ends in /exec).")
@@ -403,7 +403,7 @@ struct AccountsContent: View {
                     Text(prefs.harvestUser.isEmpty ? "—" : prefs.harvestUser).font(.system(size: 12)).foregroundStyle(.secondary)
                     Spacer(); Button { prefs.discover() } label: { Label("Discover from my accounts", systemImage: "sparkles") }
                 }
-                Text("Discover reads your Harvest, GitHub, and (when an Azure DevOps token is set) Azure DevOps to auto-fill your user ID, project mappings, org list, and repo list — so you never type IDs by hand.")
+                Text("This reads your connected accounts and fills in your user ID, projects, orgs, and repos automatically — so you never type an ID by hand.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
                 if !prefs.projectsList.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
@@ -444,7 +444,7 @@ struct AccountsContent: View {
                     Field(label: "Org", text: $prefs.adoOrg, valid: !prefs.adoOrg.isEmpty)
                     Field(label: "Project", text: $prefs.adoProject, valid: !prefs.adoProject.isEmpty)
                     MultiSelect(label: "Repos", options: prefs.adoReposAvailable, csv: $prefs.adoRepos, valid: !prefs.adoRepos.trimmingCharacters(in: .whitespaces).isEmpty,
-                                help: "Tick the repos to scan for your commits + pushes — loaded automatically once Org, Project, and the token are set.")
+                                help: "Tick the repos to scan for your commits and pushes — loaded automatically once Org, Project, and the token are set.")
                     Field(label: "Author (email)", text: $prefs.adoAuthor, hint: "you@org.com", valid: !prefs.adoAuthor.isEmpty,
                           help: "Your commit-author email in Azure DevOps.")
                     Secret(label: "Access token", text: $prefs.adoPAT, reveal: $prefs.showPAT, valid: !prefs.adoPAT.isEmpty,
@@ -479,7 +479,7 @@ struct AllocationContent: View {
                         }
                         Spacer()
                     }
-                    Help(text: "Only commits inside these hours count toward the split — before/after-hours work (e.g. overnight automation) is ignored.")
+                    Help(text: "Only commits made inside these hours count — work before or after (like overnight automation) is left out.")
                 }
             }
             PrefCard(title: "Timeline split") {
@@ -554,7 +554,7 @@ struct ResetCard: View {
             Button("Cancel", role: .cancel) {}
             Button("Continue…", role: .destructive) { typed = ""; typeSheet = true }
         } message: {
-            Text("This permanently deletes your saved account, access tokens, and all settings from this Mac, then restarts setup. This can't be undone.")
+            Text("This permanently deletes your saved account, access tokens, and all settings from this Mac, then restarts setup. It can’t be undone.")
         }
         .sheet(isPresented: $typeSheet) {
             ResetConfirmSheet(typed: $typed,
@@ -578,7 +578,7 @@ struct GeneralContent: View {
                 Text("Choose whether the app files your finished week for you, or waits until you say so.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Toggle("Log the finished week to Harvest every Friday at 6pm", isOn: $prefs.autoRecord).font(.system(size: 12.5)).toggleStyle(.switch)
-                Text("On — the app records your week for you every Friday evening and won't double-book if it already ran. Off — nothing reaches Harvest until you open the app and click \u{201C}Log this week.\u{201D}")
+                Text("On — files your week automatically every Friday evening, and never double-books if it already ran. Off — nothing reaches Harvest until you click \u{201C}Log this week\u{201D} yourself.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
             }
             PrefCard(title: "Dock icon") {
@@ -594,7 +594,7 @@ struct GeneralContent: View {
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
             }
             PrefCard(title: "How it works") {
-                Label("Always current — your week's hours recompute in the background every 15 minutes, so the menu-bar total is live.", systemImage: "clock.arrow.circlepath")
+                Label("Always current — your hours update in the background every 15 minutes, so the menu-bar total is always live.", systemImage: "clock.arrow.circlepath")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
                 Label("Hands-off Fridays — the finished week is filed to Harvest at 6pm on its own, even if the app is closed (turn this off above).", systemImage: "calendar.badge.checkmark")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
@@ -756,7 +756,7 @@ struct UpdateCard: View {
             }
             Toggle("Keep this app up to date automatically", isOn: $prefs.autoUpdate).font(.system(size: 12)).toggleStyle(.switch)
                 .onChange(of: prefs.autoUpdate) { _, _ in prefs.writeAll() }
-            Text("Every update is signed and verified before it's installed. Checks happen quietly on launch and once a day. When this is on, updates install and relaunch on their own; when off, the app holds them here until you're ready.")
+            Text("Every update is verified as genuine before it installs. Checks happen quietly on launch and once a day. When this is on, updates install and relaunch on their own; when off, the app holds them here until you're ready.")
                 .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -1209,7 +1209,7 @@ struct OnbWorkday: View {
                         TextField("", value: $prefs.workEnd, format: .number).frame(width: 44).textFieldStyle(.roundedBorder).overlay(invalidBorder(prefs.workHoursValid))
                         Text(":00").foregroundStyle(.secondary); Spacer()
                     }
-                    Help(text: "Only commits inside these hours count toward the split.")
+                    Help(text: "Only commits made inside these hours count — work before or after (like overnight automation) is left out.")
                 }
             }
             PrefCard(title: "Holidays") {
@@ -1427,7 +1427,7 @@ struct VerifyView: View {
             Text("Calendar — How to connect (expanded)").font(.system(size: 13, weight: .bold))
             VStack(alignment: .leading, spacing: 10) {
                 Step(n: 1, text: "Go to script.google.com (signed in as the Google account whose calendar you use) and create a New project.")
-                Step(n: 2, text: "Replace everything in Code.gs with this — it checks a secret and returns your events as JSON:")
+                Step(n: 2, text: "Replace everything in Code.gs with this — it checks your secret and sends back your events:")
                 Text(highlightJS(doGetCode)).font(.system(size: 10, design: .monospaced)).padding(12)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .textBackgroundColor)))
                     .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.secondary.opacity(0.25)))
@@ -1463,7 +1463,7 @@ extension Notification.Name {
     @Published var requestedTab: Int?
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_: Notification) {
         let args = CommandLine.arguments
         // hidden self-test: exercise the real update-check path and print the terminal state
@@ -1588,9 +1588,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try? FileManager.default.copyItem(atPath: P.configDefault, toPath: P.config)
         }
         // first-run Preferences is handled by MenuLabel.onAppear (needs openWindow)
+        // Fix up the Window menu's window list. SwiftUI adds one row per Window scene whether or
+        // not it's open (so closed Welcome/What's New rows show) and never checks the active one.
+        // It populates the list in its own menu delegate's menuNeedsUpdate, so a plain reconcile
+        // is undone the instant the submenu is navigated to. Instead we insert ourselves as the
+        // submenu's delegate — chaining to SwiftUI's original so its rows still build — and then
+        // reconcile after it. The main menu bar posts didBeginTracking as the user clicks into it
+        // (before any submenu draws), which is where we (re)install the chained delegate.
+        NotificationCenter.default.addObserver(
+            forName: NSMenu.didBeginTrackingNotification, object: nil, queue: .main,
+        ) { [weak self] note in
+            guard let self, let bar = note.object as? NSMenu,
+                  let windowMenu = bar.items.first(where: { $0.submenu?.title == "Window" })?.submenu
+            else { return }
+            MainActor.assumeIsolated {
+                if windowMenu.delegate !== self {
+                    self.swiftUIWindowMenuDelegate = windowMenu.delegate
+                    windowMenu.delegate = self
+                }
+            }
+        }
         // wake -> refresh
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { _ in
-            (NSApp.delegate as? AppDelegate)?.model?.refresh()
+            MainActor.assumeIsolated { (NSApp.delegate as? AppDelegate)?.model?.refresh() }
         }
     }
 
@@ -1639,6 +1659,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openMainFromDock() {
         NotificationCenter.default.post(name: .openMainWindow, object: nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    // SwiftUI's own Window-menu delegate, which we chain to so its rows still build before we
+    // reconcile them.
+    private weak var swiftUIWindowMenuDelegate: NSMenuDelegate?
+
+    // The titles SwiftUI gives the Window menu's per-scene rows (one per Window scene, shown even
+    // when that window is closed). We reconcile only these rows, leaving the system's
+    // Minimize/Zoom/tiling items alone.
+    private static let sceneWindowTitles: Set<String> = [
+        "Harvest — This Week", "Settings", "Welcome to Harvest Auto-Fill", "What's New",
+    ]
+
+    // As the Window submenu is about to display: let SwiftUI build its rows, then reconcile them —
+    // hide rows whose window isn't open and check the active one, so the list reflects reality.
+    // SwiftUI's rows are reused (their open/focus behaviour is intact); we only toggle visibility
+    // and the checkmark.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        swiftUIWindowMenuDelegate?.menuNeedsUpdate?(menu)
+        let openTitles = Set(appWindows().map(\.title))
+        let keyTitle = NSApp.keyWindow?.title
+        for item in menu.items where Self.sceneWindowTitles.contains(item.title) {
+            let isOpen = openTitles.contains(item.title)
+            item.isHidden = !isOpen
+            item.state = isOpen && item.title == keyTitle ? .on : .off
+        }
     }
 
     var model: WeekModel?
@@ -1705,6 +1751,12 @@ struct HarvestMenuApp: App {
                         .keyboardShortcut(",", modifiers: .command)
                 }
                 CommandGroup(after: .appSettings) {
+                    Button("Check for Updates…") {
+                        // Run the check and open Settings → About, where the result shows.
+                        PrefsNav.shared.requestedTab = 3
+                        Updater.shared.check(manual: true)
+                        NotificationCenter.default.post(name: .openSettings, object: nil)
+                    }
                     Button("This Week") { NotificationCenter.default.post(name: .openMainWindow, object: nil) }
                 }
                 CommandGroup(replacing: .appTermination) {
