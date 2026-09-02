@@ -29,8 +29,8 @@ pre-commit:
       glob: "*.sh"
       run: mise exec -- shfmt -i 2 -w {staged_files}
       stage_fixed: true
-    json-format:
-      glob: "*.json"
+    format:
+      glob: "*.{json,jsonc,mjs,cjs,js,ts,tsx}"
       run: mise exec -- oxfmt {staged_files}
       stage_fixed: true
     web-format:
@@ -71,8 +71,10 @@ pre-push:
       run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:shell-lint
     toml:
       run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:toml
-    json-format:
-      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:json-format
+    format:
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:format
+    lint:
+      run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:lint
     yaml-lint:
       run: ./bin/mise exec -- ./node_modules/.bin/turbo run qa:yaml-lint
     workflow-lint:

@@ -23,7 +23,7 @@
 			"inputs": [
 				"packages/products/harvest-autofill/*.swift",
 				"packages/products/harvest-autofill/SwiftTests/**",
-				"packages/products/harvest-autofill/*.py",
+				"packages/products/harvest-autofill/**/*.py",
 				"packages/products/harvest-autofill/build.sh",
 				"packages/products/harvest-autofill/Info.plist",
 				"packages/products/harvest-autofill/icon.icns",
@@ -74,7 +74,7 @@
 		},
 		"qa:python-format": {
 			"inputs": [
-				"packages/products/harvest-autofill/*.py",
+				"packages/products/harvest-autofill/**/*.py",
 				"packages/products/harvest-autofill/ruff.toml"
 			],
 			"outputs": [],
@@ -82,7 +82,7 @@
 		},
 		"qa:python-lint": {
 			"inputs": [
-				"packages/products/harvest-autofill/*.py",
+				"packages/products/harvest-autofill/**/*.py",
 				"packages/products/harvest-autofill/ruff.toml"
 			],
 			"outputs": [],
@@ -90,7 +90,7 @@
 		},
 		"qa:python-test": {
 			"inputs": [
-				"packages/products/harvest-autofill/*.py",
+				"packages/products/harvest-autofill/**/*.py",
 				"packages/products/harvest-autofill/tests/**",
 				"packages/products/harvest-autofill/pyproject.toml",
 				"packages/products/harvest-autofill/uv.lock"
@@ -109,17 +109,22 @@
 			"outputLogs": "new-only"
 		},
 		"qa:toml": {
-			"inputs": ["mise.toml"],
+			"inputs": ["**/*.toml", "!**/node_modules/**"],
 			"outputs": [],
 			"outputLogs": "new-only"
 		},
-		"qa:json-format": {
-			"inputs": ["packages/products/harvest-autofill/config.default.json"],
+		"qa:format": {
+			"inputs": ["**/*.{js,mjs,cjs,ts,tsx,json,jsonc}", "!**/node_modules/**", "!**/*.d.ts"],
+			"outputs": [],
+			"outputLogs": "new-only"
+		},
+		"qa:lint": {
+			"inputs": ["**/*.{js,mjs,cjs,ts,tsx}", "!**/node_modules/**"],
 			"outputs": [],
 			"outputLogs": "new-only"
 		},
 		"qa:yaml-lint": {
-			"inputs": [".github/workflows/**"],
+			"inputs": ["**/*.yml", "**/*.yaml", "!**/node_modules/**", "!**/pnpm-lock.yaml", ".yamllint"],
 			"outputs": [],
 			"outputLogs": "new-only"
 		},
@@ -129,7 +134,7 @@
 			"outputLogs": "new-only"
 		},
 		"qa:markdown-lint": {
-			"inputs": ["*.md", ".markdownlint-cli2.jsonc"],
+			"inputs": ["**/*.md", "!**/node_modules/**", "!**/dist/**", ".markdownlint-cli2.jsonc"],
 			"outputs": [],
 			"outputLogs": "new-only"
 		},
@@ -188,7 +193,7 @@
 		"qa:app-visual": {
 			"inputs": [
 				"packages/products/harvest-autofill/*.swift",
-				"packages/products/harvest-autofill/*.py",
+				"packages/products/harvest-autofill/**/*.py",
 				"packages/products/harvest-autofill/visual-baseline/**",
 				"packages/products/harvest-autofill/build.sh",
 				"packages/products/harvest-autofill/Info.plist",

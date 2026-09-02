@@ -10,9 +10,9 @@
 //                                            to stdout as the GitHub Release body
 //
 // Node builtins only, so it runs on a bare runner with no install step.
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const fail = (msg) => {
@@ -20,20 +20,20 @@ const fail = (msg) => {
 	process.exit(1);
 };
 
-const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
-const changelog = readFileSync(join(root, 'CHANGELOG.md'), 'utf8');
+const version = readFileSync(join(root, "VERSION"), "utf8").trim();
+const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
 
 // The topmost RELEASED heading (skipping "## [Unreleased]").
 const topReleased = [...changelog.matchAll(/^## \[([^\]]+)\]/gm)]
 	.map((m) => m[1])
-	.find((v) => v.toLowerCase() !== 'unreleased');
+	.find((v) => v.toLowerCase() !== "unreleased");
 
 const args = process.argv.slice(2);
 
-if (args.includes('--check')) {
+if (args.includes("--check")) {
 	if (topReleased !== version) {
 		fail(
-			`VERSION (${version}) != CHANGELOG.md top released heading (${topReleased ?? 'none'}) — ` +
+			`VERSION (${version}) != CHANGELOG.md top released heading (${topReleased ?? "none"}) — ` +
 				`bump both together, or add a "## [${version}] - <date>" section`,
 		);
 	}
@@ -41,13 +41,13 @@ if (args.includes('--check')) {
 	process.exit(0);
 }
 
-const notesIdx = args.indexOf('--notes');
+const notesIdx = args.indexOf("--notes");
 if (notesIdx !== -1) {
 	const tag = args[notesIdx + 1];
 	if (!tag) {
-		fail('usage: version.mjs --notes <tag>  (e.g. v2.32)');
+		fail("usage: version.mjs --notes <tag>  (e.g. v2.32)");
 	}
-	const tagVersion = tag.replace(/^v/, '');
+	const tagVersion = tag.replace(/^v/, "");
 	if (tagVersion !== version) {
 		fail(`tag ${tag} (${tagVersion}) != VERSION (${version})`);
 	}
@@ -56,7 +56,7 @@ if (notesIdx !== -1) {
 	}
 	const escaped = version.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 	const section = changelog.match(
-		new RegExp(`^## \\[${escaped}\\][^\\n]*\\n([\\s\\S]*?)(?=^## |^\\[)`, 'm'),
+		new RegExp(`^## \\[${escaped}\\][^\\n]*\\n([\\s\\S]*?)(?=^## |^\\[)`, "m"),
 	)?.[1];
 	const notes = section?.trim();
 	if (!notes) {
@@ -66,4 +66,4 @@ if (notesIdx !== -1) {
 	process.exit(0);
 }
 
-fail('usage: version.mjs --check | --notes <tag>');
+fail("usage: version.mjs --check | --notes <tag>");

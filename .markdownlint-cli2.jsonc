@@ -1,8 +1,23 @@
 {
-  "config": {
-    "MD013": false,
-    "MD033": false,
-    "MD041": false,
-    "MD024": { "siblings_only": true }
-  }
+	// Lint every authored markdown file, not just the repo root, with vendored/build/toolchain
+	// trees excluded.
+	"globs": ["**/*.md"],
+	"ignores": [
+		"**/node_modules/**",
+		"**/.pnpm/**",
+		"**/dist/**",
+		"**/build/**",
+		"**/.build/**",
+		"**/coverage/**",
+		"**/.astro/**",
+		"**/.turbo/**",
+		"**/.mise/**",
+		"**/.git/**",
+	],
+	"config": {
+		"MD013": false,
+		"MD033": false,
+		"MD041": false,
+		"MD024": { "siblings_only": true },
+	},
 }
