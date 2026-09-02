@@ -2,14 +2,14 @@ import { expect, test } from "@playwright/test";
 
 // reduced-motion disables the carousel's auto-advance, so step assertions are deterministic.
 // Set on the page before each test's own navigation (the page method is precisely typed,
-// unlike `test.use({ reducedMotion })` which TS7 can't resolve through Playwright's Fixtures).
+// unlike `test.use({ reducedMotion })` which TS7 can't resolve through Playwright's fixtures).
 test.beforeEach(async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });
 });
 
 // Every slide/panel stays in the DOM (only the active one is opaque + interactive), so assertions
-// target the [data-active] element rather than mere text presence — opacity:0 still counts as
-// "visible" to Playwright, so a text-presence check would pass without the switch happening. The
+// target the [data-active] element rather than mere text presence: Playwright treats opacity:0
+// elements as visible, so a text-presence check would pass without the switch happening. The
 // click is retried until the active slide/panel has actually switched, to ride out hydration.
 async function switchTo(
 	scope: import("@playwright/test").Locator,
@@ -63,9 +63,9 @@ test.describe("made to feel native", () => {
 		}
 	});
 
-	// The auto-advance must not run until the mockup is on screen (a carousel nobody's looking at
-	// shouldn't burn cycles), and must run once it is. Motion is allowed here so the timer is live.
-	test("carousel auto-advances only once scrolled into view", async ({ page }) => {
+	// The auto-advance must skip the timer while the mockup is off-screen and start it once the
+	// mockup is visible. Motion is allowed here so the timer is live.
+	test("carousel auto-advances only after it scrolls into view", async ({ page }) => {
 		await page.emulateMedia({ reducedMotion: "no-preference" });
 		await page.goto("./");
 		const carousel = page.locator("[data-onb-carousel]");
@@ -74,7 +74,7 @@ test.describe("made to feel native", () => {
 		await expect(step).toHaveText("Step 1 of 6");
 		await page.waitForTimeout(5600);
 		await expect(step).toHaveText("Step 1 of 6");
-		// Scroll it into view; now the interval elapses and it advances.
+		// Scroll it into view so the interval elapses and it advances.
 		await carousel.scrollIntoViewIfNeeded();
 		await expect(step).toHaveText("Step 2 of 6", { timeout: 7000 });
 	});

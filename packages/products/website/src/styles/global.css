@@ -15,7 +15,8 @@
 	--popover-foreground: oklch(14.5% 0 0deg);
 
 	/* Darkened from 64.6% so white text on the primary (buttons, the version slot) and the primary
-	   as link/tab text clear WCAG 2.2 AA 4.5:1; the bright hero gradient is large text and stays. */
+	   as link/tab text clear WCAG 2.2 AA 4.5:1. The bright hero gradient is large text, so it is
+	   exempt from that ratio and keeps its original lightness. */
 	--primary: oklch(55% 0.18 41.116deg);
 	--primary-foreground: oklch(98% 0.02 60deg);
 	--secondary: oklch(97% 0 0deg);
@@ -94,7 +95,7 @@
 		/* No grey flash when tapping links/buttons on iOS Safari. */
 		-webkit-tap-highlight-color: transparent;
 
-		/* Avoid orphans / ragged last lines in body copy (Safari 17.5+/Chrome). */
+		/* text-wrap: pretty so a paragraph's last line isn't left a single short word (Safari 17.5+/Chrome). */
 		text-wrap: pretty;
 	}
 
@@ -128,8 +129,8 @@
 }
 
 /* Scroll-reveal. Scoped to html.js so no-JS visitors always see content, and wrapped in
-   the no-preference query so prefers-reduced-motion disables it entirely. Only opacity and
-   transform animate — neither triggers layout, so this adds no CLS. */
+   @media (prefers-reduced-motion: no-preference) so reduced-motion users see no animation. Only
+   opacity and transform animate — neither triggers layout, so this adds no CLS. */
 @media (prefers-reduced-motion: no-preference) {
 	html.js [data-reveal],
 	html.js [data-stagger] > * {
@@ -167,11 +168,12 @@
 	}
 }
 
-/* Hero entrance. Runs on load (above the fold, so no IntersectionObserver). The LCP
-   element ([data-hero="lcp"], the headline) animates transform ONLY and never drops below
-   opacity 1 — Chromium excludes opacity:0 nodes from LCP but not transformed ones, so this
-   keeps LCP fast. Everything else may fade. Scoped to html.js and gated by reduced-motion;
-   transforms/opacity don't reflow, so CLS stays 0. */
+/* Hero entrance. Runs on load — it's above the fold, so no IntersectionObserver.
+   The LCP element ([data-hero="lcp"], the headline) animates transform ONLY and never drops
+   below opacity 1: Chromium excludes opacity:0 nodes from LCP but not transformed ones, so this
+   keeps LCP fast. Everything else may fade in.
+   Scoped to html.js and gated by reduced-motion. Transforms and opacity don't reflow, so CLS
+   stays 0. */
 @media (prefers-reduced-motion: no-preference) {
 	@keyframes haf-rise {
 		from {
@@ -273,11 +275,12 @@
 }
 
 /* Preferences mockup: the active-tab pill slides between tabs, and panels cross-fade the same
-   way the carousel steps do (stacked so the frame is the tallest panel's height). The pill is
-   positioned purely from the tab index (--tab), so it sits under the right tab even before the
-   script runs: the tab strip has px-3 (0.75rem) side padding, py-2 (0.5rem) top/bottom, gap-1
-   (0.25rem) between four equal tabs — so each tab is (100% - 2.25rem)/4 wide and one step over is
-   its own width plus the gap. */
+   way the carousel steps do (stacked so the frame is the tallest panel's height).
+   The pill position is derived from the tab index (--tab) alone, so it renders under the right
+   tab even before the script runs.
+   The geometry: the tab strip has px-3 (0.75rem) side padding, py-2 (0.5rem) top/bottom, and
+   gap-1 (0.25rem) between four equal tabs — so each tab is (100% - 2.25rem)/4 wide, and one step
+   over is its own width plus the gap. */
 [data-prefs-pill] {
 	position: absolute;
 	top: 0.5rem;

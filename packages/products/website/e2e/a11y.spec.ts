@@ -11,8 +11,8 @@ const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-prac
 async function scan(page: Page, label: string) {
 	// Settle the page so axe measures final colours, never a mid-animation frame: kill every
 	// animation/transition outright, and force the reveal/stagger/hero elements to their opaque
-	// end state. (reducedMotion already disables them, but a belt-and-suspenders style rules out
-	// any render-timing flake in the contrast numbers.)
+	// end state. (reducedMotion already disables them, but forcing the end state too removes any
+	// render-timing flake in the contrast numbers.)
 	await page.addStyleTag({
 		content: "*,*::before,*::after{animation:none!important;transition:none!important}",
 	});

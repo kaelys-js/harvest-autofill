@@ -110,8 +110,8 @@ export const FeaturesSchema = v.pipe(v.array(FeatureSchema), v.minLength(1));
 export const HowItWorksStepSchema = v.object({ n: NonEmpty, title: NonEmpty, body: NonEmpty });
 export const HowItWorksStepsSchema = v.pipe(v.array(HowItWorksStepSchema), v.minLength(1));
 
-// Onboarding wizard slides (OnboardingCarousel.tsx): copy plus a Lucide icon component that
-// mirrors the matching step's SF Symbol in the app.
+// Onboarding wizard slides (OnboardingCarousel.astro): copy plus an inline SVG path for the
+// step's icon, mirroring the matching step's SF Symbol in the app.
 export const OnboardingStepSchema = v.object({
 	title: NonEmpty,
 	body: NonEmpty,
@@ -156,9 +156,9 @@ export const DotMapSchema = v.record(
 	v.pipe(v.string(), v.minLength(1)),
 );
 
-// Props for the DownloadButton island. Astro serialises island props across the server→client
-// hydration boundary, so the size is validated on mount (falling back to "lg") rather than
-// trusted — and the prop type is inferred from this schema so there's a single source.
+// Props for the server-rendered DownloadButton. The size is validated at render time (falling
+// back to "lg") rather than trusted — and the prop type is inferred from this schema so there's
+// a single source.
 export const DownloadSizeSchema = v.picklist(["lg", "default"]);
 export type DownloadSize = v.InferOutput<typeof DownloadSizeSchema>;
 

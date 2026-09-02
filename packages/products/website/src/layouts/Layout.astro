@@ -11,8 +11,8 @@ import {
 
 interface Props {
 	// When a page passes its FAQ, a FAQPage node is added to the JSON-LD graph so the
-	// questions are machine-readable in the initial server-rendered HTML (the React
-	// accordion is a client island and wouldn't be seen by crawlers on its own).
+	// questions are machine-readable in the server-rendered HTML — the on-page accordion is a
+	// native <details> disclosure, so this JSON-LD is what makes the Q&A explicit to crawlers.
 	faq?: readonly FaqItem[];
 }
 const { faq } = Astro.props;
@@ -29,7 +29,7 @@ const repo: string = parseUrl("https://github.com/kaelys-js/harvest-autofill");
 
 // schema.org structured data (JSON-LD). No aggregateRating/review is included: the app has
 // no real reviews, and fabricating ratings for a rich-result star is against Google policy.
-// This is honest markup that helps search engines understand the app, source, and site.
+// The graph describes only what the app actually is.
 const structuredData = {
 	"@context": "https://schema.org",
 	"@graph": [
@@ -136,7 +136,7 @@ const csp: string = parseNonEmpty(
 
 		<script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
 
-		<!-- Set theme + mark JS on before paint to avoid a flash -->
+		<!-- Apply the stored theme and set the html.js class before first paint to avoid a flash of the wrong theme -->
 		<script is:inline>
 			const t = localStorage.getItem("theme");
 			if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches))

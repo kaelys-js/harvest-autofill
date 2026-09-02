@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { cn } from "@/lib/utils";
 
 describe("cn", () => {
-	it("joins class names", () => {
+	it("joins class names into a single space-separated string", () => {
 		expect(cn("a", "b")).toBe("a b");
 	});
-	it("drops falsy values", () => {
+	it("drops falsy values so callers can pass conditional class names", () => {
 		expect(cn("a", undefined, null, "", "c")).toBe("a c");
 	});
 	it("merges conflicting tailwind classes, last wins", () => {

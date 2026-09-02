@@ -2,7 +2,7 @@
 # Runs the website Playwright suite (E2E + visual regression) inside the pinned Playwright
 # container so browser rendering is byte-identical on every machine and in CI. Install + build
 # + test all happen in the container; an anonymous volume keeps the container's Linux
-# node_modules from overwriting the host's. Pass --update to (re)generate the -linux baselines.
+# node_modules from overwriting the host's. Pass --update to regenerate the -linux baselines.
 #
 #   ./run-web-e2e.sh            compare against committed baselines
 #   ./run-web-e2e.sh --update   regenerate baselines

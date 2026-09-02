@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { FaqItemsSchema, type FaqItem } from "@/lib/schemas";
 
-// Single source of truth for the FAQ: the on-page accordion (Faq.tsx) and the FAQPage
+// Single source of truth for the FAQ: the on-page accordion (Faq.astro) and the FAQPage
 // JSON-LD in Layout.astro both read this array. Validated at module load so a malformed
 // entry fails the build rather than shipping broken structured data.
 const items: FaqItem[] = [

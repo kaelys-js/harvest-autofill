@@ -3,9 +3,9 @@ import { expect, test } from "@playwright/test";
 // Visual regression on the hero, in both themes. Runs in CI, not skipped: the suite executes
 // inside the pinned Playwright Docker container (see the web-visual gate), so rendering is
 // byte-identical on every machine. The download button's version tag is baked in at build time
-// (the E2E build sets GITHUB_REF_NAME=v0.0.0), so the screenshot is deterministic with no runtime
-// fetch to stub. Animations disabled.
-test.describe("visual", () => {
+// (see DownloadButton.astro; the E2E build sets GITHUB_REF_NAME=v0.0.0), so the screenshot is
+// deterministic with no runtime fetch to stub. Animations disabled.
+test.describe("visual regression", () => {
 	test("hero — light", async ({ page }) => {
 		await page.goto("./");
 		await page.emulateMedia({ colorScheme: "light" });
@@ -51,8 +51,8 @@ test.describe("visual", () => {
 // only after all three islands have hydrated.
 test.describe("visual — native section", () => {
 	test.beforeEach(async ({ page }) => {
-		// reduced-motion pins the carousel to its first slide (page method is precisely typed,
-		// unlike `test.use({ reducedMotion })` which TS7 can't resolve through Playwright's Fixtures).
+		// reduced-motion pins the carousel to its first slide; set via the page method for the
+		// same TS7-vs-fixtures reason as native.spec.ts.
 		await page.emulateMedia({ reducedMotion: "reduce" });
 	});
 

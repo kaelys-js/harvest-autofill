@@ -45,7 +45,8 @@ describe("parseBasePath", () => {
 		expect(parseBasePath("/harvest-autofill")).toBe("/harvest-autofill");
 	});
 
-	it("rejects a full URL or an unrooted path — the values that would corrupt every link", () => {
+	// A full URL or an unrooted path would corrupt every link built from the base path.
+	it("rejects a full URL or an unrooted path", () => {
 		expect(ok(BasePathSchema, "https://example.com")).toBe(false);
 		expect(ok(BasePathSchema, "harvest-autofill")).toBe(false);
 		expect(ok(BasePathSchema, "/trailing/")).toBe(false);
@@ -141,8 +142,8 @@ describe("content constants", () => {
 		// icon is now a lucide name rendered by Icon.astro (a non-empty string), not a component.
 		expect(ok(FeaturesSchema, [{ icon: "calendar-check", title: "t", body: "b" }])).toBe(true);
 		expect(ok(FeaturesSchema, [{ icon: "calendar-check", title: "", body: "b" }])).toBe(false);
-		expect(ok(FeaturesSchema, [{ icon: "", title: "t", body: "b" }])).toBe(false); // blank icon
-		expect(ok(FeaturesSchema, [{ title: "t", body: "b" }])).toBe(false); // missing icon
+		expect(ok(FeaturesSchema, [{ icon: "", title: "t", body: "b" }])).toBe(false);
+		expect(ok(FeaturesSchema, [{ title: "t", body: "b" }])).toBe(false);
 		expect(ok(HowItWorksStepsSchema, [{ n: "1", title: "t", body: "b" }])).toBe(true);
 		expect(ok(HowItWorksStepsSchema, [{ n: "1", title: "t", body: " " }])).toBe(false);
 	});
@@ -150,7 +151,7 @@ describe("content constants", () => {
 	it("onboarding and preferences reject a missing icon and empty rows", () => {
 		// onboarding icon is now an inline SVG string, not a component.
 		expect(ok(OnboardingStepsSchema, [{ title: "t", body: "b", icon: "<path/>" }])).toBe(true);
-		expect(ok(OnboardingStepsSchema, [{ title: "t", body: "b" }])).toBe(false); // missing icon
+		expect(ok(OnboardingStepsSchema, [{ title: "t", body: "b" }])).toBe(false);
 		expect(
 			ok(PrefsTabsSchema, [{ name: "General", path: "M1 2", rows: [{ title: "t", body: "b" }] }]),
 		).toBe(true);
