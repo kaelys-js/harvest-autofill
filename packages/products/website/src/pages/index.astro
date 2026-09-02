@@ -24,18 +24,18 @@ const ZIP: string = parseUrl(`${REPO}/releases/latest/download/HarvestAutoFill.z
 const features = [
 	{
 		icon: "calendar-check",
-		title: "Files itself every Friday",
-		body: "Your finished week lands in Harvest automatically at 6pm, even if the app is closed. It never double-books, so you can forget it's there.",
+		title: "Logs itself every Friday",
+		body: "Your finished week lands in Harvest automatically every Friday at 6:00 PM, even if the app is closed. It never double-books, so you can forget it's there.",
 	},
 	{
 		icon: "git-commit-horizontal",
 		title: "Built from real work",
-		body: "Your commits, pushes, and meetings become hours on a timeline, credited to the project you were actually on.",
+		body: "Your commits, pushes, and meetings become hours on a timeline, credited to the right project.",
 	},
 	{
 		icon: "chart-pie",
 		title: "Split across projects",
-		body: "The time between things is credited to the right project, so each one shows real hours instead of a commit count.",
+		body: "Gaps between commits and meetings are credited to the right project, so each one shows real hours instead of a commit count.",
 	},
 	{
 		icon: "package-check",
@@ -50,7 +50,7 @@ const features = [
 	{
 		icon: "shield-check",
 		title: "Private by design",
-		body: "Everything stays on your Mac in a spot only the app can read. No account, no cloud, no tracking — and the source is open.",
+		body: "Everything stays on your Mac in a spot only the app can read. It talks only to the services you connect, and the source is open.",
 	},
 ];
 
@@ -62,13 +62,13 @@ const steps = [
 	},
 	{
 		n: "2",
-		title: "It watches your week",
-		body: "The menu-bar total recomputes in the background, turning your real work into a per-project, per-day breakdown.",
+		title: "It keeps your week up to date",
+		body: "The menu-bar total updates in the background, broken down by project and day.",
 	},
 	{
 		n: "3",
-		title: "Friday, it files",
-		body: "At 6pm the finished week is written to Harvest automatically. Or click “Log this week” whenever you like.",
+		title: "Friday, it logs",
+		body: "The finished week logs itself to Harvest — or click Log this week whenever you like.",
 	},
 ];
 
@@ -159,7 +159,7 @@ v.parse(HowItWorksStepsSchema, steps);
 					class="mt-5 max-w-xl text-lg text-muted-foreground text-pretty"
 				>
 					Harvest Auto-Fill turns the work you already did — commits, pushes, and meetings — into
-					hours, split across the right projects and filed for you every Friday.
+					hours, split across the right projects and logged for you every Friday.
 				</p>
 				<div data-hero style="--hd:200ms" class="mt-8 flex flex-wrap items-center gap-3">
 					<DownloadButton />
@@ -194,20 +194,15 @@ v.parse(HowItWorksStepsSchema, steps);
 				<span class="inline-flex items-center gap-2"
 					><GithubMark class="size-4 text-primary" /> Fully open source</span
 				>
-				<span class="inline-flex items-center gap-2"
-					><Icon name="plug-zap" class="size-4 text-primary" /> Nothing to install</span
-				>
 			</div>
 		</section>
 
 		<section id="features" class="mx-auto max-w-6xl px-5 py-20">
 			<div class="mx-auto max-w-2xl text-center">
 				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>
-					Everything, handled
+					From your work to filed hours
 				</h2>
-				<p class="mt-3 text-muted-foreground">
-					The tedious parts of timesheets, done for you — accurately.
-				</p>
+				<p class="mt-3 text-muted-foreground">The tedious parts of a timesheet, done for you.</p>
 			</div>
 			<div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" data-stagger>
 				{
@@ -248,9 +243,7 @@ v.parse(HowItWorksStepsSchema, steps);
 
 		<section id="native" class="mx-auto max-w-6xl px-5 py-20">
 			<div class="mx-auto max-w-2xl text-center">
-				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>
-					Made to feel native
-				</h2>
+				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>Native to macOS</h2>
 				<p class="mt-3 text-muted-foreground">
 					A setup you can step through, every preference tab, and a changelog after each update.
 				</p>
@@ -283,7 +276,7 @@ v.parse(HowItWorksStepsSchema, steps);
 					Get Harvest Auto-Fill
 				</h2>
 				<p class="mt-3 text-muted-foreground">
-					macOS 26 or newer, Apple Silicon. Free and open source.
+					Requires macOS 26 or newer on Apple Silicon. Free and open source.
 				</p>
 				<div class="mt-8 flex justify-center"><DownloadButton /></div>
 				<ol class="mx-auto mt-10 max-w-xl space-y-4 text-left">
@@ -313,8 +306,7 @@ v.parse(HowItWorksStepsSchema, steps);
 							>3</span
 						>
 						<p class="pt-1 text-sm text-muted-foreground">
-							A guided wizard walks you through connecting your accounts, then it lives in your menu
-							bar.
+							A guided setup connects your accounts, then it runs from your menu bar.
 						</p>
 					</li>
 				</ol>
@@ -323,13 +315,13 @@ v.parse(HowItWorksStepsSchema, steps);
 
 		<section id="faq" class="mx-auto max-w-3xl px-5 py-20">
 			<div class="text-center">
-				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>Questions</h2>
+				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>Common questions</h2>
 			</div>
 			<div class="mt-10"><Faq /></div>
 			<div
 				class="mt-12 flex flex-col items-center gap-4 rounded-2xl border border-border/60 bg-card p-8 text-center"
 			>
-				<h3 class="text-xl font-semibold">Ready to stop filling timesheets?</h3>
+				<h3 class="text-xl font-semibold">Let it fill your next timesheet.</h3>
 				<DownloadButton />
 			</div>
 		</section>
@@ -357,8 +349,7 @@ v.parse(HowItWorksStepsSchema, steps);
 						Harvest Auto-Fill
 					</div>
 					<p class="mt-4 text-sm leading-relaxed text-muted-foreground">
-						Your macOS timesheet, filled from the work you already did. Private, open source, and
-						free.
+						Your macOS timesheet, filled from the work you already did. Private and open source.
 					</p>
 					<div class="mt-6"><DownloadButton size="default" /></div>
 				</div>
@@ -423,7 +414,7 @@ v.parse(HowItWorksStepsSchema, steps);
 			<div
 				class="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row"
 			>
-				<span>© 2026 TTT Studios · Open Source</span>
+				<span>© 2026 TTT Studios · Open source</span>
 				<span>Not affiliated with or endorsed by Harvest.</span>
 			</div>
 		</div>

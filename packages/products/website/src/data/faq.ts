@@ -7,7 +7,7 @@ import { FaqItemsSchema, type FaqItem } from "@/lib/schemas";
 const items: FaqItem[] = [
 	{
 		q: "How does it know what I worked on?",
-		a: "It looks at the work you already leave behind — your commits, your pushes, and your calendar — and lays the week out on a timeline. The time between things becomes hours on the right project, so you never retype what you did.",
+		a: "It reads your commits, pushes, and calendar, then lays the week out on a timeline. Gaps between events become hours on the right project, so you never retype what you did.",
 	},
 	{
 		q: "Can I see the week before it's filed?",
@@ -19,19 +19,19 @@ const items: FaqItem[] = [
 	},
 	{
 		q: "Is there anything to set up?",
-		a: "Barely. Everything the app needs is already inside it. Connect your accounts in a short guided setup and you're done — usually a couple of minutes.",
+		a: "Barely. Everything the app needs is already inside it. Connect your accounts in a short guided setup and you're done.",
 	},
 	{
 		q: "What do I need to run it?",
 		a: "A Mac on macOS 26 or newer with Apple Silicon. You'll connect Harvest and GitHub; a calendar and Azure DevOps are optional extras.",
 	},
 	{
-		q: "Why does macOS ask before opening it the first time?",
-		a: "macOS double-checks anything downloaded from the web the first time it runs. Right-click the app in your Applications folder, choose Open, and confirm once — after that it opens like anything else.",
+		q: "Why does macOS warn me the first time I open it?",
+		a: "macOS quarantines apps downloaded from the web. Right-click the app in your Applications folder, choose Open, then click Open in the dialog — you'll only see it once.",
 	},
 	{
 		q: "How do updates work?",
-		a: "It keeps itself current. The app checks for a new version on launch and once a day, confirms it genuinely came from us before installing, and shows you a plain-language note about what changed.",
+		a: "The app checks for a new version on launch and once a day. It verifies each update's signature before installing, then shows a plain-language note about what changed.",
 	},
 	{
 		q: "What does it cost?",

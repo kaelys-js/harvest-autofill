@@ -4,10 +4,10 @@
 import * as v from "valibot";
 import { NotesSchema, parseVersion } from "@/lib/schemas";
 const notes: string[] = [
-	"Live preview now shows only the days you've actually worked.",
+	"Live preview now shows only the days you've worked.",
 	"Dark-mode polish across every window.",
 	"Faster account discovery on first run.",
-	"Reset back to onboarding anytime from Settings.",
+	"Reset to onboarding anytime from Settings.",
 ];
 v.parse(NotesSchema, notes); // build-time guard: no blank changelog lines
 
@@ -64,7 +64,7 @@ const versionLabel: string = version ? `Version ${version}` : "Latest release";
 	<div class="flex items-center justify-between border-t border-border/60 px-6 py-4">
 		<span class="text-xs font-medium text-primary">All releases on GitHub →</span>
 		<span class="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground"
-			>Got It</span
+			>Got it</span
 		>
 	</div>
 </div>

@@ -12,15 +12,15 @@ const TABS: Tab[] = [
 		path: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 13a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 13.6H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 3.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9",
 		rows: [
 			{
-				title: "Automatic recording",
-				body: "Files your week to Harvest every Friday at 6pm, even if the app is closed.",
+				title: "Automatic logging",
+				body: "Logs your week to Harvest every Friday at 6:00 PM, even if the app is closed.",
 			},
 			{
 				title: "Dock icon",
 				body: "Show a Dock icon in addition to the menu-bar item, or keep it menu-bar only.",
 			},
 			{
-				title: "How it works",
+				title: "Behind the scenes",
 				body: "Recomputes your week's hours in the background every 15 minutes.",
 			},
 		],
@@ -31,18 +31,18 @@ const TABS: Tab[] = [
 		rows: [
 			{
 				title: "Harvest",
-				body: "Where your hours are written — the one account the app truly needs.",
+				body: "Where your hours are written.",
 			},
 			{
-				title: "Calendar",
-				body: "Optional. Adds meeting hours from your calendar via a private script.",
+				title: "Calendar (optional)",
+				body: "Adds meeting hours from your calendar. Runs locally, never leaves your Mac.",
 			},
 			{
 				title: "GitHub",
-				body: "Reads your commits, pushes, and organizations to build the timeline.",
+				body: "Reads your commits and pushes to build the timeline.",
 			},
 			{
-				title: "Azure DevOps — optional",
+				title: "Azure DevOps (optional)",
 				body: "Connect it to count your Azure DevOps commits and pushes too.",
 			},
 		],
@@ -54,10 +54,10 @@ const TABS: Tab[] = [
 			{ title: "Your workday", body: "Work hours and the days counted as a normal week." },
 			{
 				title: "Timeline split",
-				body: "How commits, pushes, and meetings weight across your projects.",
+				body: "How commits, pushes, and meetings are weighted across your projects.",
 			},
 			{ title: "Holidays", body: "Your region's public holidays, skipped automatically." },
-			{ title: "Danger zone", body: "Delete everything and restart setup from scratch." },
+			{ title: "Reset app", body: "Delete everything and restart setup from scratch." },
 		],
 	},
 	{
@@ -66,7 +66,7 @@ const TABS: Tab[] = [
 		rows: [
 			{ title: "Version & updates", body: "See what's new and check for a signed update." },
 			{ title: "Website & source", body: "Open this site or the app's open-source repository." },
-			{ title: "Your privacy", body: "Everything stays on this Mac and is never sent anywhere." },
+			{ title: "Your privacy", body: "Stored on this Mac, in a spot only the app can read." },
 		],
 	},
 ];

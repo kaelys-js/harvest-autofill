@@ -45,7 +45,7 @@ test.describe("visual", () => {
 	});
 });
 
-// The "Made to feel native" section carries three interactive/static mockups (onboarding
+// The "Native to macOS" section carries three interactive/static mockups (onboarding
 // carousel, preferences, what's-new). reducedMotion pins the carousel to its first slide so the
 // section renders deterministically; each mockup's landmark text is awaited so the shot is taken
 // only after all three islands have hydrated.
@@ -59,7 +59,7 @@ test.describe("visual — native section", () => {
 	async function readyNative(page: import("@playwright/test").Page) {
 		await page.goto("./#native");
 		await expect(page.getByRole("heading", { name: "Welcome to Harvest Auto-Fill" })).toBeVisible();
-		await expect(page.getByText("Automatic recording")).toBeVisible();
+		await expect(page.getByText("Automatic logging")).toBeVisible();
 		await expect(page.getByRole("img", { name: /What's New window/ })).toBeVisible();
 	}
 
@@ -97,10 +97,10 @@ test.describe("visual — page sections", () => {
 	const SECTIONS: { name: string; selector: string; ready?: string }[] = [
 		{ name: "nav", selector: "header" },
 		{ name: "trust", selector: "#trust", ready: "Your data stays on your Mac" },
-		{ name: "features", selector: "#features", ready: "Files itself every Friday" },
-		{ name: "how", selector: "#how", ready: "Friday, it files" },
+		{ name: "features", selector: "#features", ready: "Logs itself every Friday" },
+		{ name: "how", selector: "#how", ready: "Friday, it logs" },
 		{ name: "download", selector: "#download", ready: "Get Harvest Auto-Fill" },
-		{ name: "faq", selector: "#faq", ready: "Questions" },
+		{ name: "faq", selector: "#faq", ready: "Common questions" },
 		{ name: "footer", selector: "footer" },
 	];
 

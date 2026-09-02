@@ -50,13 +50,13 @@ test.describe("made to feel native", () => {
 		await page.goto("./");
 		const prefs = page.locator("[data-prefs-mockup]");
 		await expect(prefs.locator("[data-prefs-panel][data-active]")).toContainText(
-			"Automatic recording",
+			"Automatic logging",
 		);
 		const tabs: [string, string][] = [
-			["Accounts", "Where your hours are written — the one account the app truly needs."],
-			["Allocation", "How commits, pushes, and meetings weight across your projects."],
-			["About", "Everything stays on this Mac and is never sent anywhere."],
-			["General", "Files your week to Harvest every Friday at 6pm, even if the app is closed."],
+			["Accounts", "Where your hours are written."],
+			["Allocation", "How commits, pushes, and meetings are weighted across your projects."],
+			["About", "Stored on this Mac, in a spot only the app can read."],
+			["General", "Logs your week to Harvest every Friday at 6:00 PM, even if the app is closed."],
 		];
 		for (const [tab, marker] of tabs) {
 			await switchTo(prefs, tab, "[data-prefs-panel]", marker);

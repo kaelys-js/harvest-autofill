@@ -22,7 +22,7 @@ const site: string = parseUrl(Astro.site?.href.replace(/\/$/, "") ?? "https://ka
 const canonical: string = parseUrl(`${site}${base}/`);
 const title: string = parseNonEmpty("Harvest Auto-Fill — your timesheet fills itself");
 const description: string = parseNonEmpty(
-	"A macOS menu-bar app that fills your Harvest timesheet from your commits, pushes, and meetings — hours filed for you every Friday. Private and open source.",
+	"A macOS menu-bar app that fills your Harvest timesheet from your commits, pushes, and meetings — logged for you every Friday. Private and open source.",
 );
 const ogImage: string = parseUrl(`${site}${base}/og.png`);
 const repo: string = parseUrl("https://github.com/kaelys-js/harvest-autofill");
