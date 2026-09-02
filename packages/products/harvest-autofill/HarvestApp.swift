@@ -149,9 +149,16 @@ let LBL: CGFloat = 190
 extension View {
     // Frosted content card: legible over the window's material, modern layered depth.
     // (True Liquid Glass is reserved for floating controls — see primaryProminent — per HIG.)
-    func glassBG(_ radius: CGFloat = 12) -> some View {
-        background(.thinMaterial, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(.primary.opacity(0.06)))
+    func glassBG(_ radius: CGFloat = 12, render: Bool = false) -> some View {
+        // In a static ImageRenderer capture, `.thinMaterial` rasterizes approximately and
+        // OS-version-dependently, so a screenshot of it drifts between the machine that generated
+        // the baseline and the CI runner. Fall back to the solid `Web.section` surface in render
+        // mode so the baseline is deterministic; the running app still gets the frosted material.
+        background(
+            render ? AnyShapeStyle(Web.section) : AnyShapeStyle(.thinMaterial),
+            in: RoundedRectangle(cornerRadius: radius, style: .continuous),
+        )
+        .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(.primary.opacity(0.06)))
     }
 
     func primaryProminent() -> some View {
@@ -1364,6 +1371,7 @@ struct OnbWorkday: View {
 
 struct OnbFinish: View {
     @ObservedObject var prefs: Prefs
+    var render = false
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             OnbHeader(lucide: LUCIDE_BADGE_CHECK, title: "Here's your week",
@@ -1384,7 +1392,7 @@ struct OnbFinish: View {
                             Divider().opacity(0.5)
                         }
                     }
-                }.padding(.vertical, 4).padding(.horizontal, 14).glassBG(12)
+                }.padding(.vertical, 4).padding(.horizontal, 14).glassBG(12, render: render)
             } else {
                 Text("No preview yet — that's fine. Once you've committed or had meetings this week, the menu-bar total fills in. You can finish now.")
                     .font(.system(size: 12.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -1430,7 +1438,7 @@ struct OnboardingView: View {
         case 2: OnbDiscover(prefs: prefs)
         case 3: OnbSources(prefs: prefs)
         case 4: OnbWorkday(prefs: prefs)
-        default: OnbFinish(prefs: prefs)
+        default: OnbFinish(prefs: prefs, render: render)
         }
     }
 
