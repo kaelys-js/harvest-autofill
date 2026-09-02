@@ -12,6 +12,14 @@ Release notes. Every version is also a downloadable build on the
 
 ## [Unreleased]
 
+## [2.35] - 2026-09-02
+
+- Polished the wording across the whole app to one voice: a single verb for filing your week
+  ("log"), clearer onboarding and Settings copy, a consistent privacy statement, plain-language
+  update and error messages, and one time format. No behaviour changes.
+- Brought the marketing site's copy in line with the app, and tidied the documentation and
+  in-code comments behind the scenes.
+
 ## [2.34] - 2026-09-01
 
 - A housekeeping release with no changes to the app itself: the project's documentation and release process were refreshed behind the scenes. The app behaves exactly as 2.33.
