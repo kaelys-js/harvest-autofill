@@ -80,6 +80,37 @@ test.describe("visual — native section", () => {
 	});
 });
 
+// The #demo section is the app's "This week" window filling itself. reduced-motion shows the
+// finished week (all rows in), so the snapshot is deterministic regardless of the fill timer.
+test.describe("visual — demo section", () => {
+	test.beforeEach(async ({ page }) => {
+		await page.emulateMedia({ reducedMotion: "reduce" });
+	});
+
+	async function readyDemo(page: import("@playwright/test").Page) {
+		await page.goto("./#demo");
+		await expect(page.getByRole("heading", { name: "See it fill a week" })).toBeVisible();
+		// Under reduced-motion the finished week is in view before the shot is taken.
+		await expect(page.locator("[data-demo-summary]")).toHaveText(/36h across 4 days/);
+	}
+
+	test("demo section — light", async ({ page }) => {
+		await readyDemo(page);
+		await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+		await expect(page.locator("#demo")).toHaveScreenshot("demo-light.png", {
+			animations: "disabled",
+		});
+	});
+
+	test("demo section — dark", async ({ page }) => {
+		await readyDemo(page);
+		await page.evaluate(() => document.documentElement.classList.add("dark"));
+		await expect(page.locator("#demo")).toHaveScreenshot("demo-dark.png", {
+			animations: "disabled",
+		});
+	});
+});
+
 // The rest of the landing page — the sections without their own snapshot until now: the
 // feature grid, the "how it works" steps, the download block (its new numbered steps), the
 // FAQ accordion, and the footer. Each is captured in both themes so a colour or layout

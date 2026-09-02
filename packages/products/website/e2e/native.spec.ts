@@ -63,6 +63,44 @@ test.describe("made to feel native", () => {
 		}
 	});
 
+	// The demo is the app's "This week" window (in #demo) filling itself day by day. Days carry
+	// an .is-shown class as they fill in, so assertions count that class rather than visibility.
+	test("demo: reduced-motion shows the finished week and does not autoplay", async ({ page }) => {
+		await page.goto("./#demo"); // beforeEach emulates reduced-motion
+		const demo = page.locator("[data-demo]");
+		await expect(demo.locator("[data-demo-summary]")).toHaveText(/36h across 4 days/);
+		await expect(demo.locator("[data-demo-day].is-shown")).toHaveCount(5);
+		await expect(demo.locator("[data-demo-toggle]")).toHaveAttribute("aria-label", "Play demo");
+	});
+
+	test("demo: the Play/Pause control stops and restarts the fill", async ({ page }) => {
+		// Motion allowed so the week autoplays; the control must be able to stop it (WCAG 2.2.2).
+		await page.emulateMedia({ reducedMotion: "no-preference" });
+		await page.goto("./#demo");
+		const toggle = page.locator("[data-demo] [data-demo-toggle]");
+		await expect(toggle).toHaveAttribute("aria-label", "Pause demo");
+		await toggle.click();
+		await expect(toggle).toHaveAttribute("aria-label", "Play demo");
+		await toggle.click();
+		await expect(toggle).toHaveAttribute("aria-label", "Pause demo");
+	});
+
+	test("demo starts filling the week only after it scrolls into view", async ({ page }) => {
+		await page.emulateMedia({ reducedMotion: "no-preference" });
+		// A short viewport keeps #demo below the fold on load so the lazy-start gate is exercised.
+		await page.setViewportSize({ width: 1280, height: 600 });
+		await page.goto("./");
+		const demo = page.locator("[data-demo]");
+		const shown = demo.locator("[data-demo-day].is-shown");
+		await expect(shown).toHaveCount(0);
+		await page.waitForTimeout(1600);
+		await expect(shown).toHaveCount(0); // still empty while below the fold
+		await demo.scrollIntoViewIfNeeded();
+		// Once visible, the week fills in day by day up to all five rows.
+		await expect.poll(() => shown.count(), { timeout: 6000 }).toBeGreaterThan(0);
+		await expect.poll(() => shown.count(), { timeout: 12000 }).toBe(5);
+	});
+
 	// The auto-advance must skip the timer while the mockup is off-screen and start it once the
 	// mockup is visible. Motion is allowed here so the timer is live.
 	test("carousel auto-advances only after it scrolls into view", async ({ page }) => {

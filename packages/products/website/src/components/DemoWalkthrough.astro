@@ -1,0 +1,348 @@
+---
+// The demo IS the app's "This week" window (the same pixel-matched recreation as WindowMockup),
+// playing the product's one promise: your timesheet fills itself. On a timer the week fills in
+// day by day — each day's rows appear, the running total climbs, and a caption narrates what was
+// added — then it holds on the finished week and loops. No framework, no recorded footage, all
+// data generic. Autoplays only while on screen and only when motion is allowed; a visible
+// Play/Pause control stops it (WCAG 2.2.2); under reduced-motion it shows the finished week with
+// no animation. A few lines of vanilla JS drive it.
+import * as v from "valibot";
+import { MockupDaysSchema, DotMapSchema } from "@/lib/schemas";
+
+const dot: Record<string, string> = {
+	Website: "bg-[#f2762a]",
+	"Mobile App": "bg-[#22afa0]",
+	Internal: "bg-[#6b78f6]",
+	Design: "bg-[#4dba6b]",
+};
+v.parse(DotMapSchema, dot); // build-time guard: known project keys, non-empty colour classes
+
+type Row = { span: string; project: keyof typeof dot; task: string; hours: string };
+const days: { name: string; total: string; note?: string; rows: Row[] }[] = [
+	{
+		name: "Mon Aug 31",
+		total: "9h",
+		rows: [
+			{ span: "9:00 AM–1:30 PM", project: "Website", task: "Development", hours: "4.5h" },
+			{ span: "1:30 PM–5:00 PM", project: "Design", task: "Development", hours: "3.5h" },
+			{ span: "11:00 AM–11:30 AM", project: "Website", task: "Client meeting", hours: "1h" },
+		],
+	},
+	{
+		name: "Tue Sep 1",
+		total: "9h",
+		rows: [{ span: "9:00 AM–6:00 PM", project: "Mobile App", task: "Development", hours: "9h" }],
+	},
+	{ name: "Wed Sep 2", total: "", note: "Public holiday — skipped", rows: [] },
+	{
+		name: "Thu Sep 3",
+		total: "9h",
+		rows: [
+			{ span: "9:00 AM–5:00 PM", project: "Internal", task: "Development", hours: "8h" },
+			{ span: "3:00 PM–4:00 PM", project: "Internal", task: "Internal meeting", hours: "1h" },
+		],
+	},
+	{
+		name: "Fri Sep 4",
+		total: "9h",
+		rows: [{ span: "9:00 AM–6:00 PM", project: "Website", task: "Development", hours: "9h" }],
+	},
+];
+
+// Same build-time guard WindowMockup uses: known project keys, valid time ranges, "Nh" hours.
+v.parse(MockupDaysSchema, days);
+---
+
+<div data-demo class="mx-auto grid w-full max-w-md gap-4">
+	<!-- The app's This Week window, pixel-matched to WindowMockup. Its rows fill in on a timer.
+	     min-w-0 lets the window shrink to the grid track on narrow screens instead of forcing
+	     horizontal overflow (the day rows' natural width otherwise pushes past a phone viewport). -->
+	<div
+		class="min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-2xl shadow-black/10 ring-1 ring-black/5 dark:shadow-black/40"
+	>
+		<div class="flex items-center gap-3 border-b border-border/60 px-5 py-4">
+			<div
+				class="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-[#f6903a] to-[#e2541f] shadow-sm"
+			>
+				<svg
+					viewBox="0 0 24 24"
+					class="size-6 text-white"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg
+				>
+			</div>
+			<div class="leading-tight">
+				<div class="flex items-center gap-1.5 text-sm font-semibold text-primary">
+					<span class="size-2 rounded-full bg-primary"></span> This week, so far
+				</div>
+				<div class="text-xs text-muted-foreground" data-demo-summary>
+					36h across 4 days · Aug 31–Sep 4
+				</div>
+			</div>
+		</div>
+
+		<div class="divide-y divide-border/50 px-5">
+			{
+				days.map((d, n) => (
+					<div class="py-3" data-demo-day={n}>
+						<div class="flex items-center justify-between">
+							<span class="text-[13px] font-semibold">{d.name}</span>
+							{d.total && (
+								<span class="text-xs font-semibold text-muted-foreground tabular-nums">
+									{d.total}
+								</span>
+							)}
+						</div>
+						{d.note ? (
+							<div class="pt-0.5 text-xs text-muted-foreground">{d.note}</div>
+						) : (
+							d.rows.map((r) => (
+								<div class="flex items-center gap-2.5 py-1 text-[13px]">
+									<span class={`size-1.5 shrink-0 rounded-full ${dot[r.project]}`} />
+									<span class="w-32 shrink-0 font-mono text-[11px] text-muted-foreground">
+										{r.span}
+									</span>
+									<span class="shrink-0 font-medium">{r.project}</span>
+									<span class="min-w-0 truncate text-muted-foreground">{r.task}</span>
+									<span class="ml-auto font-semibold tabular-nums">{r.hours}</span>
+								</div>
+							))
+						)}
+					</div>
+				))
+			}
+		</div>
+
+		<div class="flex items-center justify-between border-t border-border/60 px-5 py-3">
+			<span class="text-xs text-muted-foreground">Logs to Harvest every Friday</span>
+			<span class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+				>Log this week</span
+			>
+		</div>
+	</div>
+
+	<!-- Player bar: caption (the narration / text alternative) + progress + Play/Pause and Replay. -->
+	<div
+		class="flex min-w-0 items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-2.5 shadow-sm"
+	>
+		<button
+			type="button"
+			data-demo-toggle
+			aria-label="Pause demo"
+			class="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+		>
+			<svg
+				data-demo-icon-pause
+				viewBox="0 0 24 24"
+				class="size-4"
+				fill="currentColor"
+				aria-hidden="true"
+			>
+				<rect x="6" y="5" width="4" height="14" rx="1"></rect><rect
+					x="14"
+					y="5"
+					width="4"
+					height="14"
+					rx="1"></rect>
+			</svg>
+			<svg
+				data-demo-icon-play
+				viewBox="0 0 24 24"
+				class="hidden size-4"
+				fill="currentColor"
+				aria-hidden="true"
+			>
+				<path d="M8 5v14l11-7z"></path>
+			</svg>
+		</button>
+		<p
+			data-demo-caption
+			aria-live="polite"
+			class="min-w-0 flex-1 truncate text-xs text-muted-foreground"
+		>
+			Your week fills itself as you work.
+		</p>
+		<div class="flex shrink-0 gap-1" aria-hidden="true">
+			{
+				days.map((_, n) => (
+					<span data-demo-pip={n} class="h-1 w-4 rounded-full bg-border transition-colors" />
+				))
+			}
+		</div>
+		<button
+			type="button"
+			data-demo-replay
+			aria-label="Replay demo from the start"
+			class="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+		>
+			<svg
+				viewBox="0 0 24 24"
+				class="size-4"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8"></path><path d="M3 3v5h5"></path>
+			</svg>
+		</button>
+	</div>
+</div>
+
+<style>
+	/* Days start hidden and pop in as the week fills. Gated on html.js so no-JS visitors (and the
+	   pre-hydration paint) see the finished week, never a blank one. Motion only when allowed. */
+	html.js [data-demo-day] {
+		opacity: 0;
+	}
+
+	html.js [data-demo-day].is-shown {
+		opacity: 1;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		html.js [data-demo-day] {
+			transform: translateY(6px);
+			transition:
+				opacity 0.45s ease,
+				transform 0.45s ease;
+		}
+
+		html.js [data-demo-day].is-shown {
+			transform: none;
+		}
+	}
+</style>
+
+<script>
+	const DAY_MS = 1300; // dwell per day as the week fills
+	const HOLD_MS = 2000; // pause on the finished week before looping
+
+	for (const root of document.querySelectorAll<HTMLElement>("[data-demo]")) {
+		const dayEls = [...root.querySelectorAll<HTMLElement>("[data-demo-day]")];
+		const pips = [...root.querySelectorAll<HTMLElement>("[data-demo-pip]")];
+		const summary = root.querySelector<HTMLElement>("[data-demo-summary]");
+		const caption = root.querySelector<HTMLElement>("[data-demo-caption]");
+		const toggle = root.querySelector<HTMLButtonElement>("[data-demo-toggle]");
+		const replay = root.querySelector<HTMLButtonElement>("[data-demo-replay]");
+		const iconPlay = root.querySelector<HTMLElement>("[data-demo-icon-play]");
+		const iconPause = root.querySelector<HTMLElement>("[data-demo-icon-pause]");
+		const N = dayEls.length;
+		if (!N || !toggle) continue;
+
+		const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+		// Each day's hours are read from its row; the captions below narrate each day the fill reaches.
+		const hoursFor = (el: HTMLElement) =>
+			Number(el.querySelector(".tabular-nums")?.textContent?.replace("h", "") ?? "0");
+		const captions = [
+			"Monday — 9h on Website and Design",
+			"Tuesday — 9h on Mobile App",
+			"Wednesday — public holiday, skipped",
+			"Thursday — 9h on Internal work",
+			"Friday — 9h on Website, then it logs to Harvest",
+			"Your week, filled and logged to Harvest.",
+		];
+
+		// r = number of days revealed (0..N). Under reduced-motion, start on the finished week.
+		let r = reduced ? N : 0;
+		let playing = !reduced;
+		let inView = false;
+		let hovered = false;
+		let timer: ReturnType<typeof setTimeout> | undefined;
+
+		const render = () => {
+			let cum = 0;
+			let workDays = 0;
+			dayEls.forEach((el, n) => {
+				const shown = n < r;
+				el.classList.toggle("is-shown", shown);
+				if (shown) {
+					const h = hoursFor(el);
+					cum += h;
+					if (h > 0) workDays += 1;
+				}
+			});
+			pips.forEach((p, n) => {
+				const on = n < r;
+				p.classList.toggle("bg-primary", on);
+				p.classList.toggle("bg-border", !on);
+			});
+			if (summary) {
+				summary.textContent =
+					r === 0
+						? "Filling from your work…"
+						: `${cum % 1 === 0 ? cum : cum.toFixed(1)}h across ${workDays} ${workDays === 1 ? "day" : "days"} · Aug 31–Sep 4`;
+			}
+			if (caption)
+				caption.textContent =
+					r === 0 ? "Your week fills itself as you work." : (captions[r - 1] ?? captions[N] ?? "");
+			toggle.setAttribute("aria-label", playing ? "Pause demo" : "Play demo");
+			iconPause?.classList.toggle("hidden", !playing);
+			iconPlay?.classList.toggle("hidden", playing);
+		};
+
+		const schedule = () => {
+			if (timer) clearTimeout(timer);
+			if (!playing || !inView || hovered || reduced) return;
+			// Fill the next day, or — once the week is complete — hold, then loop back to empty.
+			if (r < N)
+				timer = setTimeout(() => {
+					r += 1;
+					render();
+					schedule();
+				}, DAY_MS);
+			else
+				timer = setTimeout(() => {
+					r = 0;
+					render();
+					schedule();
+				}, HOLD_MS);
+		};
+
+		toggle.addEventListener("click", () => {
+			// Under reduced-motion there is nothing to animate; the button is inert but honest.
+			if (reduced) return;
+			playing = !playing;
+			render();
+			schedule();
+		});
+		replay?.addEventListener("click", () => {
+			if (reduced) return;
+			r = 0;
+			playing = true;
+			render();
+			schedule();
+		});
+
+		const pause = () => {
+			hovered = true;
+			if (timer) clearTimeout(timer);
+		};
+		const resume = () => {
+			hovered = false;
+			schedule();
+		};
+		root.addEventListener("mouseenter", pause);
+		root.addEventListener("mouseleave", resume);
+		root.addEventListener("focusin", pause);
+		root.addEventListener("focusout", resume);
+
+		// Don't start filling until the window scrolls into view; stop when it leaves.
+		const io = new IntersectionObserver(
+			(entries) => {
+				inView = entries[0].isIntersecting;
+				if (inView) schedule();
+				else if (timer) clearTimeout(timer);
+			},
+			{ threshold: 0.4 },
+		);
+		io.observe(root);
+
+		render();
+	}
+</script>

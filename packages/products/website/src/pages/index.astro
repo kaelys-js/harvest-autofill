@@ -2,6 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import WindowMockup from "@/components/WindowMockup.astro";
 import OnboardingCarousel from "@/components/OnboardingCarousel.astro";
+import DemoWalkthrough from "@/components/DemoWalkthrough.astro";
 import PreferencesMockup from "@/components/PreferencesMockup.astro";
 import WhatsNewMockup from "@/components/WhatsNewMockup.astro";
 import GithubMark from "@/components/GithubMark.astro";
@@ -116,6 +117,7 @@ v.parse(HowItWorksStepsSchema, steps);
 				Harvest Auto-Fill
 			</a>
 			<div class="ml-auto hidden items-center gap-7 text-sm text-muted-foreground md:flex">
+				<a href="#demo" class="transition-colors hover:text-foreground">Demo</a>
 				<a href="#features" class="transition-colors hover:text-foreground">Features</a>
 				<a href="#how" class="transition-colors hover:text-foreground">How it works</a>
 				<a href="#faq" class="transition-colors hover:text-foreground">FAQ</a>
@@ -195,6 +197,19 @@ v.parse(HowItWorksStepsSchema, steps);
 					><GithubMark class="size-4 text-primary" /> Fully open source</span
 				>
 			</div>
+		</section>
+
+		<section id="demo" class="mx-auto max-w-6xl px-5 py-20">
+			<div class="mx-auto max-w-2xl text-center">
+				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl" data-reveal>
+					See it fill a week
+				</h2>
+				<p class="mt-3 text-muted-foreground">
+					The same window you'll use, filling itself day by day from your commits, pushes, and
+					meetings — then logging to Harvest.
+				</p>
+			</div>
+			<div class="mt-12" data-reveal><DemoWalkthrough /></div>
 		</section>
 
 		<section id="features" class="mx-auto max-w-6xl px-5 py-20">
@@ -357,6 +372,7 @@ v.parse(HowItWorksStepsSchema, steps);
 				<nav aria-label="Product">
 					<h2 class="text-sm font-semibold">Product</h2>
 					<ul class="mt-4 space-y-3 text-sm text-muted-foreground">
+						<li><a href="#demo" class="transition-colors hover:text-foreground">Demo</a></li>
 						<li>
 							<a href="#features" class="transition-colors hover:text-foreground">Features</a>
 						</li>
