@@ -62,7 +62,6 @@ def diff_fraction(a, b):
     bbox = ImageChops.difference(ia, ib).getbbox()
     if not bbox:
         return 0.0
-    # fraction of pixels that differ at all
     diff = ImageChops.difference(ia, ib).convert("L")
     changed = sum(1 for p in diff.getdata() if p > 8)
     return changed / (ia.width * ia.height)

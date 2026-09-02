@@ -93,7 +93,6 @@ final class WeekModel: ObservableObject {
         return hrs(s.actualTotal) // completed hours only — today's projection isn't in the label
     }
 
-    // Human menu header: a plain-language headline + a compact detail line.
     var menuHeadline: String {
         guard let s = summary else { return "Adding up this week…" }
         switch s.state {

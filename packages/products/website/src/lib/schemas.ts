@@ -100,7 +100,6 @@ const SvgPathSchema = v.pipe(
 	v.regex(/^[MmLlHhVvCcSsQqTtAaZz0-9\s.,-]+$/u, "expected SVG path data"),
 );
 
-// Feature cards (index.astro): a Lucide icon component plus copy.
 export const FeatureSchema = v.object({
 	icon: NonEmpty, // lucide icon name rendered by Icon.astro
 	title: NonEmpty,
@@ -108,7 +107,6 @@ export const FeatureSchema = v.object({
 });
 export const FeaturesSchema = v.pipe(v.array(FeatureSchema), v.minLength(1));
 
-// "How it works" numbered steps (index.astro).
 export const HowItWorksStepSchema = v.object({ n: NonEmpty, title: NonEmpty, body: NonEmpty });
 export const HowItWorksStepsSchema = v.pipe(v.array(HowItWorksStepSchema), v.minLength(1));
 
@@ -121,7 +119,6 @@ export const OnboardingStepSchema = v.object({
 });
 export const OnboardingStepsSchema = v.pipe(v.array(OnboardingStepSchema), v.minLength(1));
 
-// Preferences tabs and their rows (PreferencesMockup.tsx).
 export const PrefsRowSchema = v.object({ title: NonEmpty, body: NonEmpty });
 export const PrefsTabSchema = v.object({
 	name: NonEmpty,
@@ -130,7 +127,6 @@ export const PrefsTabSchema = v.object({
 });
 export const PrefsTabsSchema = v.pipe(v.array(PrefsTabSchema), v.minLength(1));
 
-// "What's New" changelog notes (WhatsNewMockup.astro).
 export const NotesSchema = v.pipe(v.array(NonEmpty), v.minLength(1));
 
 // The "This week" window mockup (WindowMockup.astro). The project must be one of the known

@@ -13,7 +13,6 @@ export function parseTheme(input: unknown): Theme | null {
 	return result.success ? result.output : null;
 }
 
-// Read the stored theme, validated — returns null when nothing valid is stored.
 export function readStoredTheme(): Theme | null {
 	try {
 		return parseTheme(localStorage.getItem(THEME_KEY));
@@ -22,7 +21,6 @@ export function readStoredTheme(): Theme | null {
 	}
 }
 
-// Persist a theme, validated — a bad value is dropped instead of being written.
 export function writeTheme(theme: unknown): void {
 	const valid = parseTheme(theme);
 	if (valid) localStorage.setItem(THEME_KEY, valid);

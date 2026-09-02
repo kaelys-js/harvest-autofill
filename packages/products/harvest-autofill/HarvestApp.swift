@@ -5,7 +5,6 @@ import SwiftUI
 // HarvestApp — SwiftUI views, the app delegate, and the @main entry point.
 // Logic lives in HarvestCore.swift (same module in the app build).
 
-// ============================================================ Paths
 struct EntryRow: View {
     let e: Entry
     var body: some View {
@@ -61,7 +60,6 @@ struct IssueRow: View {
     }
 }
 
-// ============================================================ Main window
 struct MainWindow: View {
     @ObservedObject var model: WeekModel
     var render = false
@@ -147,7 +145,6 @@ struct MainWindow: View {
     }
 }
 
-// ============================================================ Preferences
 let LBL: CGFloat = 190
 extension View {
     // Frosted content card: legible over the window's material, modern layered depth.
@@ -373,7 +370,6 @@ struct MultiSelect: View {
     }
 }
 
-// A single-choice dropdown (e.g. the Azure DevOps project), populated from a discovered list.
 struct SingleSelect: View {
     let label: String; let options: [String]; @Binding var value: String
     var placeholder = "Select"; var valid = true; var help = ""
@@ -1052,7 +1048,6 @@ struct PreferencesView: View {
     }
 }
 
-// ============================================================ Onboarding (first-run wizard)
 let ONB_STEPS = ["Welcome", "Harvest", "Discover", "Sources", "Workday", "Finish"]
 
 struct OnbDots: View {
@@ -1067,7 +1062,6 @@ struct OnbDots: View {
     }
 }
 
-// A single "we scan this" line in the Discover step.
 struct ScanBullet: View {
     let text: String
     var body: some View {
@@ -1479,7 +1473,6 @@ struct OnboardingView: View {
     }
 }
 
-// ============================================================ Menu
 struct MenuContent: View {
     @ObservedObject var model: WeekModel
     @ObservedObject var updater = Updater.shared
@@ -1609,7 +1602,6 @@ struct VerifyView: View {
     }
 }
 
-// ============================================================ App
 extension Notification.Name {
     static let openMainWindow = Notification.Name("HarvestOpenMainWindow")
     static let openSettings = Notification.Name("HarvestOpenSettings")
@@ -1688,7 +1680,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
-        // render mode for verification
         if let i = args.firstIndex(of: "--render"), i + 2 < args.count {
             let which = args[i + 1], out = args[i + 2]
             let model = WeekModel()
@@ -1778,7 +1769,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 }
             }
         }
-        // wake -> refresh
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { (NSApp.delegate as? AppDelegate)?.model?.refresh() }
         }

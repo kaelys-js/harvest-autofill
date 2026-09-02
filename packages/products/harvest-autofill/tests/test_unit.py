@@ -6,7 +6,6 @@ import datetime as dt
 import pytest
 
 
-# ---------- time / format helpers ----------
 @pytest.mark.parametrize(
     "s,expected",
     [("9:00am", 540), ("5:00pm", 1020), ("12:00pm", 720), ("12:30am", 30), ("1:15pm", 795)],
@@ -93,7 +92,6 @@ def test_summary_json_no_projection_when_finalized(hw):
     assert all(d.get("projected") is False for d in out["days"])
 
 
-# ---------- split_props ----------
 def test_split_props_is_proportional(hw):
     assert hw.split_props(8, {"Website": 60, "Mobile App": 20}) == {"Website": 6.0, "Mobile App": 2.0}
 
@@ -111,7 +109,6 @@ def test_split_props_all_zero_props_falls_back_to_work(hw):
     assert hw.split_props(8, {"Website": 0}) == {"Work": 8}
 
 
-# ---------- classification ----------
 @pytest.mark.parametrize(
     "title,expected",
     [("Website standup", "Website"), ("Mobile sync", "Mobile App"), ("Design chat", "Design"), ("Random", "Internal")],
@@ -153,7 +150,6 @@ def test_gh_mine_by_login_or_email_hint(hw):
     assert hw.gh_mine({"author": {"user": {"login": "other"}, "email": "a@b"}}, "testuser", ["hint"]) is False
 
 
-# ---------- timeline attribution ----------
 def test_attribute_credits_lead_in_plus_capped_gap(hw, tz):
     events = [
         (dt.datetime(2026, 8, 24, 10, 0, tzinfo=tz), "Website"),
@@ -180,7 +176,6 @@ def test_attribute_respects_half_hour_work_window(hw, tz):
     assert out == {"Website": 45}  # the 9:45 commit's lead-in only
 
 
-# ---------- calendar classification against the fixture ----------
 def test_classify_calendar_splits_meetings_ooo_and_social(hw, cfg, tz):
     import mockapi
 
@@ -200,7 +195,6 @@ def test_classify_calendar_splits_meetings_ooo_and_social(hw, cfg, tz):
     assert social_h[dt.date(2026, 8, 28)] == 9.0  # 9h offsite
 
 
-# ---------- misc ----------
 def test_week_label(hw):
     assert hw.week_label(dt.date(2026, 8, 24), dt.date(2026, 8, 24)) == "Aug 24"
     assert hw.week_label(dt.date(2026, 8, 24), dt.date(2026, 8, 28)) == "Aug 24–28"

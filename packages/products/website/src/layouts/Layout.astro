@@ -112,13 +112,11 @@ const csp: string = parseNonEmpty(
 		<link rel="canonical" href={canonical} />
 		<link rel="sitemap" href={`${base}/sitemap-index.xml`} />
 
-		<!-- Icons -->
 		<link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
 		<link rel="icon" href={`${base}/favicon-32.png`} sizes="32x32" type="image/png" />
 		<link rel="apple-touch-icon" href={`${base}/apple-touch-icon.png`} />
 		<link rel="manifest" href={`${base}/manifest.webmanifest`} />
 
-		<!-- Open Graph -->
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="Harvest Auto-Fill" />
 		<meta property="og:url" content={canonical} />
@@ -130,14 +128,12 @@ const csp: string = parseNonEmpty(
 		<meta property="og:image:alt" content="Harvest Auto-Fill — your timesheet fills itself" />
 		<meta property="og:locale" content="en_US" />
 
-		<!-- Twitter -->
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
 		<meta name="twitter:image" content={ogImage} />
 		<meta name="twitter:image:alt" content="Harvest Auto-Fill — your timesheet fills itself" />
 
-		<!-- Structured data (schema.org JSON-LD) -->
 		<script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
 
 		<!-- Set theme + mark JS on before paint to avoid a flash -->

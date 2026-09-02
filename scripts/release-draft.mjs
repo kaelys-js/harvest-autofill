@@ -114,7 +114,6 @@ if (!write) {
 	process.exit(0);
 }
 
-// Insert under [Unreleased] and maintain the link-reference definitions.
 const changelogPath = join(root, "CHANGELOG.md");
 let changelog = readFileSync(changelogPath, "utf8");
 if (!/## \[Unreleased\]\n/.test(changelog)) {

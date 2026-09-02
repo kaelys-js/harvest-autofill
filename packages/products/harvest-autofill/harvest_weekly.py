@@ -39,7 +39,6 @@ HARVEST_API_BASE = os.environ.get("HARVEST_API_BASE", "https://api.harvestapp.co
 ADO_API_BASE = os.environ.get("ADO_API_BASE", "https://dev.azure.com")
 
 
-# ---------- pure helpers ----------
 def parse_iso(s):
     return datetime.datetime.fromisoformat(s.replace("Z", "+00:00"))
 
@@ -334,7 +333,6 @@ def summary_json(plan, mon, fri, flags, issues, state, message="", today=None):
     }
 
 
-# ---------- I/O ----------
 def http(url, headers=None, data=None, method=None):
     h = headers or {}
     body = None
@@ -449,7 +447,6 @@ def main():
     except Exception:
         VAN = datetime.timezone(datetime.timedelta(hours=-7))
 
-    # ---------- target week ----------
     today = tovan(datetime.datetime.now(datetime.timezone.utc), VAN).date()
     if os.environ.get("WEEK_START"):
         mon = datetime.date.fromisoformat(os.environ["WEEK_START"])
@@ -462,7 +459,6 @@ def main():
     fri = days[-1]
     NAMES = {d: d.strftime("%a %Y-%m-%d") for d in days}
 
-    # ---------- holidays ----------
     _holreg = CFG.get("holidays", {}).get("region", "")
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -482,7 +478,6 @@ def main():
         "User-Agent": CFG["harvest"].get("user_agent", "harvest-fill"),
     }
 
-    # ---------- calendar ----------
     cu = (
         ASURL
         + "?"
@@ -509,7 +504,6 @@ def main():
         meeting_default=cfg["meeting_default"],
     )
 
-    # ---------- commit TIMELINE events ----------
     day_events = defaultdict(list)
     GH_LOGIN = CFG["github"]["login"]
     GH_ORGS = CFG["github"].get("orgs", [])
@@ -545,7 +539,6 @@ def main():
                 day_events[dd].append((vdt(date, VAN), scope_of(msg, br, cfg["scope_rules"], cfg["scope_default"])))
                 gh_n += 1
 
-    # ---------- Azure DevOps ----------
     ado = CFG.get("azure_devops", {})
     pat = os.environ.get("ADO_PAT")
     if ado.get("enabled", True) and pat:
@@ -638,7 +631,6 @@ def main():
     cfg["gh_n"] = gh_n
     cfg["ado_n"] = ado_n
 
-    # week-level fallback: sum attributions across the week
     week_mins = defaultdict(float)
     for d in days:
         for p, m in attribute(
@@ -652,10 +644,8 @@ def main():
         ).items():
             week_mins[p] += m
 
-    # ---------- allocate ----------
     plan, posts, issues = build_plan(days, meet, off, social_h, day_events, week_mins, cfg=cfg)
 
-    # ---------- report plan ----------
     print(
         f"\n{'=' * 70}\nHarvest weekly fill — {mon} … {fri}  ({CFG.get('timezone')})  {'[DRY-RUN]' if DRY else '[WRITE]'}"
     )
@@ -682,7 +672,6 @@ def main():
     _nm = {"holiday": "holiday", "off": "OOO", "skip": "quiet", "social": "event", "overbooked": "overbooked"}
     _bl = (" · " + ", ".join(f"{d.strftime('%a')} {_nm.get(k, k)}" for d, k in _blanks)) if _blanks else ""
 
-    # ---------- exact per-entry breakdown (for the desktop popup) ----------
     print("DETAIL_BEGIN")
     print(f"{_wl} · {_totalh}h across {len(_worked)} day{'s' if len(_worked) != 1 else ''}")
     for d, kind, entries in plan:
@@ -705,7 +694,6 @@ def main():
             )
     print("DETAIL_END")
 
-    # ---------- dedup pre-flight ----------
     st, ex = http(f"{HARVEST_API_BASE}/v2/time_entries?user_id={USER}&from={mon}&to={fri}", HHEAD)
     n_ex = ex.get("total_entries") if isinstance(ex, dict) else "?"
     print(f"\ndedup pre-flight: {n_ex} existing entries in window")
@@ -730,7 +718,6 @@ def main():
         print("\nDRY-RUN — no writes performed.")
         return 0
 
-    # ---------- write + verify ----------
     created = []
     for p in posts:
         st, r = http(f"{HARVEST_API_BASE}/v2/time_entries", HHEAD, p)

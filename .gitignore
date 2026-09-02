@@ -325,11 +325,7 @@ temp/
 !.vscode/tasks.json
 !.vscode/launch.json
 
-# Git: Local developer state (`.branding.*.yml`, `.devenv.json`,
-# `branding-git-exclude`, `.playwright-mcp`, `.cocoindex_code/` all live in the
-# shared partial — universal scanner ignore).
-# below is honoured — git refuses to re-include children of an excluded
-# directory, but re-including children of an excluded PATTERN works. Without
+# Local developer state (`.branding.*.yml`, `.devenv.json`, `branding-git-exclude`, `.playwright-mcp`, `.cocoindex_code/`) lives in the shared partial — universal scanner ignore. Re-including children of an excluded PATTERN works, unlike children of an excluded directory.
 
 # Sync manifest is committed intentionally so template deletions surface as
 # visible diffs in review (see sync/utils/manifest.ts).

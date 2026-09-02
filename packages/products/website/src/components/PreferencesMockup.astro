@@ -1,8 +1,5 @@
 ---
-// Neutral recreation of the app's Preferences window — all four tabs, clickable, framework-free.
-// A few lines of vanilla JS slide the active-tab pill and cross-fade the panels (which stack in
-// one grid cell, so the frame is the tallest panel's height); tab 0 (General) is active by
-// default. Mirrors the app's own matched-geometry tab pill.
+// Framework-free recreation of the app's Preferences window; panels stack in one grid cell (frame height = tallest panel) and vanilla JS cross-fades them, tab 0 active by default.
 import * as v from "valibot";
 import { PrefsTabsSchema } from "@/lib/schemas";
 

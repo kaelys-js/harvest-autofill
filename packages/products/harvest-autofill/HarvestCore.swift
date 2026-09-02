@@ -77,7 +77,6 @@ enum P {
     }
 }
 
-// ============================================================ Model
 struct Entry: Codable, Identifiable {
     let id = UUID(); let span: String; let project: String; let task: String; let hours: Double
     enum CodingKeys: String, CodingKey { case span, project, task, hours }
@@ -175,7 +174,6 @@ func statusFor(_ s: String) -> Status {
     }
 }
 
-// ============================================================ Auto-update (GitHub Releases + Ed25519)
 let UPDATE_REPO = "kaelys-js/harvest-autofill"
 let UPDATE_REPO_URL = "https://github.com/kaelys-js/harvest-autofill"
 let WEBSITE_URL = "https://kaelys-js.github.io/harvest-autofill/"
@@ -314,7 +312,6 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
     }
 }
 
-// ============================================================ Breakdown views (shared)
 enum TestState: Equatable {
     case idle, testing, ok(String), fail(String)
     var isOK: Bool {
@@ -368,7 +365,6 @@ final class Prefs: ObservableObject {
     @Published var showSecret = false
     @Published var showPAT = false
 
-    // ---- validation ----
     var accountValid: Bool {
         !harvestAccount.isEmpty && harvestAccount.allSatisfy(\.isNumber)
     }
@@ -585,7 +581,6 @@ final class Prefs: ObservableObject {
 
     // Install the login-launch agent always; the Friday agent only when auto-record is on.
 
-    // ---- live connection test (onboarding: verify before advancing) ----
     @Published var harvestTest: TestState = .idle
     func testHarvest() {
         guard accountValid, tokenValid else { harvestTest = .fail("Enter your account ID and token first"); return }
@@ -615,7 +610,6 @@ final class Prefs: ObservableObject {
         }
     }
 
-    // ---- live Google-Calendar test: hit the deployed Apps Script and confirm it returns events ----
     @Published var calTest: TestState = .idle
     func testCalendar() {
         guard !calUrl.isEmpty, !calSecret.isEmpty else { calTest = .fail("Enter the web-app URL and secret first"); return }
@@ -654,7 +648,6 @@ final class Prefs: ObservableObject {
         }
     }
 
-    // ---- live dry-run preview (onboarding finish: show value before commit) ----
     @Published var preview: Summary?
     @Published var previewing = false
 
@@ -676,7 +669,6 @@ func regionName(_ c: String) -> String {
     }
 }
 
-// macOS 26 Liquid Glass with a material fallback, so surfaces read as modern glass on this Mac.
 let doGetCode = """
 function doGet(e) {
   var need = PropertiesService.getScriptProperties()

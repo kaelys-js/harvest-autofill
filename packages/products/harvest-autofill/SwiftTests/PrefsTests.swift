@@ -85,7 +85,7 @@ struct PrefsTests {
         #expect(!p.regionValid)
     }
 
-    // ---- change tracking (drives Save visibility) ----
+    // change tracking drives Save visibility
     @Test func `no changes right after load`() {
         let p = Prefs() // load() sets savedSig from the loaded values
         #expect(!p.hasChanges)

@@ -11,7 +11,7 @@ import os
 import urllib.request
 
 
-# ---------- stdlib statutory-holiday generator (no external deps) ----------
+# stdlib statutory-holiday generator (no external deps)
 def _easter(y):
     a = y % 19
     b = y // 100

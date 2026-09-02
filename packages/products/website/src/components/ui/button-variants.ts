@@ -1,8 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 
-// The button's class recipe, framework-free. Lives apart from any React component so the Astro
-// download/theme buttons can pull it in without dragging React into the build. The class strings
-// are unchanged, so every button renders exactly as before.
+// The button class recipe, kept apart from any React component so the Astro buttons can use it without dragging React into the build.
 export const buttonVariants = cva(
 	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 cursor-pointer",
 	{

@@ -1,8 +1,5 @@
 ---
-// Framework-free lucide icons. The SVG paths are lucide's own, inlined verbatim, and the
-// wrapper matches what lucide-react emitted (24×24, currentColor stroke, aria-hidden, and the
-// `lucide lucide-<name> <class>` class order) so every icon renders pixel-for-pixel the same —
-// the site no longer pulls in React just to draw an icon.
+// Framework-free lucide icons: paths and wrapper match lucide-react's output exactly so icons render identically without pulling React into the build.
 interface Props {
 	name: keyof typeof PATHS;
 	class?: string;
