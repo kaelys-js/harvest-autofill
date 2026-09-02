@@ -12,6 +12,13 @@ Release notes. Every version is also a downloadable build on the
 
 ## [Unreleased]
 
+## [2.36] - 2026-09-02
+
+- Added a "See it fill a week" demo to the website: the app's This Week window plays through a
+  whole week filling itself day by day — the same window you use — with play, pause, and replay,
+  and it holds still for anyone who prefers reduced motion. The demo fits phone screens cleanly.
+  The app itself is unchanged from 2.35.
+
 ## [2.35] - 2026-09-02
 
 - Polished the wording across the whole app to one voice: a single verb for filing your week
