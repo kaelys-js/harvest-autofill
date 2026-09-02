@@ -132,9 +132,9 @@ struct MainWindow: View {
             Divider()
             HStack(spacing: 10) {
                 // Auto-refreshes every 15 minutes; the mockup's footer line replaces the manual Refresh.
-                Text("Files to Harvest every Friday").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text("Logs to Harvest every Friday").font(.system(size: 12)).foregroundStyle(.secondary)
                 Spacer()
-                HelpIcon(text: "Writes this week's hours to Harvest right now, instead of waiting for the automatic Friday run. Safe to click more than once — the app checks what's already on your timesheet and never double-books a day, so re-running only fills in whatever is still missing.")
+                HelpIcon(text: "Logs this week to Harvest now, without waiting for the automatic Friday run. Safe to click twice — days already on your timesheet are skipped.")
                 Button { model.logNow() } label: { Text("Log this week") }
                     .primaryProminent().controlSize(.large).disabled(model.refreshing)
             }.padding(.horizontal, 18).padding(.vertical, 14)
@@ -238,7 +238,7 @@ struct CalendarTestRow: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         HStack(spacing: 12) {
-            Button { prefs.testCalendar() } label: { Label("Test calendar", systemImage: "bolt.horizontal.circle") }
+            Button { prefs.testCalendar() } label: { Label("Test connection", systemImage: "bolt.horizontal.circle") }
                 .disabled(prefs.calUrl.isEmpty || prefs.calSecret.isEmpty || prefs.calTest == .testing)
             TestStatusView(state: prefs.calTest)
             Spacer(minLength: 0)
@@ -250,13 +250,13 @@ struct CalendarHelp: View {
     var body: some View {
         DisclosureGroup {
             VStack(alignment: .leading, spacing: 10) {
-                Step(n: 1, text: "Go to script.google.com (signed in as the Google account whose calendar you use) and create a New project.")
-                Step(n: 2, text: "Replace everything in Code.gs with this — it checks your secret and sends back your events:")
+                Step(n: 1, text: CALENDAR_SETUP_STEPS[0])
+                Step(n: 2, text: CALENDAR_SETUP_STEPS[1])
                 CodeBox(code: doGetCode)
-                Step(n: 3, text: "Click the gear (Project Settings) → Script Properties → Add script property. Name it APPS_SCRIPT_SECRET and set the value to a strong secret you choose.")
-                Step(n: 4, text: "Deploy → New deployment → choose Web app. Set Execute as: Me and Who has access: Anyone. Click Deploy, then copy the Web-app URL (it ends in /exec).")
-                Step(n: 5, text: "Paste that URL and the same secret into the two fields above.")
-                Text("The script runs as your own Google account, so there's no OAuth to configure and your calendar can stay private — the tool only reads each event's time, title, and your RSVP.")
+                Step(n: 3, text: CALENDAR_SETUP_STEPS[2])
+                Step(n: 4, text: CALENDAR_SETUP_STEPS[3])
+                Step(n: 5, text: CALENDAR_SETUP_STEPS[4])
+                Text("The script runs as your own Google account, so there's no OAuth to configure. Your calendar stays private — the tool reads only each event's time, title, and your RSVP.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true).padding(.top, 2)
             }.padding(.top, 8)
         } label: { Label("How to connect Google Calendar — step by step", systemImage: "questionmark.circle").font(.system(size: 11.5)) }
@@ -469,10 +469,10 @@ struct AccountsContent: View {
                 Field(label: "Account ID", text: $prefs.harvestAccount, hint: "e.g. 123456", valid: prefs.accountValid,
                       help: "The number in your Harvest web address — id.getharvest.com shows it under Settings.")
                 Secret(label: "Access token", text: $prefs.harvestToken, reveal: $prefs.showToken, valid: prefs.tokenValid,
-                       help: "Create one at id.getharvest.com → Developers → Create New Personal Access Token, then paste it here.")
+                       help: HARVEST_TOKEN_HELP)
                 HStack { Text("User ID").frame(width: LBL, alignment: .leading).font(.system(size: 12))
                     Text(prefs.harvestUser.isEmpty ? "—" : prefs.harvestUser).font(.system(size: 12)).foregroundStyle(.secondary)
-                    Spacer(); Button { prefs.discover() } label: { Label("Discover from my accounts", systemImage: "sparkles") }
+                    Spacer(); Button { prefs.discover() } label: { Label("Scan my accounts", systemImage: "sparkles") }
                 }
                 Text("This reads your connected accounts and fills in your user ID, projects, orgs, and repos automatically — so you never type an ID by hand.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
@@ -511,7 +511,7 @@ struct AccountsContent: View {
                     Field(label: "Username", text: $prefs.ghLogin, hint: "your-username", valid: prefs.ghLoginValid,
                           help: "The GitHub account whose commits count toward your time.")
                     Secret(label: "Access token", text: $prefs.ghToken, reveal: $prefs.showGHToken, valid: true,
-                           help: "The GitHub CLI (gh) isn't signed in, so paste a read-only token to read your commits — github.com → Settings → Developer settings → Fine-grained tokens → Repository: read.")
+                           help: GITHUB_TOKEN_HELP)
                 }
                 MultiSelect(label: "Organizations", options: prefs.ghOrgsAvailable, csv: $prefs.ghOrgs, valid: prefs.ghOrgsValid,
                             help: "Tick the organizations whose commits count toward your time — loaded automatically from your GitHub.")
@@ -525,7 +525,7 @@ struct AccountsContent: View {
                           help: "Your Azure DevOps organization — the name in dev.azure.com/<organization>.")
                     if prefs.adoProjectsAvailable.isEmpty {
                         Field(label: "Project", text: $prefs.adoProject, valid: !prefs.adoProject.isEmpty,
-                              help: "The project holding your repos. Fill in Organization and the token, then Scan on the discover step to load projects here as a dropdown.")
+                              help: "The project holding your repos. Fill in Organization and the token, then Scan to load projects here as a dropdown.")
                     } else {
                         SingleSelect(label: "Project", options: prefs.adoProjectsAvailable, value: $prefs.adoProject,
                                      placeholder: "Select a project", valid: !prefs.adoProject.isEmpty,
@@ -536,7 +536,7 @@ struct AccountsContent: View {
                     Field(label: "Author (email)", text: $prefs.adoAuthor, hint: "you@org.com", valid: !prefs.adoAuthor.isEmpty,
                           help: "Your commit-author email in Azure DevOps.")
                     Secret(label: "Access token", text: $prefs.adoPAT, reveal: $prefs.showPAT, valid: !prefs.adoPAT.isEmpty,
-                           help: "A read-only token from dev.azure.com → User settings → Personal access tokens → Code: Read.")
+                           help: ADO_TOKEN_HELP)
                 }
             }
         }
@@ -568,7 +568,7 @@ struct AllocationContent: View {
                 }
             }
             PrefCard(title: "Timeline split") {
-                Text("How a day's hours get shared between projects. The app sorts your commits by time and credits the stretch before each one to that commit's project — so a busy afternoon on one project earns more hours than a quick fix elsewhere.")
+                Text("How a day's hours are split between projects. The app sorts your commits by time and credits the stretch before each one to that commit's project — so a long run on one project earns more of the day than a quick fix elsewhere.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 NumRow(label: "Gap cap", value: $prefs.gapCap, width: 56, valid: prefs.gapValid, trailing: "min",
                        help: "The most a single gap between two commits can be worth — keeps a long lunch or meeting from inflating one project.")
@@ -605,7 +605,7 @@ struct ResetConfirmSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Label("Delete everything and restart setup", systemImage: "trash.fill").font(.system(size: 14.5, weight: .semibold)).foregroundStyle(.red)
-            Text("This permanently deletes your saved account, access tokens, and all settings from this Mac, then takes you back to setup. It can’t be undone.")
+            Text(RESET_WARNING)
                 .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             VStack(alignment: .leading, spacing: 5) {
                 Text("Type RESET to confirm").font(.system(size: 11.5, weight: .medium)).foregroundStyle(.secondary)
@@ -630,7 +630,7 @@ struct ResetCard: View {
     @State private var typed = ""
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Danger zone", systemImage: "exclamationmark.triangle.fill").font(.system(size: 11, weight: .semibold)).foregroundStyle(.red).textCase(.uppercase)
+            Label("Reset app", systemImage: "exclamationmark.triangle.fill").font(.system(size: 11, weight: .semibold)).foregroundStyle(.red).textCase(.uppercase)
             Text("Reset deletes your account, access tokens, and settings from this Mac and takes you back to setup — useful for handing the app to someone else or starting clean.")
                 .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             Button(role: .destructive) { confirm1 = true } label: { Label("Reset", systemImage: "trash") }.controlSize(.large).tint(.red)
@@ -640,9 +640,9 @@ struct ResetCard: View {
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.red.opacity(0.28)))
         .alert("Reset Harvest Auto-Fill?", isPresented: $confirm1) {
             Button("Cancel", role: .cancel) {}
-            Button("Continue…", role: .destructive) { typed = ""; typeSheet = true }
+            Button("Reset…", role: .destructive) { typed = ""; typeSheet = true }
         } message: {
-            Text("This permanently deletes your saved account, access tokens, and all settings from this Mac, then takes you back to setup. It can’t be undone.")
+            Text(RESET_WARNING)
         }
         .sheet(isPresented: $typeSheet) {
             ResetConfirmSheet(typed: $typed,
@@ -659,15 +659,15 @@ struct GeneralContent: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         VStack(spacing: 14) {
-            Text("How the app behaves day to day — when it files your week, and where it lives on your Mac.")
+            Text("How the app behaves day to day — when it logs your week, and where it lives on your Mac.")
                 .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            PrefCard(title: "Automatic recording") {
-                Text("Choose whether the app files your finished week for you, or waits until you say so.")
+            PrefCard(title: "Automatic logging") {
+                Text("Choose whether the app logs your finished week for you, or waits until you say so.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
-                    Toggle("Log the finished week to Harvest every Friday at 6pm", isOn: $prefs.autoRecord).font(.system(size: 12.5)).toggleStyle(.switch)
-                    HelpIcon(text: "On — files your week automatically every Friday evening, and never double-books if it already ran. Off — nothing reaches Harvest until you click \u{201C}Log this week\u{201D} yourself.")
+                    Toggle("Log the finished week to Harvest every Friday at 6:00 PM", isOn: $prefs.autoRecord).font(.system(size: 12.5)).toggleStyle(.switch)
+                    HelpIcon(text: AUTO_LOG_HELP)
                 }
             }
             PrefCard(title: "Dock icon") {
@@ -680,15 +680,15 @@ struct GeneralContent: View {
                                 NSApp.activate(ignoringOtherApps: true)
                             }
                         }
-                    HelpIcon(text: "Off — the app lives only in the menu bar. On — it also appears in the Dock and the \u{2318}-Tab app switcher.")
+                    HelpIcon(text: "Off — the app lives only in the menu bar. On — it also appears in the Dock and the ⌘-Tab app switcher.")
                 }
             }
             PrefCard(title: "How it works") {
-                Label("Always current — your hours update in the background every 15 minutes, so the menu-bar total is always live.", systemImage: "clock.arrow.circlepath")
+                Label("Always current — your hours update in the background every 15 minutes, so the menu-bar total stays live.", systemImage: "clock.arrow.circlepath")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
-                Label("Hands-off Fridays — the finished week is filed to Harvest at 6pm on its own, even if the app is closed (turn off automatic recording above).", systemImage: "calendar.badge.checkmark")
+                Label("Hands-off Fridays — the finished week is logged to Harvest at 6:00 PM on its own, even if the app is closed (turn off automatic logging above).", systemImage: "calendar.badge.checkmark")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
-                Label("Yours alone — everything you connect stays on this Mac and is never sent anywhere else.", systemImage: "lock.shield")
+                Label("Private by design — everything you connect stays on this Mac and is never sent anywhere but the services you connect.", systemImage: "lock.shield")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
             }
             ResetCard(prefs: prefs)
@@ -901,7 +901,7 @@ struct AboutContent: View {
                 }
                 Text("Harvest Auto-Fill").font(.system(size: 18, weight: .bold))
                 Text("Version \(version)").font(.system(size: 11.5)).foregroundStyle(.secondary)
-                Text("Fills your Harvest timesheet from the work you already did — commits, pushes, and meetings turned into hours, filed for you every Friday.")
+                Text("Fills your Harvest timesheet from the work you already did — commits, pushes, and meetings turned into hours, logged for you every Friday.")
                     .font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 8)
                 HStack(spacing: 16) {
@@ -910,7 +910,7 @@ struct AboutContent: View {
                             if updater.loadingWhatsNew {
                                 ProgressView().controlSize(.small)
                             }
-                            Label("What's new", systemImage: "sparkles")
+                            Label("What's New", systemImage: "sparkles")
                         }
                     }.buttonStyle(.plain).foregroundStyle(Web.primary).font(.system(size: 12)).disabled(updater.loadingWhatsNew)
                     Button { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) } label: {
@@ -1181,9 +1181,9 @@ struct OnbWelcome: View {
                 }
             }
             VStack(alignment: .leading, spacing: 16) {
-                ValueBullet(icon: "calendar.badge.checkmark", title: "Fills itself every Friday",
-                            detail: "Your finished week is logged to Harvest automatically at 6pm — even if the app is closed.")
-                ValueBullet(icon: "chart.bar.doc.horizontal", title: "Built from real activity",
+                ValueBullet(icon: "calendar.badge.checkmark", title: "Logs itself every Friday",
+                            detail: "Your finished week is logged to Harvest automatically at 6:00 PM — even if the app is closed.")
+                ValueBullet(icon: "chart.bar.doc.horizontal", title: "Built from your activity",
                             detail: "Your commits, pushes, and meetings become hours, split across the right projects by when you did the work.")
                 ValueBullet(icon: "lock.shield", title: "Private by design",
                             detail: "Every token stays on this Mac in a locked file and is never sent anywhere but the services you connect.")
@@ -1199,18 +1199,18 @@ struct OnbHarvest: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             OnbHeader(lucide: LUCIDE_KEY, title: "Connect your Harvest account",
-                      subtitle: "The one account the app truly needs — it's where your hours are written.")
+                      subtitle: "The only account the app needs — where your hours are written.")
             VStack(spacing: 12) {
                 Field(label: "Account ID", text: $prefs.harvestAccount, hint: "e.g. 123456", valid: prefs.harvestAccount.isEmpty || prefs.accountValid,
                       help: "The number in your Harvest web address — id.getharvest.com shows it under Settings.")
                 Secret(label: "Access token", text: $prefs.harvestToken, reveal: $prefs.showToken, valid: true,
-                       help: "Create one at id.getharvest.com → Developers → Create New Personal Access Token, then paste it here.")
+                       help: HARVEST_TOKEN_HELP)
             }
             HStack(spacing: 12) {
                 Button { prefs.testHarvest() } label: { Label("Test connection", systemImage: "bolt.horizontal.circle") }
                     .controlSize(.large).disabled(!(prefs.accountValid && prefs.tokenValid) || prefs.harvestTest == .testing)
                 switch prefs.harvestTest {
-                case .idle: Text("We'll verify it works before moving on.").font(.system(size: 11.5)).foregroundStyle(.tertiary)
+                case .idle: Text("The app checks the connection before moving on.").font(.system(size: 11.5)).foregroundStyle(.tertiary)
                 case .testing: HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Checking…").font(.system(size: 12)).foregroundStyle(.secondary) }
                 case let .ok(who): Label("Connected as \(who)", systemImage: "checkmark.circle.fill").font(.system(size: 12)).foregroundStyle(.green)
                 case let .fail(why): Label(why, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
@@ -1225,7 +1225,7 @@ struct OnbDiscover: View {
     @ObservedObject var prefs: Prefs
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            OnbHeader(lucide: LUCIDE_SPARKLES, title: "Let's find your projects automatically",
+            OnbHeader(lucide: LUCIDE_SPARKLES, title: "Find your projects automatically",
                       subtitle: "It scans your connected accounts so you never type a project number by hand.")
             if prefs.discovering {
                 HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Scanning your Harvest, GitHub, and Azure DevOps…").font(.system(size: 12.5)).foregroundStyle(.secondary) }
@@ -1252,7 +1252,7 @@ struct OnbDiscover: View {
                 Button { prefs.discover() } label: { Label("Scan again", systemImage: "arrow.clockwise") }.controlSize(.small)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("It reads four things, so you never type an ID by hand:")
+                    Text("It reads a few things, so you never type an ID by hand:")
                         .font(.system(size: 12.5)).foregroundStyle(.secondary)
                     ScanBullet(text: "Your Harvest user — who the hours are logged as.")
                     ScanBullet(text: "Your Harvest projects — the list your time is split across.")
@@ -1290,13 +1290,13 @@ struct OnbSources: View {
                     Field(label: "Username", text: $prefs.ghLogin, hint: "your-username", valid: prefs.ghLogin.isEmpty || prefs.ghLoginValid,
                           help: "The GitHub account whose commits count toward your time.")
                     Secret(label: "Access token", text: $prefs.ghToken, reveal: $prefs.showGHToken, valid: true,
-                           help: "The GitHub CLI (gh) isn't signed in, so paste a read-only token to read your commits — github.com → Settings → Developer settings → Fine-grained tokens → Repository: read. Then Scan again to load your organizations.")
+                           help: GITHUB_TOKEN_HELP + " Then Scan again to load your organizations.")
                 }
                 MultiSelect(label: "Organizations", options: prefs.ghOrgsAvailable, csv: $prefs.ghOrgs, valid: true,
                             help: "Tick the organizations whose commits count — loaded from your GitHub above.")
             }
             PrefCard(title: "Azure DevOps — optional") {
-                Toggle("I also commit in Azure DevOps", isOn: $prefs.adoEnabled).font(.system(size: 12.5)).toggleStyle(.switch)
+                Toggle("Also include Azure DevOps", isOn: $prefs.adoEnabled).font(.system(size: 12.5)).toggleStyle(.switch)
                 if prefs.adoEnabled {
                     Field(label: "Organization", text: $prefs.adoOrg, valid: true)
                     if prefs.adoProjectsAvailable.isEmpty {
@@ -1308,7 +1308,7 @@ struct OnbSources: View {
                     Field(label: "Author (email)", text: $prefs.adoAuthor, hint: "you@org.com", valid: true,
                           help: "Your commit-author email in Azure DevOps.")
                     Secret(label: "Access token", text: $prefs.adoPAT, reveal: $prefs.showPAT, valid: true,
-                           help: "A read-only token from dev.azure.com → User settings → Personal access tokens → Code: Read. Then Scan again on the previous step to load repos.")
+                           help: ADO_TOKEN_HELP + " Then Scan again on the previous step to load repos.")
                     MultiSelect(label: "Repos", options: prefs.adoReposAvailable, csv: $prefs.adoRepos, valid: true,
                                 help: "Tick the repos to scan for your commits and pushes.")
                 }
@@ -1332,7 +1332,7 @@ struct OnbWorkday: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             OnbHeader(lucide: LUCIDE_CALENDAR_CLOCK, title: "Your workday",
-                      subtitle: "Sensible defaults are already set — adjust only if yours differ, then continue.")
+                      subtitle: "Defaults are filled in — adjust only if yours differ, then continue.")
             PrefCard(title: "Hours") {
                 NumRow(label: "Daily target", value: $prefs.dailyTarget, width: 60, valid: prefs.targetValid, trailing: "hours",
                        help: "Hours logged per worked weekday — meetings plus development. Usually 8–9.")
@@ -1355,7 +1355,7 @@ struct OnbWorkday: View {
                         ForEach(SUPPORTED_REGIONS, id: \.self) { Text(regionName($0)).tag($0) }
                     }.labelsHidden().frame(width: 220)
                         .padding(.leading, -11) // match the input column (pop-up bezel inset)
-                    HelpIcon(text: "Statutory holidays for this region are computed automatically and left blank on your timesheet.")
+                    HelpIcon(text: "Public holidays for this region are skipped automatically and left blank on your timesheet.")
                     Spacer()
                 }
             }
@@ -1375,9 +1375,9 @@ struct OnbFinish: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             OnbHeader(lucide: LUCIDE_BADGE_CHECK, title: "Here's your week",
-                      subtitle: "A live preview from everything you connected — nothing is written yet.")
+                      subtitle: "A live preview from everything you connected — nothing is logged yet.")
             if prefs.previewing || prefs.logging {
-                HStack(spacing: 8) { ProgressView().controlSize(.small); Text(prefs.logging ? "Writing to Harvest…" : "Building this week's preview…").font(.system(size: 12.5)).foregroundStyle(.secondary) }
+                HStack(spacing: 8) { ProgressView().controlSize(.small); Text(prefs.logging ? "Logging to Harvest…" : "Building this week's preview…").font(.system(size: 12.5)).foregroundStyle(.secondary) }
                     .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 20)
             } else if let s = prefs.preview, !s.days.isEmpty {
                 let st = statusFor(s.state)
@@ -1397,9 +1397,9 @@ struct OnbFinish: View {
                 Text("No preview yet — that's fine. Once you've committed or had meetings this week, the menu-bar total fills in. You can finish now.")
                     .font(.system(size: 12.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
-            PrefCard(title: "Automatic recording") {
-                Toggle("Log the finished week to Harvest every Friday at 6pm", isOn: $prefs.autoRecord).font(.system(size: 12.5)).toggleStyle(.switch)
-                Text("On — records your week automatically every Friday evening (safe to run twice, it never double-books) and keeps the app running so it can. Off — you stay in control: nothing is logged until you click “Log this week” yourself.")
+            PrefCard(title: "Automatic logging") {
+                Toggle("Log the finished week to Harvest every Friday at 6:00 PM", isOn: $prefs.autoRecord).font(.system(size: 12.5)).toggleStyle(.switch)
+                Text(AUTO_LOG_HELP)
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -1465,7 +1465,7 @@ struct OnboardingView: View {
                 }
                 Spacer()
                 if step == ONB_STEPS.count - 1, prefs.preview?.days.isEmpty == false {
-                    Button { prefs.logThisWeek() } label: { Text("Log this week now") }.controlSize(.large).disabled(prefs.logging || prefs.previewing)
+                    Button { prefs.logThisWeek() } label: { Text("Log this week") }.controlSize(.large).disabled(prefs.logging || prefs.previewing)
                 }
                 Button(primaryLabel) {
                     if step < ONB_STEPS.count - 1 {
@@ -1586,14 +1586,14 @@ struct VerifyView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Calendar — How to connect (expanded)").font(.system(size: 13, weight: .bold))
             VStack(alignment: .leading, spacing: 10) {
-                Step(n: 1, text: "Go to script.google.com (signed in as the Google account whose calendar you use) and create a New project.")
-                Step(n: 2, text: "Replace everything in Code.gs with this — it checks your secret and sends back your events:")
+                Step(n: 1, text: CALENDAR_SETUP_STEPS[0])
+                Step(n: 2, text: CALENDAR_SETUP_STEPS[1])
                 Text(highlightJS(doGetCode)).font(.system(size: 10, design: .monospaced)).padding(12)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .textBackgroundColor)))
                     .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.secondary.opacity(0.25)))
-                Step(n: 3, text: "Click the gear (Project Settings) → Script Properties → Add script property. Name it APPS_SCRIPT_SECRET and set the value to a strong secret you choose.")
-                Step(n: 4, text: "Deploy → New deployment → choose Web app. Set Execute as: Me and Who has access: Anyone. Click Deploy, then copy the Web-app URL (it ends in /exec).")
-                Step(n: 5, text: "Paste that URL and the same secret into the two fields above.")
+                Step(n: 3, text: CALENDAR_SETUP_STEPS[2])
+                Step(n: 4, text: CALENDAR_SETUP_STEPS[3])
+                Step(n: 5, text: CALENDAR_SETUP_STEPS[4])
             }
             Divider()
             Text("Holidays — Region dropdown labels").font(.system(size: 13, weight: .bold))
@@ -1879,7 +1879,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                 Day(name: "Tue Sep 1", total: 9.0, note: nil, entries: [
                                     Entry(span: "9:00 AM–6:00 PM", project: "Mobile App", task: "Development", hours: 9.0),
                                 ]),
-                                Day(name: "Wed Sep 2", total: nil, note: "Statutory holiday — skipped", entries: []),
+                                Day(name: "Wed Sep 2", total: nil, note: "Public holiday — skipped", entries: []),
                                 Day(name: "Thu Sep 3", total: 9.0, note: nil, entries: [
                                     Entry(span: "9:00 AM–5:00 PM", project: "Internal", task: "Development", hours: 8.0),
                                     Entry(span: "3:00 PM–4:00 PM", project: "Internal", task: "Internal meeting", hours: 1.0),

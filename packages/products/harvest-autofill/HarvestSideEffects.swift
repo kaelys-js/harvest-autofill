@@ -97,7 +97,7 @@ final class WeekModel: ObservableObject {
         guard let s = summary else { return "Adding up this week…" }
         switch s.state {
         case "written": return "Logged to Harvest"
-        case "dedup": return "This week is already filed"
+        case "dedup": return "This week is already logged"
         case "fail": return "This week needs a look"
         default: return "This week, so far"
         }
@@ -145,7 +145,7 @@ extension Updater {
         do {
             let (zipData, _) = try await URLSession.shared.data(from: info.zip)
             let digest = SHA256.hash(data: zipData).map { String(format: "%02x", $0) }.joined()
-            guard digest == info.sha256 else { throw UpdErr(m: "The download didn't match its verified fingerprint, so it wasn't installed") }
+            guard digest == info.sha256 else { throw UpdErr(m: "The download didn't match its verified fingerprint, so the update wasn't installed.") }
             let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("haf-update-\(info.build)")
             try? FileManager.default.removeItem(at: tmp)
             try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
@@ -157,7 +157,7 @@ extension Updater {
             let newApp = tmp.appendingPathComponent(appName).path
             let xq = Process(); xq.executableURL = URL(fileURLWithPath: "/usr/bin/xattr"); xq.arguments = ["-dr", "com.apple.quarantine", newApp]; try? xq.run(); xq.waitUntilExit()
             let cv = Process(); cv.executableURL = URL(fileURLWithPath: "/usr/bin/codesign"); cv.arguments = ["--verify", "--deep", "--strict", newApp]; try? cv.run(); cv.waitUntilExit()
-            guard cv.terminationStatus == 0 else { throw UpdErr(m: "The update's app signature didn't check out, so it wasn't installed") }
+            guard cv.terminationStatus == 0 else { throw UpdErr(m: "The update's code signature didn't check out, so the update wasn't installed.") }
             readyAppPath = newApp; state = .ready(info)
             if Prefs.autoUpdateEnabled() {
                 installAndRelaunch()
@@ -311,7 +311,7 @@ extension Prefs {
     }
 
     func discover() {
-        status = "Discovering…"; discovering = true
+        status = "Scanning…"; discovering = true
         Task.detached { [account = harvestAccount, token = harvestToken, aorg = adoOrg, aproj = adoProject, apat = adoPAT, ght = ghToken, py = P.python, disc = P.discover] in
             let p = Process(); p.executableURL = URL(fileURLWithPath: "/bin/bash")
             var env = ProcessInfo.processInfo.environment
@@ -331,7 +331,7 @@ extension Prefs {
             let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
             await MainActor.run {
                 self.discovering = false
-                guard let o = obj else { self.status = "Discovery failed — check your Harvest account ID and token"; return }
+                guard let o = obj else { self.status = "Scan failed — check your Harvest account ID and token"; return }
                 self.discovered = true
                 if let hv = o["harvest"] as? [String: Any] {
                     self.harvestUser = String(describing: hv["user_id"] ?? "")
@@ -358,7 +358,7 @@ extension Prefs {
                 if let pr = o["harvest_projects"] as? [String: Any] {
                     self.projectsList = pr.compactMap { k, v in (v as? [String: Any]).map { (k, String(describing: $0["project_id"] ?? "")) } }.sorted { $0.0 < $1.0 }
                 }
-                self.status = "Found your projects, orgs, and repos ✓ — pick the ones to include below"
+                self.status = "Found your projects, orgs, and repos ✓. Pick the ones to include below."
             }
         }
     }

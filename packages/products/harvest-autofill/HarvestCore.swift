@@ -166,9 +166,9 @@ enum Web {
 struct Status { let text: String; let color: Color; let symbol: String }
 func statusFor(_ s: String) -> Status {
     switch s {
-    case "written": Status(text: "Recorded to Harvest", color: .green, symbol: "checkmark.circle.fill")
+    case "written": Status(text: "Logged to Harvest", color: .green, symbol: "checkmark.circle.fill")
     case "dryrun": Status(text: "This week, so far", color: Web.primary, symbol: "circle.fill")
-    case "dedup": Status(text: "Already filled", color: .secondary, symbol: "info.circle.fill")
+    case "dedup": Status(text: "Already logged", color: .secondary, symbol: "info.circle.fill")
     case "fail": Status(text: "Needs a look", color: .orange, symbol: "exclamationmark.triangle.fill")
     default: Status(text: "Harvest", color: .secondary, symbol: "clock")
     }
@@ -177,6 +177,26 @@ func statusFor(_ s: String) -> Status {
 let UPDATE_REPO = "kaelys-js/harvest-autofill"
 let UPDATE_REPO_URL = "https://github.com/kaelys-js/harvest-autofill"
 let WEBSITE_URL = "https://kaelys-js.github.io/harvest-autofill/"
+
+// Shared user-facing copy, defined once so the Settings and Onboarding surfaces that show the
+// same thing can never drift apart. See HarvestApp.swift for where each is rendered.
+let RESET_WARNING = "This permanently deletes your saved account, access tokens, and all settings from this Mac, then takes you back to setup. It can’t be undone."
+// The five-step Google Apps Script walkthrough, rendered in the Calendar help disclosure and the
+// verification harness. One canonical copy so the fragile procedure stays in sync.
+let CALENDAR_SETUP_STEPS = [
+    "Go to script.google.com (signed in as the Google account whose calendar you use) and create a New project.",
+    "Replace everything in Code.gs with this — it checks your secret and sends back your events:",
+    "Click the gear (Project Settings) → Script Properties → Add script property. Name it APPS_SCRIPT_SECRET and set the value to a strong secret you choose.",
+    "Deploy → New deployment → choose Web app. Set Execute as: Me and Who has access: Anyone. Click Deploy, then copy the Web-app URL (it ends in /exec).",
+    "Paste that URL into Web-app URL and the same secret into Shared secret.",
+]
+// "How to get this token" help, reused across Settings and Onboarding for each service. Onboarding
+// appends its own "Then Scan again…" hint where the flow needs it.
+// The auto-log toggle's explanation, shown in Settings and Onboarding. One canonical wording.
+let AUTO_LOG_HELP = "On — logs your week automatically every Friday evening, and never double-books if it already ran. Off — nothing reaches Harvest until you click “Log this week” yourself."
+let HARVEST_TOKEN_HELP = "Create one at id.getharvest.com → Developers → Create New Personal Access Token, then paste it here."
+let GITHUB_TOKEN_HELP = "The GitHub CLI (gh) isn't signed in, so paste a read-only token to read your commits — github.com → Settings → Developer settings → Fine-grained tokens → Repository: read."
+let ADO_TOKEN_HELP = "A read-only token from dev.azure.com → User settings → Personal access tokens → Code: Read."
 // Raw 32-byte Ed25519 public key (base64). Private key lives only on the release machine.
 let UPDATE_PUBKEY_B64 = "QwrTC2P5Xh/A+Eq92spnRGHFESWTxfiX7Hqwk0waays="
 
@@ -281,7 +301,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
         // 60-per-hour rate limit rather than a permissions problem.
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
         if code == 403 || code == 429 {
-            throw UpdErr(m: "GitHub is rate-limiting update checks right now — please try again in a little while.")
+            throw UpdErr(m: "GitHub is rate-limiting update checks. Please try again shortly.")
         }
         if code == 404 {
             throw UpdErr(m: "No published release was found to update to.")
@@ -304,7 +324,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
               let key = try? Curve25519.Signing.PublicKey(rawRepresentation: pub),
               let sigStr = String(data: sData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
               let sig = Data(base64Encoded: sigStr),
-              key.isValidSignature(sig, for: mData) else { throw UpdErr(m: "This update couldn't be verified as genuine, so it wasn't installed") }
+              key.isValidSignature(sig, for: mData) else { throw UpdErr(m: "This update couldn't be verified as genuine, so the update wasn't installed.") }
         guard let m = try? JSONSerialization.jsonObject(with: mData) as? [String: Any],
               let build = m["build"] as? Int, let version = m["version"] as? String, let sha = m["sha256"] as? String
         else { throw UpdErr(m: "The update information couldn't be read") }
