@@ -35,7 +35,7 @@ def test_span_reads_as_am_pm_range(hw):
     [
         ("Website", "dev", "Development"),
         ("Internal", "meeting", "Internal meetings"),
-        ("Website", "meeting", "Client Meetings"),
+        ("Website", "meeting", "Client meetings"),
     ],
 )
 def test_plain_task(hw, project, kind, expected):

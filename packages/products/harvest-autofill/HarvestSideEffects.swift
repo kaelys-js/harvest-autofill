@@ -153,7 +153,7 @@ extension Updater {
             let unzip = Process(); unzip.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
             unzip.arguments = ["-x", "-k", zipPath.path, tmp.path]; try unzip.run(); unzip.waitUntilExit()
             guard let items = try? FileManager.default.contentsOfDirectory(atPath: tmp.path),
-                  let appName = items.first(where: { $0.hasSuffix(".app") }) else { throw UpdErr(m: "The update didn't contain an app") }
+                  let appName = items.first(where: { $0.hasSuffix(".app") }) else { throw UpdErr(m: "The update didn't contain an app.") }
             let newApp = tmp.appendingPathComponent(appName).path
             let xq = Process(); xq.executableURL = URL(fileURLWithPath: "/usr/bin/xattr"); xq.arguments = ["-dr", "com.apple.quarantine", newApp]; try? xq.run(); xq.waitUntilExit()
             let cv = Process(); cv.executableURL = URL(fileURLWithPath: "/usr/bin/codesign"); cv.arguments = ["--verify", "--deep", "--strict", newApp]; try? cv.run(); cv.waitUntilExit()

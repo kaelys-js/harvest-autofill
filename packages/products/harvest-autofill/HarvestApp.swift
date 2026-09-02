@@ -474,7 +474,7 @@ struct AccountsContent: View {
                     Text(prefs.harvestUser.isEmpty ? "—" : prefs.harvestUser).font(.system(size: 12)).foregroundStyle(.secondary)
                     Spacer(); Button { prefs.discover() } label: { Label("Scan my accounts", systemImage: "sparkles") }
                 }
-                Text("This reads your connected accounts and fills in your user ID, projects, orgs, and repos automatically — so you never type an ID by hand.")
+                Text("This reads your connected accounts and fills in your user ID, projects, organizations, and repos automatically — so you never type an ID by hand.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
                 if !prefs.projectsList.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
@@ -568,7 +568,7 @@ struct AllocationContent: View {
                 }
             }
             PrefCard(title: "Timeline split") {
-                Text("How a day's hours are split between projects. The app sorts your commits by time and credits the stretch before each one to that commit's project — so a long run on one project earns more of the day than a quick fix elsewhere.")
+                Text("How a day's hours are split between projects. The app sorts your commits by time and credits the stretch before each one to that commit's project. A long run on one project earns more of the day than a quick fix elsewhere.")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 NumRow(label: "Gap cap", value: $prefs.gapCap, width: 56, valid: prefs.gapValid, trailing: "min",
                        help: "The most a single gap between two commits can be worth — keeps a long lunch or meeting from inflating one project.")
@@ -688,7 +688,7 @@ struct GeneralContent: View {
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
                 Label("Hands-off Fridays — the finished week is logged to Harvest at 6:00 PM on its own, even if the app is closed (turn off automatic logging above).", systemImage: "calendar.badge.checkmark")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
-                Label("Private by design — everything you connect stays on this Mac and is never sent anywhere but the services you connect.", systemImage: "lock.shield")
+                Label("Private by design — everything you connect stays on this Mac and is sent only to those same services.", systemImage: "lock.shield")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
             }
             ResetCard(prefs: prefs)
@@ -795,7 +795,7 @@ struct WhatsNewView: View {
                 // "Got It" is a post-update acknowledgement; when browsing from About the
                 // window is just closed via its title bar, so no button is shown.
                 if !updater.whatsNewManual {
-                    Button("Got It") { updater.whatsNew = nil; updater.releases = []; dismissWindow(id: "whatsnew") }
+                    Button("Got it") { updater.whatsNew = nil; updater.releases = []; dismissWindow(id: "whatsnew") }
                         .primaryProminent().controlSize(.large).keyboardShortcut(.defaultAction)
                 }
             }.padding(.horizontal, 20).padding(.vertical, 14)
@@ -846,7 +846,7 @@ struct UpdateCard: View {
             }
             Toggle("Keep this app up to date automatically", isOn: $prefs.autoUpdate).font(.system(size: 12)).toggleStyle(.switch)
                 .onChange(of: prefs.autoUpdate) { _, _ in prefs.writeAll() }
-            Text("Every update is verified as genuine before it installs. Checks happen quietly on launch and once a day. When this is on, updates install and relaunch on their own; when off, the app holds them here until you're ready.")
+            Text("The app checks each update's Ed25519 signature and SHA-256 before installing it. Checks happen quietly on launch and once a day. When this is on, updates install and relaunch on their own; when off, the app holds them here until you're ready.")
                 .font(.system(size: 10.5)).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -1177,7 +1177,7 @@ struct OnbWelcome: View {
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Welcome to Harvest Auto-Fill").font(.system(size: 21, weight: .bold))
-                    Text("Your timesheet, filled from the work you already did.").font(.system(size: 13)).foregroundStyle(.secondary)
+                    Text("Your Harvest timesheet, filled from the work you already did.").font(.system(size: 13)).foregroundStyle(.secondary)
                 }
             }
             VStack(alignment: .leading, spacing: 16) {
@@ -1186,7 +1186,7 @@ struct OnbWelcome: View {
                 ValueBullet(icon: "chart.bar.doc.horizontal", title: "Built from your activity",
                             detail: "Your commits, pushes, and meetings become hours, split across the right projects by when you did the work.")
                 ValueBullet(icon: "lock.shield", title: "Private by design",
-                            detail: "Every token stays on this Mac in a locked file and is never sent anywhere but the services you connect.")
+                            detail: "Every token stays on this Mac in a locked folder and is never sent anywhere but the services you connect.")
             }
             Text("Setup takes about two minutes. You can change anything later in Settings.")
                 .font(.system(size: 12)).foregroundStyle(.tertiary)
@@ -1737,7 +1737,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 ## Polish
                 - Clearer wording across the whole update flow.
                 - A green check now appears on every field you've filled in correctly.
-                - The Friday auto-log moved from 4pm to **6pm**.
+                - The Friday auto-log moved from 4:00 PM to **6:00 PM**.
                 """, date: "August 31, 2026", url: UPDATE_REPO_URL)
                 view = WhatsNewView(render: true)
             }

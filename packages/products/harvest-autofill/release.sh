@@ -16,7 +16,7 @@
 set -euo pipefail
 
 VERSION="${1:?usage: release.sh <version> <build> [notes] [app_path]}"
-BUILD="${2:?need a build number (integer, must increase each release)}"
+BUILD="${2:?usage: release.sh <version> <build>  # build is an integer that must increase each release}"
 NOTES="${3:-}"
 APP="${4:-/Applications/Harvest Auto-Fill.app}"
 REPO="kaelys-js/harvest-autofill"

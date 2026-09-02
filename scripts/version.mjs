@@ -45,7 +45,7 @@ const notesIdx = args.indexOf("--notes");
 if (notesIdx !== -1) {
 	const tag = args[notesIdx + 1];
 	if (!tag) {
-		fail("usage: version.mjs --notes <tag>  (e.g. v2.32)");
+		fail("usage: version.mjs --notes <tag>  # tag like v1.2.3");
 	}
 	const tagVersion = tag.replace(/^v/, "");
 	if (tagVersion !== version) {

@@ -79,7 +79,7 @@ def span(a, b):
 
 
 def plain_task(p, kind):
-    return "Development" if kind != "meeting" else ("Internal meetings" if p == "Internal" else "Client Meetings")
+    return "Development" if kind != "meeting" else ("Internal meetings" if p == "Internal" else "Client meetings")
 
 
 def select_days(mon, today):
@@ -690,7 +690,7 @@ def main():
         print(f"\n{dn}   ({tot:.2f}h)")
         for p, task, knd, h, a, b in entries:
             print(
-                f"   {fmt(a)}–{fmt(b)}   ·   {p} {'Development' if knd == 'dev' else ('Internal meetings' if p == 'Internal' else 'Client Meetings')}   ·   {h}h"
+                f"   {fmt(a)}–{fmt(b)}   ·   {p} {'Development' if knd == 'dev' else ('Internal meetings' if p == 'Internal' else 'Client meetings')}   ·   {h}h"
             )
     print("DETAIL_END")
 
@@ -739,7 +739,7 @@ def main():
             emit(
                 "fail",
                 "Harvest · Run failed",
-                "couldn't write the week",
+                "Couldn't write the week",
                 f"stopped on {p['spent_date']} — see latest.log",
             )
             write_summary(summary_json(plan, mon, fri, flags, issues, "fail", "stopped mid-write — see latest.log"))
@@ -775,7 +775,7 @@ def main():
         emit("written", "Harvest · Week logged", sub, _brk + _bl)
         write_summary(summary_json(plan, mon, fri, flags, issues, "written"))
     else:
-        emit("fail", "Harvest · Needs a look", "written but verification failed", "; ".join(issues) or "see latest.log")
+        emit("fail", "Harvest · Needs a look", "Written but verification failed", "; ".join(issues) or "see latest.log")
         write_summary(summary_json(plan, mon, fri, flags, issues, "fail", "; ".join(issues) or "see latest.log"))
     return 0
 

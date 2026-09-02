@@ -65,7 +65,7 @@ if (polish) {
 			const prompt =
 				'Rewrite the following release notes as concise, user-facing bullets for a product "What\'s New". ' +
 				"Plain language, benefit-led, no commit types, scopes, or engineering jargon. One bullet per " +
-				"user-visible change. If nothing is user-facing, say so in one honest line. Output only the " +
+				"user-visible change. If nothing is user-facing, say so in one line. Output only the " +
 				`bullets, each starting with "- ", no headings, no preamble.\n\n${body}`;
 			const res = await fetch("https://api.anthropic.com/v1/messages", {
 				method: "POST",
@@ -98,7 +98,7 @@ if (polish) {
 		}
 	} else {
 		console.error(
-			"release-draft: no ANTHROPIC_API_KEY set — keeping the raw notes. Set the key for automatic polish, or ask Claude Code to rewrite the drafted section for users.",
+			"release-draft: ANTHROPIC_API_KEY not set; keeping the raw notes. Set the key to auto-polish, or edit the drafted section by hand.",
 		);
 	}
 }

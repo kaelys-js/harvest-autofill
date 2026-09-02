@@ -195,7 +195,7 @@ let CALENDAR_SETUP_STEPS = [
 // The auto-log toggle's explanation, shown in Settings and Onboarding. One canonical wording.
 let AUTO_LOG_HELP = "On — logs your week automatically every Friday evening, and never double-books if it already ran. Off — nothing reaches Harvest until you click “Log this week” yourself."
 let HARVEST_TOKEN_HELP = "Create one at id.getharvest.com → Developers → Create New Personal Access Token, then paste it here."
-let GITHUB_TOKEN_HELP = "The GitHub CLI (gh) isn't signed in, so paste a read-only token to read your commits — github.com → Settings → Developer settings → Fine-grained tokens → Repository: read."
+let GITHUB_TOKEN_HELP = "The GitHub CLI (gh) isn't signed in. Paste a read-only token to read your commits: github.com → Settings → Developer settings → Fine-grained tokens → Repository: read."
 let ADO_TOKEN_HELP = "A read-only token from dev.azure.com → User settings → Personal access tokens → Code: Read."
 // Raw 32-byte Ed25519 public key (base64). Private key lives only on the release machine.
 let UPDATE_PUBKEY_B64 = "QwrTC2P5Xh/A+Eq92spnRGHFESWTxfiX7Hqwk0waays="
@@ -317,7 +317,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
                 .flatMap { ($0["browser_download_url"] as? String).flatMap(URL.init(string:)) }
         }
         guard let mURL = assetURL("manifest.json"), let sURL = assetURL("manifest.json.sig"), let zURL = assetURL("HarvestAutoFill.zip")
-        else { throw UpdErr(m: "This release is missing its update files") }
+        else { throw UpdErr(m: "This release is missing its update files. Try again later, or check the release page.") }
         let (mData, _) = try await URLSession.shared.data(from: mURL)
         let (sData, _) = try await URLSession.shared.data(from: sURL)
         guard let pub = Data(base64Encoded: UPDATE_PUBKEY_B64),
@@ -327,7 +327,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
               key.isValidSignature(sig, for: mData) else { throw UpdErr(m: "This update couldn't be verified as genuine, so the update wasn't installed.") }
         guard let m = try? JSONSerialization.jsonObject(with: mData) as? [String: Any],
               let build = m["build"] as? Int, let version = m["version"] as? String, let sha = m["sha256"] as? String
-        else { throw UpdErr(m: "The update information couldn't be read") }
+        else { throw UpdErr(m: "The update information couldn't be read. Try again later, or check the release page.") }
         return UpdateInfo(build: build, version: version, sha256: sha.lowercased(), notes: m["notes"] as? String ?? "", zip: zURL)
     }
 }

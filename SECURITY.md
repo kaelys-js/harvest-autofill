@@ -15,9 +15,9 @@ When you report, include where you can:
 - the version (the app's About tab shows it) and macOS version,
 - steps to reproduce, and a proof of concept if you have one.
 
-You can expect an initial response within a few days. If a fix is warranted, it
-ships as a normal signed release and the advisory is published once users have had
-a chance to update.
+We aim to reply within three business days. If a fix is warranted, it ships as a
+normal signed release, and the advisory is published once users have had a chance to
+update.
 
 ## Supported versions
 
@@ -36,6 +36,6 @@ the update is refused.
 ## Scope
 
 This project is a personal, open-source utility. Credentials (Harvest, GitHub, Azure
-DevOps, calendar) are stored only on the user's Mac, in files scoped to that user; the
+DevOps, calendar) are stored only on the user's Mac, in a locked folder scoped to that user; the
 app has no backend and sends nothing to a server it controls. Reports about token
 handling, the update pipeline, or the bundled runtime are all in scope.

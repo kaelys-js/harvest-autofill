@@ -12,7 +12,7 @@ struct ModelsTests {
       "daysWorked": 2,
       "days": [
         {"name": "Mon Aug 24", "total": 9.0, "note": null, "projected": true, "entries": [
-          {"span": "9:00 AM–9:30 AM", "project": "Website", "task": "Client Meetings", "hours": 0.5},
+          {"span": "9:00 AM–9:30 AM", "project": "Website", "task": "Client meetings", "hours": 0.5},
           {"span": "9:45 AM–6:00 PM", "project": "Website", "task": "Development", "hours": 8.5}
         ]},
         {"name": "Wed Aug 26", "total": null, "note": "holiday · skipped", "entries": []}

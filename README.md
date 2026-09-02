@@ -6,7 +6,7 @@
   <img src="packages/products/harvest-autofill/visual-baseline/main.png" alt="The Harvest Auto-Fill menu-bar window showing a week of hours split across projects, with a Log this week button" width="480">
 </p>
 
-No more Friday-afternoon guesswork about what you worked on. Harvest Auto-Fill reads the week you actually had and proposes a complete, project-split timesheet you can file in one click, or let it file itself.
+No more Friday-afternoon guesswork about what you worked on. Harvest Auto-Fill reads the week you had and proposes a complete, project-split timesheet you can file in one click — or schedule it to file on Friday.
 
 [Download the latest release](https://github.com/kaelys-js/harvest-autofill/releases/latest) · [Website](https://kaelys-js.github.io/harvest-autofill/) · [Changelog](CHANGELOG.md)
 
@@ -19,7 +19,7 @@ No more Friday-afternoon guesswork about what you worked on. Harvest Auto-Fill r
 
 - **It fills the week for you.** Commits, pushes, and meetings become hours, allocated across the projects they belong to, for every worked weekday. You review and file, or let the Friday reminder do it.
 - **It knows your calendar.** Statutory holidays and days off are skipped, not billed. A week that crosses a month reads clearly.
-- **Everything stays on your Mac.** Your Harvest, GitHub, Azure DevOps, and Google Calendar tokens live in a locked folder on your machine. Data goes only to the services you connect, nowhere else.
+- **Everything stays on your Mac.** Your Harvest, GitHub, Azure DevOps, and Google Calendar tokens live in a locked folder on your Mac. Data goes only to the services you connect, nowhere else.
 - **Nothing to install alongside it.** Python is bundled inside the app. Download, open, done.
 - **It keeps itself current.** The app checks for a new signed release and can install it for you, verifying an Ed25519 signature before it trusts anything.
 
@@ -31,21 +31,21 @@ No more Friday-afternoon guesswork about what you worked on. Harvest Auto-Fill r
 
 Requires macOS 26 or newer on Apple Silicon.
 
-On first run, a short onboarding wizard connects your accounts and writes the settings into the app's own folder. Nothing is hard-coded to one person or company: you bring your own Harvest, GitHub, Azure DevOps, and Google Calendar.
+On first run, a short onboarding wizard connects your accounts and writes the settings into a locked folder on your Mac. Nothing is hard-coded to one person or company: you bring your own Harvest, GitHub, Azure DevOps, and Google Calendar.
 
 ## How it works
 
 Three steps run behind the single **Log this week** button (and behind the Friday reminder):
 
-1. **Discover** your connected accounts and projects, and build the holiday calendar, so the app knows what it may fill and when to stand down.
-2. **Allocate** the week's real activity, your Git commits and pushes plus calendar meetings, into an hours-per-project timeline for each worked weekday.
+1. **Discover** your connected accounts and projects, and build the holiday calendar. This tells the app what it may fill and when to stand down.
+2. **Allocate** your week — Git commits and pushes, plus calendar meetings — into an hours-per-project timeline for each weekday worked.
 3. **File** the allocated entries to Harvest.
 
-The current day shows as *projected*, filled ahead and recalculated right up to the Friday post, so you can always see the difference between a finished day and one still in progress.
+The current day shows as *projected* — filled ahead and recalculated right up to the Friday auto-log at 6:00 PM. You can always see the difference between a finished day and one still in progress.
 
 ## Privacy and security
 
-Your credentials never leave your Mac. They sit in the app's own directory, seeded during onboarding, and are sent only to the services you explicitly connect. The bundled defaults carry no real client names, identities, or account IDs, so a new install starts from a neutral example. Every update is verified against an **Ed25519** signature before it is trusted; the signing model and how to report a vulnerability are in [`SECURITY.md`](SECURITY.md).
+Your credentials never leave your Mac. They sit in a locked folder on your Mac, seeded during onboarding, and are sent only to the services you explicitly connect. The bundled defaults carry no real client names, identities, or account IDs, so a new install starts from a neutral example. Every update is verified against an **Ed25519** signature before it is trusted. The signing model and how to report a vulnerability are in [`SECURITY.md`](SECURITY.md).
 
 ---
 
@@ -74,7 +74,7 @@ To iterate on the allocation engine alone, run it the way the app does:
 
 ### Architecture
 
-The Swift app is the menu-bar shell: onboarding, preferences, the Friday nudge, and the auto-updater. The hours themselves come from a Python engine the app bundles and runs. Everything is config-driven, the `*.env` files and `config.json` in the app directory hold your connection settings, seeded from `config.default.json` during onboarding.
+The Swift app is the menu-bar shell: onboarding, preferences, the Friday nudge, and the auto-updater. The hours themselves come from a Python engine the app bundles and runs. Everything is config-driven: the `*.env` files and `config.json` in the app directory hold your connection settings, seeded from `config.default.json` during onboarding.
 
 ```text
 .                                   # workspace root
@@ -113,7 +113,7 @@ The Swift app is the menu-bar shell: onboarding, preferences, the Friday nudge, 
 
 ### Testing and gates
 
-Every `git push` runs the same battery CI runs, configured in [`lefthook.yml`](lefthook.yml). The [`lint.yml`](.github/workflows/lint.yml) "Checks" job is literally `lefthook run pre-push --all-files`, so local and CI stay in parity by construction; [`build.yml`](.github/workflows/build.yml) additionally compiles, bundles, signs, and verifies the app, and [`web-e2e.yml`](.github/workflows/web-e2e.yml) runs the website E2E container.
+Every `git push` runs the same battery CI runs, configured in [`lefthook.yml`](lefthook.yml). The [`lint.yml`](.github/workflows/lint.yml) "Checks" job is `lefthook run pre-push --all-files`, so local and CI stay in parity. [`build.yml`](.github/workflows/build.yml) additionally compiles, bundles, signs, and verifies the app. [`web-e2e.yml`](.github/workflows/web-e2e.yml) runs the website E2E container.
 
 Three test suites, each with a 75% coverage floor:
 
@@ -123,9 +123,9 @@ Three test suites, each with a 75% coverage floor:
 | Swift core | `./swift-coverage-gate.sh` | `HarvestCore.swift` via the Swift Testing suite |
 | Website | `pnpm exec vitest run --coverage` | components + `src/lib` helpers (jsdom) |
 
-Visual regression guards the rendered surfaces: `visual-check.py` renders every app screen and pixel-diffs each against `visual-baseline/` (rebuilding the app first), and `e2e/visual.spec.ts` screenshots the site in light and dark against committed `-linux` baselines inside the pinned Playwright container. Regenerate baselines deliberately with `visual-check.py --update` and `./run-web-e2e.sh --update`.
+Visual regression guards the rendered surfaces. `visual-check.py` rebuilds the app, renders every screen, and pixel-diffs each against `visual-baseline/`. `e2e/visual.spec.ts` screenshots the site in light and dark against committed `-linux` baselines inside the pinned Playwright container. Regenerate baselines deliberately with `visual-check.py --update` and `./run-web-e2e.sh --update`.
 
-Each stage runs through [turbo](https://turborepo.com/), so an unchanged surface, swift, python, or web, is a cache hit rather than a re-run. The gate is unskippable by design: [`bin/git`](bin/git) refuses `git push --no-verify`, and the `no-bypass` stage refuses the `LEFTHOOK=0` / `LEFTHOOK_EXCLUDE` environment bypasses. Fix the failing check; there is no escape hatch.
+Each stage runs through [turbo](https://turborepo.com/), so an unchanged surface — Swift, Python, or web — is a cache hit rather than a re-run. The gate is unskippable by design: [`bin/git`](bin/git) refuses `git push --no-verify`, and the `no-bypass` stage refuses the `LEFTHOOK=0` / `LEFTHOOK_EXCLUDE` environment bypasses.
 
 ### Release process
 
