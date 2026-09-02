@@ -21,8 +21,8 @@ trim = true
 conventional_commits = true
 filter_unconventional = true
 split_commits = false
-# Only user-facing types reach the changelog; release plumbing (chore/ci/test/style/build) is
-# dropped. Ordered so Features lead, then Fixes, then the rest.
+# Only user-facing types reach the changelog; non-user-facing types (chore/ci/test/style/build)
+# are excluded. Ordered so Features lead, then Fixes, then the rest.
 commit_parsers = [
 	{ message = "^feat", group = "<!-- 0 -->Features" },
 	{ message = "^fix", group = "<!-- 1 -->Bug Fixes" },

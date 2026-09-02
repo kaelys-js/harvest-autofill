@@ -147,7 +147,7 @@ func projColor(_ p: String) -> Color {
 // Website palette (oklch tokens from the site's global.css, converted to sRGB) so the app
 // matches the marketing site exactly.
 enum Web {
-    // Appearance-aware colours mirroring the website's design tokens (oklch → sRGB), so the app
+    // Appearance-aware colors mirroring the website's design tokens (oklch → sRGB), so the app
     // renders the same light/dark palette as the marketing mockup instead of the system accent.
     private static func tok(_ light: (Double, Double, Double), _ dark: (Double, Double, Double)) -> Color {
         Color(nsColor: NSColor(name: nil) { ap in
@@ -211,7 +211,7 @@ struct UpdErr: Error, LocalizedError { let m: String; var errorDescription: Stri
     static let shared = Updater()
     @Published var state: UpdaterState = .idle
     @Published var readyAppPath: String?
-    @Published var whatsNew: WhatsNew? // set to trigger the "What's new" window
+    @Published var whatsNew: WhatsNew? // set to trigger the "What's New" window
     @Published var releases: [WhatsNew] = [] // full history shown under the newest notes
     @Published var whatsNewManual = false // opened from About (no "Continue") vs post-update
     @Published var loadingWhatsNew = false
@@ -539,8 +539,8 @@ final class Prefs: ObservableObject {
         try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: path)
     }
 
-    // writeAll writes config + env files but does NOT mark setup complete — so the
-    // onboarding preview can save-then-dry-run without prematurely finishing first-run.
+    // writeAll writes config + env files but does not mark setup complete. This lets the
+    // onboarding preview save a draft and run a dry-run without ending first-run setup.
     func writeAll() {
         var c = cfg()
         c["auto_record"] = autoRecord
@@ -591,15 +591,10 @@ final class Prefs: ObservableObject {
         FileManager.default.createFile(atPath: P.setupMarker, contents: Data())
     }
 
-    // Destructive: wipe config + all secret env files + the setup marker, then re-seed a blank
-    // template so the engine still has a config. Returns the app to first-run onboarding.
-
-    // ---- launchd agents: Friday auto-write + launch-at-login, per-user, self-installing ----
+    // ---- launchd agents: Friday auto-log + launch-at-login, per-user, self-installing ----
     // Stable bundle-scoped labels so re-running is idempotent (bootout then bootstrap).
     static let weeklyLabel = "studio.harvestfill.weekly"
     static let loginLabel = "studio.harvestfill.menubar"
-
-    // Install the login-launch agent always; the Friday agent only when auto-record is on.
 
     @Published var harvestTest: TestState = .idle
     func testHarvest() {
@@ -765,5 +760,3 @@ func highlightJS(_ src: String) -> AttributedString {
 func inlineMD(_ s: String) -> AttributedString {
     (try? AttributedString(markdown: s, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(s)
 }
-
-// Renders release notes as a tidy changelog: headings, bullets, and inline emphasis/links.

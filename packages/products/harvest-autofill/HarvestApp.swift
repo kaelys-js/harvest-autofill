@@ -27,7 +27,7 @@ struct DayBlock: View {
             HStack {
                 Text(day.name).font(.system(size: 12.5, weight: .semibold))
                 // Today, mid-week, is shown at its full daily target rather than the hours logged
-                // so far — this tag says so. It's recalculated on every refresh up to the Friday post.
+                // so far — this tag says so. It's recalculated on every refresh up to the Friday auto-log.
                 if day.projected == true {
                     Text("projected")
                         .font(.system(size: 9.5, weight: .semibold))
@@ -140,15 +140,15 @@ struct MainWindow: View {
             }.padding(.horizontal, 18).padding(.vertical, 14)
         }
         .frame(width: 470)
-        // Solid site card colour in both render and the running app, matching the mockup.
+        // Solid site card color in both render and the running app, matching the mockup.
         .background(Web.card)
     }
 }
 
 let LBL: CGFloat = 190
 extension View {
-    // Frosted content card: legible over the window's material, modern layered depth.
-    // (True Liquid Glass is reserved for floating controls — see primaryProminent — per HIG.)
+    // Frosted content card: legible over the window's material.
+    // (Liquid Glass is reserved for floating controls — see primaryProminent — per HIG.)
     func glassBG(_ radius: CGFloat = 12, render: Bool = false) -> some View {
         // In a static ImageRenderer capture, `.thinMaterial` rasterizes approximately and
         // OS-version-dependently, so a screenshot of it drifts between the machine that generated
@@ -284,9 +284,9 @@ struct ValidMark: View {
     }
 }
 
-// A small "?" that reveals its explanation in a popover on click (SwiftUI's `.help()` hover
-// tooltip is unreliable on macOS, so click is the primary affordance; `.help()` stays as a
-// hover bonus where it works). Keeps the form uncluttered instead of a line of grey text per row.
+// A "?" reveals its explanation in a popover on click. SwiftUI's `.help()` hover tooltip is
+// unreliable on macOS, so click is the primary affordance; `.help()` still fires on hover where
+// it works. This keeps the form from adding a line of grey text per row.
 struct HelpIcon: View {
     let text: String
     @State private var show = false
@@ -1528,7 +1528,7 @@ struct MenuContent: View {
     }
 }
 
-// Menu-bar apps are easy to quit by accident; confirm, and be honest that the Friday
+// Confirm before quitting (menu-bar apps get quit by accident), and note that the Friday
 // auto-log keeps running on schedule (it's a launchd job, independent of the app).
 func confirmQuit() {
     let a = NSAlert()
@@ -1939,8 +1939,8 @@ struct HarvestMenuApp: App {
                     Button { confirmQuit() } label: { Label("Quit Harvest Auto-Fill", systemImage: "power") }
                         .keyboardShortcut("q", modifiers: .command)
                 }
-                // Replace the dead "Harvest Auto-Fill Help" (there's no Apple Help book) with
-                // links that work.
+                // Replace the "Harvest Auto-Fill Help" menu item (there's no Apple Help book)
+                // with links to the docs and issue tracker.
                 CommandGroup(replacing: .help) {
                     Button { NSWorkspace.shared.open(URL(string: WEBSITE_URL)!) } label: {
                         Label("Harvest Auto-Fill Website", systemImage: "safari")

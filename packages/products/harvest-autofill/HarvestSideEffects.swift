@@ -193,6 +193,8 @@ extension Prefs {
         writeAll(); markComplete(); syncAgents(); status = "Saved ✓"
     }
 
+    // Destructive: wipe config + all secret env files + the setup marker, then re-seed a blank
+    // template so the engine still has a config. Returns the app to first-run onboarding.
     func resetAll() {
         removeAgents()
         for f in [P.config, P.harvestEnv, P.calEnv, P.adoEnv, P.githubEnv, P.setupMarker] {
@@ -231,6 +233,7 @@ extension Prefs {
         try? FileManager.default.removeItem(atPath: laPath(label))
     }
 
+    // Install the login-launch agent always; the Friday agent only when auto-log is enabled.
     func syncAgents() {
         let app = Bundle.main.bundlePath
         let logs = P.dataDir + "/logs"
