@@ -118,17 +118,61 @@ never in the bundle, never committed. `HARVEST_DATA_DIR` overrides that path for
 
 ### Releasing
 
-Push an annotated version tag; CI builds, signs, and publishes it:
+Cut a release in one flow: fix commits → release commit → annotated tag → push both. CI's
+`release.yml` gates that the tag matches `VERSION` and a released `CHANGELOG.md` section,
+then publishes the matching section as the GitHub Release body and attaches the signed app.
 
-```bash
-git tag -a v2.12 -m "## Changelog
-- ..."
-git push origin v2.12
-```
+**Step by step:**
+
+1. Land your fix/feat commits on `main`. Commitlint enforces one scope per header, sentence-
+   case subject, and body lines ≤100 chars — wrap with a HEREDOC. See `.commitlintrc.json`.
+2. Bump `VERSION` to `x.y` (major.minor; the build number derives automatically):
+
+   ```bash
+   echo 2.37 > VERSION
+   ```
+
+3. In `CHANGELOG.md`, add a `## [x.y] - YYYY-MM-DD` section directly under `## [Unreleased]`,
+   moving anything that was there. The top released heading must equal the new `VERSION` or
+   the release gate refuses the tag.
+4. Verify the release notes render — this is exactly what CI will publish:
+
+   ```bash
+   node scripts/version.mjs --notes vX.Y
+   ```
+
+5. Commit as `chore(release): Cut the vX.Y release` and stage the two files:
+
+   ```bash
+   git add VERSION CHANGELOG.md
+   git commit -m 'chore(release): Cut the vX.Y release' -m '…one-paragraph summary…'
+   ```
+
+6. Run the full pre-push gate locally so a red CI never eats the release window:
+
+   ```bash
+   ./bin/mise exec -- lefthook run pre-push
+   ```
+
+7. Push `main`, then the annotated tag:
+
+   ```bash
+   git push origin main
+   NOTES="$(node scripts/version.mjs --notes vX.Y)"
+   git tag -a vX.Y -m "$NOTES"
+   git push origin vX.Y
+   ```
+
+8. Confirm CI + release: `gh run list -L 6` and `gh release view vX.Y`. Every `Checks`,
+   `Build`, `Pages`, and `Release` run for the release commit + tag must be `success`, and
+   the Release page must have the signed `.app` attached.
+
+**Notes:**
 
 - Build number derives from the version (`major*10000 + minor*100 + patch`) and must
-  increase each release.
-- The tag message becomes both the GitHub release notes and the in-app What's New.
+  increase each release — the version bump is what enforces that.
+- The CHANGELOG section becomes both the GitHub release notes and the in-app What's New; the
+  tag message is a convenient duplicate but not the source of truth.
 - Updates are Ed25519-signed; the app verifies each against the public key baked into it,
   so only releases signed with the matching private key install.
 - CI runs on `macos-26` (the app uses the macOS 26 SDK).
